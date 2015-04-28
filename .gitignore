@@ -13,3 +13,5 @@
 #misc
 *.log
 /cache
+/bin/
+/test-bin/
