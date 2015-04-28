@@ -3,8 +3,6 @@
  */
 package pt.uminho.sysbio.common.transporters.core.transport;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -14,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.xml.rpc.ServiceException;
 import javax.xml.ws.WebServiceException;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
@@ -22,6 +21,7 @@ import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiER;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.KeggAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.sbml_semantics.SemanticSbmlAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.sbml_semantics.SemanticSbmlSearchQueryResult;
+import uk.ac.ebi.chebi.webapps.chebiWS.model.ChebiWebServiceFault_Exception;
 
 /**
  * @author ODias
@@ -115,8 +115,8 @@ public class MIRIAM_Data {
 			}
 			else {
 
-				System.out.println(metabolite);
-				e.printStackTrace();
+				System.out.println("KEGG name exception "+metabolite);
+				//e.printStackTrace();
 			}
 		}
 		return new String[0];
@@ -451,18 +451,19 @@ public class MIRIAM_Data {
 	 * @param errorCount
 	 * @return
 	 */
-	public static String[] getMIRIAM_Names(String[] result, int errorCount, boolean verbose) {
+	public static String[] getMIRIAM_Names(String kegg_id, String chebi_id, int errorCount, boolean verbose) {
 
 		String[] names = new String[2];
 
 		try  {
 
-			String kegg_id = result[0], chebi_id=result[1], source_id;
+			String source_id;
 			if(kegg_id!=null) {
 
 				source_id=ExternalRefSource.KEGG_CPD.getSourceId(kegg_id);
 				names[0]= KeggAPI.getCompoundByKeggId(source_id).getName().replace(";","");
 			}
+
 			if(chebi_id!=null) {
 
 				source_id=ExternalRefSource.CHEBI.getSourceId(chebi_id);
@@ -480,7 +481,7 @@ public class MIRIAM_Data {
 
 						if(e.getMessage().contains("BD does not contain the id CHEBI:")) {
 
-							result[1] = null;
+							chebi_id = null;
 							names[1] = null;
 						}
 						else {
@@ -500,10 +501,10 @@ public class MIRIAM_Data {
 
 				if(verbose) {
 
-					System.out.println("Exception retrieving name. Trial number: "+errorCount+". Processing: KEGG:"+result[0]+" CHEBI:"+result[1]);
+					System.out.println("Exception retrieving name. Trial number: "+errorCount+". Processing: KEGG:"+kegg_id+" CHEBI:"+chebi_id);
 				}
 
-				names=getMIRIAM_Names(result, errorCount, verbose);
+				names=getMIRIAM_Names(kegg_id, chebi_id, errorCount, verbose);
 			}
 			else {
 
@@ -513,7 +514,7 @@ public class MIRIAM_Data {
 				}
 				else {
 
-					System.err.println("Exception retrieving name.  Trial counter: "+errorCount+". Processing: KEGG:"+result[0]+" CHEBI:"+result[1]);
+					System.err.println("Exception retrieving name.  Trial counter: "+errorCount+". Processing: KEGG:"+kegg_id+" CHEBI:"+chebi_id);
 				}
 			}
 		}
@@ -667,96 +668,4 @@ public class MIRIAM_Data {
 		return result;
 	}
 	 */
-
-	/**
-	 * @param args
-	 * @throws IOException 
-	 * @throws ServiceException 
-	 * @throws NullPointerException 
-	 * @throws RemoteException 
-	 */
-	public static void main(String[] args) throws IOException {
-
-		//System.out.println(UniprotAPI.get_uniprot_entry_organism("Q9WUT2", (0)));
-
-		//String[] codes = getMIRIAM_codes("strontium ion",new ArrayList<String>(),true);
-		//String[] codes = getMIRIAM_codes("gamma-butyrobetaine",new ArrayList<String>());
-		//String[] codes = getMIRIAM_codes("sulfate",new ArrayList<String>());
-		//String[] codes = getMIRIAM_codes("beta-glucoside",new ArrayList<String>());
-		//String[] codes = getMIRIAM_codes("TPP",new ArrayList<String>());
-		//String[] codes = getMIRIAM_codes("TGDG",new ArrayList<String>());
-		//String[] codes = getMIRIAM_codes("orthophosphate",new ArrayList<String>());
-		//String[] codes = getMIRIAM_codes("ion",new ArrayList<String>());
-		//String[] codes = getMIRIAM_codes("Mn2+",new ArrayList<String>());
-		//		String[] names = getMIRIAM_Names(codes,0,true);
-		//		System.out.println(codes[0]);		
-		//		System.out.println(names[0]);
-		//		System.out.println(codes[1]);		
-		//		System.out.println(names[1]);
-		//System.out.println(MIRIAM_Data.get_chebi_miriam_child_metabolites(ExternalRefSource.CHEBI.getSourceId(codes[1])));
-
-		//System.out.println(ChebiAPIInterface.getFunctionalParents("CHEBI:15525",0));
-		//System.out.println(ChebiAPIInterface.getChebiEntityByName("long chain fatty acid",5));
-		//System.out.println(ChebiAPIInterface.getChebiEntityByName("miltefosine"));
-		//System.out.println(ChebiAPIInterface.getChebiEntityByName("fatty acyl-CoA"));
-		//System.out.println(ChebiAPIInterface.getChebiEntityByName("KEGG C00009",-1));
-		//System.out.println(ChebiAPIInterface.getChebiEntityByName("unknown"));
-
-		//		Map<String, CheAxisFaultbiER> temp = MIRIAM_Data.get_chebi_miriam_child_metabolites("17996");
-		//		//System.out.println(temp.size());
-		//		//
-		//		for(String key: temp.keySet()) {
-		//
-		//			System.out.println(key+"\t"+temp.get(key).getKegg_id());
-		//			for(String child:temp.get(key).getFunctional_children()) {
-		//
-		//				System.out.println("\t\t"+child+"\t"+temp.get(child).getKegg_id());
-		//			}
-		//			//MIRIAM_Data.get_compounds_existing_in_KEGG_miriam(temp.get(key).getFunctional_children());
-		//		}
-
-		List<String> cNames = new ArrayList<String>();
-		//
-		BufferedReader in = new BufferedReader(new FileReader("C:/Users/ODias/Desktop/kLactis_compounds.txt"));
-		String str;
-
-		while ((str = in.readLine()) != null) {
-
-			if(!str.trim().isEmpty()) {
-
-				cNames.add(str.trim().replace("__"," ").replace("_","-"));
-			}
-		}
-		in.close();
-
-		//	String n = "ATP";
-
-		for(String n:cNames) 
-		{
-
-			String[] codes = getMIRIAM_codes(n,new ArrayList<String>(), true);
-			String[] names = getMIRIAM_Names(codes,0 ,true);
-			System.out.print(n+"\t");
-			if(codes[0]!=null) {
-
-				System.out.print(codes[0].replace("urn:miriam:kegg.compound:",""));		
-			}
-			System.out.print("\t");		
-			System.out.print(names[0]+"\t");
-
-			if(codes[1]!=null) {
-
-				System.out.print(codes[1].replace("urn:miriam:obo.chebi:CHEBI:",""));		
-			}
-			System.out.print("\t");
-			System.out.print(names[1]);
-			System.out.println();
-
-			//System.out.println(MIRIAM_Data.get_chebi_miriam_child_metabolites(codes[1].replace("urn:miriam:obo.chebi:CHEBI:","")));
-		}
-
-	}
-
-	//System.out.println(get_chebi_miriam_child_metabolites(ExternalRefSource.CHEBI.getSourceId(codes[1]),0,new HashMap<String,ChebiER>()).keySet());
-
 }

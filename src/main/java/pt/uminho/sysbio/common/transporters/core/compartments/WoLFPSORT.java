@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import jp.cbrc.togo.WoLFPsort;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiEFetchSequenceStub_API;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.utilities.io.FileUtils;
-import jp.cbrc.togo.WoLFPsort;
 
 public class WoLFPSORT implements PSortInterface{
 
@@ -74,40 +74,37 @@ public class WoLFPSORT implements PSortInterface{
 	/* (non-Javadoc)
 	 * @see compartments.PSortInterface#getCompartments(java.lang.String)
 	 */
-	public boolean getCompartments(String type) {
+	public boolean getCompartments(String type) throws Exception {
 
-		try {
-
-			String[] args = new String[3];
-			args[0]=this.tempPath+this.genomeCode+".faa";
-			args[1]=this.tempPath+this.genomeCode+".out";
-			args[2]=type;
-			//System.out.println(args[0]);
-			//System.out.println(args[1]);
-			//System.out.println(args[2]);
-			WoLFPsort.main(args);
-			return true;
-		}
-		catch(Exception e){e.printStackTrace();return false;}
+		return WoLFPSORT.getCompartments(type, this.tempPath+this.genomeCode+".faa", this.tempPath+this.genomeCode+".out");
 	}
 
 	/**
 	 * @param type
 	 * @param genome_file_path
+	 * @param out
 	 * @return
 	 */
-	public boolean getCompartments(String type, String genome_file_path) {
+	public static boolean getCompartments(String type, String genome_file_path, String out) throws Exception {
+
+		String[] args = new String[3];
+		args[0]=genome_file_path;
+		//args[1]=this.tempPath+this.genomeCode+".out";
+		args[1]=out;
+		args[2]=type;
+		for(String a : args)
+			System.out.print(a+" ");
 
 		try {
-
-			String[] args = new String[3];
-			args[0]=genome_file_path;
-			args[1]=this.tempPath+this.genomeCode+".out";
-			args[2]=type;
 			WoLFPsort.main(args);
-			return true;
+		} catch (Exception e) {
+			System.err.println("Exception caught");
+			throw e;
+		} catch (Error er) {
+			System.err.println("Error caught");
+			throw er;
 		}
-		catch(Exception e){e.printStackTrace();return false;}
+		return true;
 	}
 
 	/**
@@ -463,16 +460,20 @@ public class WoLFPSORT implements PSortInterface{
 		return true;
 	}
 
-	//		/**
-	//		 * @param args
-	//		 */
-	//		public static void main(String[] args) {
-	//			MySQLMultiThread msqlmt = new MySQLMultiThread ("localhost","3306","psort_test","root","password");
-	//			
-	//			WoLFPSORT obj = new WoLFPSORT(Connection conn, String genomeID, boolean isNCBIGenome);
-	//			
-	//			//obj.getCompartments("C:/Users/ODias/Desktop/CR382121.faa", "fungi");
-	//			obj.getCompartments("ftp://ftp.ncbi.nih.gov/genomes/Fungi/Kluyveromyces_lactis_NRRL_Y-1140_uid12377/NC_006042.faa", "fungi");
-	//		}
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+
+		//obj.getCompartments("C:/Users/ODias/Desktop/CR382121.faa", "fungi");
+
+		String out = "C:/Users/ODias/Desktop/out.out";
+		try {
+			WoLFPSORT.getCompartments("fungi","C:/Users/Oscar/Desktop/CP004143.faa", out);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 }

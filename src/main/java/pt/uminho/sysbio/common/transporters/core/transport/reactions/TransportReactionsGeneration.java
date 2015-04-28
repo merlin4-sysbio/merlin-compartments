@@ -44,8 +44,8 @@ import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
  */
 public class TransportReactionsGeneration {
 
-	private Map<String, String[]> miriamCodes;
-	private Map<String, String[]> miriamNames;
+	private Map<String, TransportMetaboliteDirectionStoichiometryContainer> miriamData;
+	private Map<String, TransportMetaboliteDirectionStoichiometryContainer> reviewedMetsNames, reviewedMetsCodes;
 	private MySQLMultiThread msqlmt;
 	private List<NcbiTaxon> originTaxonomy;
 	private String originOrganism;
@@ -66,8 +66,9 @@ public class TransportReactionsGeneration {
 
 		this.msqlmt = msqlmt;
 		this.originTaxonomy = null;
-		this.miriamCodes = new TreeMap<String, String[]>();
-		this.miriamNames = new TreeMap<String, String[]>();
+		this.miriamData = new TreeMap<>();
+		this.reviewedMetsNames = new TreeMap<>();
+		this.reviewedMetsCodes = new TreeMap<>();
 		this.getExistingMetabolites();
 		this.taxonomyScore= new TreeMap<String, Integer>();
 		this.counter=0;
@@ -85,8 +86,9 @@ public class TransportReactionsGeneration {
 
 		this.msqlmt = msqlmt;
 		this.originTaxonomy = null;
-		this.miriamCodes = new TreeMap<String, String[]>();
-		this.miriamNames = new TreeMap<String, String[]>();
+		this.miriamData = new TreeMap<>();
+		this.reviewedMetsNames = new TreeMap<>();
+		this.reviewedMetsCodes = new TreeMap<>();
 		this.getExistingMetabolites();
 		this.taxonomyScore= new TreeMap<String, Integer>();
 		this.counter=0;
@@ -102,82 +104,75 @@ public class TransportReactionsGeneration {
 	 * @param outPath
 	 * @param project_id
 	 * @return
+	 * @throws SQLException 
+	 * @throws IOException 
 	 */
-	public List<AlignedGenesContainer> getCandidatesFromDatabase(String outPath, int project_id) {
+	public List<AlignedGenesContainer> getCandidatesFromDatabase(String outPath, int project_id) throws SQLException, IOException {
 
-		try {
+		Connection conn = this.msqlmt.openConnection();
+		Statement stmt = conn.createStatement();
+		List<AlignedGenesContainer> data = new ArrayList<AlignedGenesContainer>();
+		Map<String, Integer> genes_map = new HashMap<String, Integer>();
 
-			Connection conn = this.msqlmt.openConnection();
-			Statement stmt = conn.createStatement();
-			List<AlignedGenesContainer> data = new ArrayList<AlignedGenesContainer>();
-			Map<String, Integer> genes_map = new HashMap<String, Integer>();
+		ResultSet rs = stmt.executeQuery("SELECT sw_reports.id, locus_tag, similarity, acc, tcdb_id FROM sw_reports " +
+				"INNER JOIN sw_similarities ON sw_reports.id=sw_similarities.sw_report_id " +
+				"INNER JOIN sw_hits ON sw_hits.id=sw_similarities.sw_hit_id " +
+				" WHERE project_id = "+ project_id +
+				" ORDER BY sw_reports.locus_tag, similarity DESC");
 
-			ResultSet rs = stmt.executeQuery("SELECT sw_reports.id, locus_tag, similarity, acc, tcdb_id FROM sw_reports " +
-					"INNER JOIN sw_similarities ON sw_reports.id=sw_similarities.sw_report_id " +
-					"INNER JOIN sw_hits ON sw_hits.id=sw_similarities.sw_hit_id " +
-					" WHERE project_id = "+ project_id +
-					" ORDER BY sw_reports.locus_tag, similarity DESC");
+		int counter = 0;
+		while(rs.next()) {
 
-			int counter = 0;
-			while(rs.next()) {
+			AlignedGenesContainer alignedGenesContainer;
+			String locusTag = rs.getString(2);
 
-				AlignedGenesContainer alignedGenesContainer;
-				String locusTag = rs.getString(2);
+			if(genes_map.containsKey(locusTag)) {
 
-				if(genes_map.containsKey(locusTag)) {
-
-					alignedGenesContainer = data.get(genes_map.get(locusTag));
-				}
-				else {
-
-					alignedGenesContainer = new AlignedGenesContainer(locusTag);
-					genes_map.put(locusTag, counter);
-					data.add(counter, alignedGenesContainer);
-					counter ++;
-				}
-
-				AlignmentResult alignmentResult = new AlignmentResult(rs.getString(4).toUpperCase(), rs.getDouble(3));
-				alignedGenesContainer.addAlignmentResult(alignmentResult);
-
-				UnnannotatedTransportersContainer unnannotatedTransportersContainer = new UnnannotatedTransportersContainer(rs.getString(4).toUpperCase(),rs.getString(5).toUpperCase());
-				this.unAnnotatedTransporters.add(unnannotatedTransportersContainer);
+				alignedGenesContainer = data.get(genes_map.get(locusTag));
 			}
-			
-			this.setInitialHomolguesSize(this.unAnnotatedTransporters.size());
+			else {
 
-			rs = stmt.executeQuery("SELECT uniprot_id, tc_number, latest_version FROM tcdb_registries;");
+				alignedGenesContainer = new AlignedGenesContainer(locusTag);
+				genes_map.put(locusTag, counter);
+				data.add(counter, alignedGenesContainer);
+				counter ++;
+			}
 
-			while(rs.next()) {
+			AlignmentResult alignmentResult = new AlignmentResult(rs.getString(4).toUpperCase(), rs.getDouble(3));
+			alignedGenesContainer.addAlignmentResult(alignmentResult);
 
-				UnnannotatedTransportersContainer transporter = new UnnannotatedTransportersContainer(rs.getString(1).toUpperCase(), rs.getString(2).toUpperCase());
+			UnnannotatedTransportersContainer unnannotatedTransportersContainer = new UnnannotatedTransportersContainer(rs.getString(4).toUpperCase(),rs.getString(5).toUpperCase());
+			this.unAnnotatedTransporters.add(unnannotatedTransportersContainer);
+		}
 
-				if(rs.getBoolean(3)) {
+		this.setInitialHomolguesSize(this.unAnnotatedTransporters.size());
 
+		rs = stmt.executeQuery("SELECT uniprot_id, tc_number, latest_version FROM tcdb_registries;");
+
+		while(rs.next()) {
+
+			UnnannotatedTransportersContainer transporter = new UnnannotatedTransportersContainer(rs.getString(1).toUpperCase(), rs.getString(2).toUpperCase());
+
+			if(rs.getBoolean(3)) {
+
+				this.unAnnotatedTransporters.remove(transporter);
+			}
+			else {
+
+				if(this.unAnnotatedTransporters.contains(transporter)) {
+
+					System.out.println("OLD version for UniProtID "+transporter.getUniprot_id()+", removing from unnanotated registries.");
 					this.unAnnotatedTransporters.remove(transporter);
 				}
-				else {
-
-					if(this.unAnnotatedTransporters.contains(transporter)) {
-
-						System.out.println("OLD version for UniProtID "+transporter.getUniprot_id()+", removing from unnanotated registries.");
-						this.unAnnotatedTransporters.remove(transporter);
-					}
-				}
 			}
-
-			if(outPath!=null && this.unAnnotatedTransporters.size()>0) {
-
-				this.generateAnnotationFile(outPath);
-			}
-			stmt.close();
-			conn.close();
-			return data;
-		} 
-		catch (SQLException e) {
-
-			e.printStackTrace();
 		}
-		return  null;
+
+		if(outPath!=null && this.unAnnotatedTransporters.size()>0)
+			this.generateAnnotationFile(outPath);
+
+		stmt.close();
+		conn.close();
+		return data;
 	}
 
 	/**
@@ -271,8 +266,9 @@ public class TransportReactionsGeneration {
 	/**
 	 * @param outPath
 	 * @throws SQLException 
+	 * @throws IOException 
 	 */
-	private void generateAnnotationFile(String outPath) throws SQLException {
+	private void generateAnnotationFile(String outPath) throws SQLException, IOException {
 
 		Connection conn = this.msqlmt.openConnection();
 		AnnotateTransporters annotate = new AnnotateTransporters(conn);
@@ -424,15 +420,11 @@ public class TransportReactionsGeneration {
 				////////////////////////////////////////////////////////////////////////////////////////////////////////
 				TransportParsing transportParsing = new TransportParsing();	//parsing data
 
-				if(!parserContainer.getMetabolites().equals("--") && !parserContainer.getMetabolites().equals("unkown")) {
-
+				if(!parserContainer.getMetabolites().equals("--") && !parserContainer.getMetabolites().equals("unkown"))
 					transportParsing.parseMetabolites(parserContainer.getMetabolites(), parserContainer.getTransportType());
-				}
 
-				if(parserContainer.getReactingMetabolites()!= null && !parserContainer.getReactingMetabolites().equals("--")) {
-
+				if(parserContainer.getReactingMetabolites()!= null && !parserContainer.getReactingMetabolites().equals("--"))
 					transportParsing.parse_reacting_metabolites(parserContainer.getReactingMetabolites());
-				}
 
 				Set<Integer> transportSystemIds = new TreeSet<Integer>();
 				// parse all lists of metabolites, each list of lists being a transport reaction
@@ -584,14 +576,16 @@ public class TransportReactionsGeneration {
 		for(int j=0; j<tmdsList.size(); j++) {
 
 			TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
+			metaboliteContainer  = this.getMiriamCodes(metaboliteContainer, verbose);
+			metaboliteContainer = this.getMiriamNames(metaboliteContainer, verbose);
 
-			String[] miriam_codes = this.getMiriamCodes(metaboliteContainer, verbose);
-
-			this.getMiriamNames(metaboliteContainer, miriam_codes, verbose);
-
-			metaboliteContainer.setKegg_miriam(miriam_codes[0]);
-			metaboliteContainer.setChebi_miriam(miriam_codes[1]);
-
+//			System.out.println(metaboliteContainer.getName());
+//			System.out.println(metaboliteContainer.getKegg_miriam());
+//			System.out.println(metaboliteContainer.getKegg_name());
+//			System.out.println(metaboliteContainer.getChebi_miriam());
+//			System.out.println(metaboliteContainer.getChebi_name());
+//			System.out.println();
+			
 			ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
 
 			tmdsList.set(j, metaboliteContainer);
@@ -605,56 +599,53 @@ public class TransportReactionsGeneration {
 	 * @param result
 	 * @return
 	 */
-	private String[] getMiriamNames(TransportMetaboliteDirectionStoichiometryContainer metabolite, String[] result, boolean verbose) {
+	private TransportMetaboliteDirectionStoichiometryContainer getMiriamNames(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose) {
 
-		String[] names = new String[2];
 
 		try {
 
-			if(this.miriamNames.containsKey(metabolite.getName())) {
+
+			if(this.reviewedMetsNames.containsKey(metabolite.getName())) {
 
 				this.counter=0;
-				return this.miriamNames.get(metabolite.getName());
+				return this.reviewedMetsNames.get(metabolite.getName());
 			}
 			else {
 
-				names=MIRIAM_Data.getMIRIAM_Names(result,0, verbose);
+				if(this.miriamData.containsKey(metabolite.getName()) && this.miriamData.get(metabolite.getName()).getKegg_name()!=null && this.miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
-				if(names==null) {
-
-					names = new String[2];
-					names[0]=null;
-					names[1]=null;
 					this.counter=0;
-					this.miriamNames.put(metabolite.getName(), names);
-					return names;
+					metabolite = this.miriamData.get(metabolite.getName());
+					this.reviewedMetsNames.put(metabolite.getName(), metabolite);
 				}
 				else {
 
-					metabolite.setKegg_name(names[0]);
-					metabolite.setChebi_name(names[1]);
+					String[] names = MIRIAM_Data.getMIRIAM_Names(metabolite.getKegg_miriam(), metabolite.getChebi_miriam(), 0, verbose);
 
-					if(metabolite.getKegg_miriam()!=null) {
+					if(names==null) {
 
-						metabolite.setKegg_miriam(result[0]);
+						this.counter=0;
+						this.reviewedMetsNames.put(metabolite.getName(), metabolite);
+						return metabolite;
 					}
+					else {
 
-					if(metabolite.getChebi_miriam()!=null) {
+						metabolite.setKegg_name(names[0]);
+						metabolite.setChebi_name(names[1]);
 
-						metabolite.setChebi_miriam(result[1]);
+						this.reviewedMetsNames.put(metabolite.getName(), metabolite);
+						this.counter=0;
 					}
-
-					this.miriamNames.put(metabolite.getName(), names);
-					this.counter=0;
-					return names;
 				}
+				return metabolite;
 			}
 		}			
 		catch(Exception u) {
 
 			if(this.counter<10) {
 
-				names = getMiriamNames(metabolite, result, verbose);this.counter++;
+				metabolite = getMiriamNames(metabolite, verbose);
+				this.counter++;
 			}
 			else {
 
@@ -664,11 +655,11 @@ public class TransportReactionsGeneration {
 				}
 				else {
 
-					System.err.println("Error retrieving miriam names for "+metabolite+"\n\n.");
+					System.err.println("Error retrieving miriam names for "+metabolite.getName()+"\n\n.");
 				}
 			}
 		}
-		return names;
+		return metabolite;
 	}
 
 
@@ -676,43 +667,41 @@ public class TransportReactionsGeneration {
 	 * @param metabolite
 	 * @return
 	 */
-	private String[] getMiriamCodes(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose) {
+	private TransportMetaboliteDirectionStoichiometryContainer getMiriamCodes(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose) {
 
 		String[] result = new String[2];
 
 		try {
 
-			if(this.miriamCodes.containsKey(metabolite.getName())) {
+
+			if(this.reviewedMetsCodes.containsKey(metabolite.getName())) {
 
 				this.counter=0;
-				return this.miriamCodes.get(metabolite.getName());
+				return this.reviewedMetsCodes.get(metabolite.getName());
 			}
 			else {
 
-				result=MIRIAM_Data.getMIRIAM_codes(metabolite.getName(), this.metabolitesToBeVerified, verbose);
+				if(this.miriamData.containsKey(metabolite.getName()) && this.miriamData.get(metabolite.getName()).getKegg_miriam()!=null && this.miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
-				if(result==null) {
-
-					result = new String[2];
-					result[0]=null;
-					result[1]=null;
 					this.counter=0;
-					this.miriamCodes.put(metabolite.getName(), result);
-					return new String[2];
+					metabolite = this.miriamData.get(metabolite.getName());
+					this.reviewedMetsCodes.put(metabolite.getName(), metabolite);
 				}
 				else {
 
-					if(result[0]==null && result[1]==null) {
+					result=MIRIAM_Data.getMIRIAM_codes(metabolite.getName(), this.metabolitesToBeVerified, verbose);
 
-						this.metabolitesNotAnnotated.add(metabolite.getName());
+
+					if(result!=null) {
+
+						if(result[0]==null && result[1]==null)
+							this.metabolitesNotAnnotated.add(metabolite.getName());
+
+						metabolite.setKegg_miriam(result[0]);
+						metabolite.setChebi_miriam(result[1]);
 					}
-
-					metabolite.setKegg_miriam(result[0]);
-					metabolite.setChebi_miriam(result[1]);
-
-					this.miriamCodes.put(metabolite.getName(), result);
 					this.counter=0;
-					return result;
+					this.reviewedMetsCodes.put(metabolite.getName(), metabolite);
 				}
 			}
 		}			
@@ -720,7 +709,7 @@ public class TransportReactionsGeneration {
 
 			if(this.counter<10) {
 
-				result = getMiriamCodes(metabolite, verbose);
+				metabolite = getMiriamCodes(metabolite, verbose);
 				this.counter++;
 			}
 			else {
@@ -735,7 +724,7 @@ public class TransportReactionsGeneration {
 				}
 			}
 		}
-		return result;
+		return metabolite;
 	}
 
 	//	/**
@@ -975,39 +964,51 @@ public class TransportReactionsGeneration {
 	/**
 	 * 
 	 */
-	public void getExistingMetabolites(){
-		try
-		{
+	public void getExistingMetabolites() {
+
+		try {
+
 			Connection conn = this.msqlmt.openConnection();
 			Statement stmt = conn.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT * FROM metabolites");
-			while(rs.next())
-			{
-				String[] data1=new String[2], data2=new String[2];
 
-				data1[0]=rs.getString(3);
-				data1[1]=rs.getString(5);
+			while(rs.next()) {
 
-				data2[0]=rs.getString(4);
-				data2[1]=rs.getString(6);
+				TransportMetaboliteDirectionStoichiometryContainer tMet = new TransportMetaboliteDirectionStoichiometryContainer(rs.getString(2));
 
-				this.miriamCodes.put(rs.getString(2), data1);
-				this.miriamNames.put(rs.getString(2), data2);
+				if(rs.getString(3)!=null && !rs.getString(3).equalsIgnoreCase("null"))
+					tMet.setKegg_miriam(rs.getString(3));
+
+				if(rs.getString(4)!=null && !rs.getString(4).equalsIgnoreCase("null"))
+					tMet.setKegg_name(rs.getString(4));
+
+				if(rs.getString(5)!=null && !rs.getString(5).equalsIgnoreCase("null"))
+					tMet.setChebi_miriam(rs.getString(5));
+
+				if(rs.getString(6)!=null && !rs.getString(6).equalsIgnoreCase("null"))
+					tMet.setChebi_name(rs.getString(6));
+
+				this.miriamData.put(rs.getString(2), tMet);
 			}
 
 			rs = stmt.executeQuery("SELECT * FROM synonyms JOIN metabolites ON (metabolite_id=metabolites.id);");
-			while(rs.next())
-			{
-				String[] data1=new String[2], data2=new String[2];
 
-				data1[0]=rs.getString(6);
-				data1[1]=rs.getString(8);
+			while(rs.next()) {
 
-				data2[0]=rs.getString(7);
-				data2[1]=rs.getString(9);
+				TransportMetaboliteDirectionStoichiometryContainer tMet = new TransportMetaboliteDirectionStoichiometryContainer(rs.getString(2));
+				if(rs.getString(6)!=null && !rs.getString(6).equalsIgnoreCase("null"))
+					tMet.setKegg_miriam(rs.getString(6));
 
-				this.miriamCodes.put(rs.getString(3), data1);
-				this.miriamNames.put(rs.getString(3), data2);
+				if(rs.getString(7)!=null && !rs.getString(7).equalsIgnoreCase("null"))
+					tMet.setKegg_name(rs.getString(7));
+
+				if(rs.getString(8)!=null && !rs.getString(8).equalsIgnoreCase("null"))
+					tMet.setChebi_miriam(rs.getString(8));
+
+				if(rs.getString(9)!=null && !rs.getString(9).equalsIgnoreCase("null"))
+					tMet.setChebi_name(rs.getString(9));
+
+				this.miriamData.put(rs.getString(2), tMet);
 			}
 			stmt.close();
 			conn.close();

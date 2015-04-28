@@ -805,8 +805,12 @@ public class LoadTransportersData {
 	 * @throws SQLException
 	 */
 	public int loadMetabolite(TransportMetaboliteDirectionStoichiometryContainer metabolite, LoadTransportersData.DATATYPE datatype) throws SQLException {
-
-		String kegg=metabolite.getKegg_miriam(), chebi=metabolite.getChebi_miriam(), kegg_name=metabolite.getKegg_name().toLowerCase(), chebi_name=metabolite.getChebi_name().toLowerCase();
+		
+		String kegg=metabolite.getKegg_miriam(),
+				chebi=metabolite.getChebi_miriam();
+		
+		String kegg_name = metabolite.getKegg_name(), 
+				chebi_name=metabolite.getChebi_name();
 
 		String name = metabolite.getName().toLowerCase();
 
@@ -819,13 +823,15 @@ public class LoadTransportersData {
 			return this.metabolites_id_map.get(name);
 		}
 
-		if(this.metabolites_id_map.containsKey(kegg_name)) {
+		if(kegg_name!= null && this.metabolites_id_map.containsKey(kegg_name.toLowerCase())) {
+			
+			kegg_name = kegg_name.toLowerCase();
 
 			if(!this.synonyms.contains(name)) {
 
 				if(chebi_name!=null) {
 
-					this.statement.execute("UPDATE metaoblites SET chebi_name = '"+chebi_name.replace("'", "\\'")+"' , chebi_miriam = '"+chebi+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
+					this.statement.execute("UPDATE metabolites SET chebi_name = '"+chebi_name.replace("'", "\\'")+"' , chebi_miriam = '"+chebi+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
 				}
 				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(kegg_name)+",'"+name.replace("'", "\\'")+"','"+datatype+"')");
 				this.synonyms.add(name);
@@ -834,13 +840,15 @@ public class LoadTransportersData {
 			return this.metabolites_id_map.get(name);
 		}
 
-		if(this.metabolites_id_map.containsKey(chebi_name)) {
+		if(chebi_name!=null && this.metabolites_id_map.containsKey(chebi_name.toLowerCase())) {
+			
+			chebi_name = chebi_name.toLowerCase();
 
 			if(!this.synonyms.contains(name)) {
 
 				if(kegg_name!=null) {
 
-					this.statement.execute("UPDATE metaoblites SET kegg_name = '"+kegg_name.replace("'", "\\'")+"' , kegg_miriam = '"+kegg+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
+					this.statement.execute("UPDATE metabolites SET kegg_name = '"+kegg_name.replace("'", "\\'")+"' , kegg_miriam = '"+kegg+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
 				}
 				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(chebi_name)+",'"+name.replace("'", "\\'")+"','"+datatype+"')");
 				this.synonyms.add(name);
@@ -1049,6 +1057,7 @@ public class LoadTransportersData {
 			return "";
 
 		} catch (Exception e) {
+			
 			if(counter<10)
 			{
 				counter = counter+1;
@@ -1056,7 +1065,7 @@ public class LoadTransportersData {
 			}
 			else {
 
-				System.out.println(keggID);
+				System.out.println("No KEgg  formula "+ keggID);
 			}
 			e.printStackTrace();
 			return "";
@@ -1412,7 +1421,7 @@ public class LoadTransportersData {
 			}
 			else {
 
-				System.out.println(this.local_database_id);
+				System.out.println("exception ontology "+this.local_database_id);
 				e.printStackTrace();
 			}
 		}
@@ -1639,10 +1648,8 @@ public class LoadTransportersData {
 		rs = this.statement.executeQuery("SELECT uniprot_id, tc_number  FROM tcdb_registries " +
 				"WHERE status='"+DatabaseProgressStatus.PROCESSED+"'");
 
-		while(rs.next()) {
-
+		while(rs.next())
 			result.add(rs.getString(1)+"__"+rs.getString(2));
-		}
 
 		rs.close();
 		return result;

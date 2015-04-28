@@ -11,7 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.biojava.bio.seq.projection.ProjectionUtils;
+
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiEFetchSequenceStub_API;
+import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 /**
@@ -150,144 +153,146 @@ public class PSort3 implements PSortInterface{
 
 		while ((str = in.readLine()) != null && !this.cancel.get()) {
 
-			String[] line = str.split("\t");
+			if(!str.isEmpty()){
 
-			if(firstLine) {
+				String[] line = str.split("\t");
 
-				firstLine=false;
-				for(int i=0;i<line.length;i++) {
+				if(firstLine) {
 
-					if(line[i].trim().equalsIgnoreCase("SeqID")){seqID_index=i;}
-					if(line[i].trim().replace(" ","").equalsIgnoreCase("CytoplasmicMembrane_Score")){cytoplasmicMembrane_Score_index=i;}
-					if(line[i].trim().equalsIgnoreCase("periplasmic_Score")){periplasmic_Score_index=i;}
-					if(line[i].trim().equalsIgnoreCase("OuterMembrane_Score")){outerMembrane_Score_index=i;}
-					if(line[i].trim().equalsIgnoreCase("Extracellular_Score")){extracellular_Score_index=i;}
-					if(line[i].trim().equalsIgnoreCase("Cytoplasmic_Score")){cytoplasmic_Score_index=i;}
-					if(line[i].trim().equalsIgnoreCase("Final_Localization")){final_Localization_index=i;}
-					if(line[i].trim().equalsIgnoreCase("Cellwall_Score")){cellwall_score_index=i;}
-				}
+					firstLine=false;
+					for(int i=0;i<line.length;i++) {
 
-				if(final_Localization_index<0) {
+						if(line[i].trim().equalsIgnoreCase("SeqID")){seqID_index=i;}
+						if(line[i].trim().replace(" ","").equalsIgnoreCase("CytoplasmicMembrane_Score")){cytoplasmicMembrane_Score_index=i;}
+						if(line[i].trim().equalsIgnoreCase("periplasmic_Score")){periplasmic_Score_index=i;}
+						if(line[i].trim().equalsIgnoreCase("OuterMembrane_Score")){outerMembrane_Score_index=i;}
+						if(line[i].trim().equalsIgnoreCase("Extracellular_Score")){extracellular_Score_index=i;}
+						if(line[i].trim().equalsIgnoreCase("Cytoplasmic_Score")){cytoplasmic_Score_index=i;}
+						if(line[i].trim().equalsIgnoreCase("Final_Localization")){final_Localization_index=i;}
+						if(line[i].trim().equalsIgnoreCase("Cellwall_Score")){cellwall_score_index=i;}
+					}
 
-					in.close();
-					return null;
-				}
-			}
-			else {
+					if(final_Localization_index<0) {
 
-				PSort3_result pSort3_result = new PSort3_result(line[seqID_index]);
-				String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
-
-				boolean unknown=true;
-
-				Double.valueOf(line[cytoplasmicMembrane_Score_index]);
-				if(Double.valueOf(line[cytoplasmicMembrane_Score_index])>3)
-				{
-					unknown=false;
-				}
-
-				if(periplasmic_Score_index>0 && Double.valueOf(line[periplasmic_Score_index])>3) {
-
-					unknown=false;
-				}
-
-				if(outerMembrane_Score_index>0 && Double.valueOf(line[outerMembrane_Score_index])>3) {
-
-					unknown=false;
-				}
-
-				if(cellwall_score_index>0 && Double.valueOf(line[cellwall_score_index])>3) {
-
-					unknown=false;
-				}
-
-				if(Double.valueOf(line[extracellular_Score_index])>3) {
-
-					unknown=false;
-				}
-				if(Double.valueOf(line[cytoplasmic_Score_index])>3)
-				{
-					unknown=false;
-				}
-
-				double score;
-				if(line[final_Localization_index].trim().equalsIgnoreCase("Unknown")&&unknown) {
-
-					score = 10;
-					pSort3_result.addCompartment("unkn", score);	
+						in.close();
+						return null;
+					}
 				}
 				else {
 
-					boolean maxFound=false, returnFinalLocalisation=false;
-					score = Double.valueOf(line[cytoplasmicMembrane_Score_index]);
-					pSort3_result.addCompartment("cytmem", score);
-					if(score==10){maxFound=true;}
+					PSort3_result pSort3_result = new PSort3_result(line[seqID_index]);
+					String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
 
-					score = Double.valueOf(line[extracellular_Score_index]);
-					pSort3_result.addCompartment("extr", score);
-					if(score==10)
+					boolean unknown=true;
+
+					Double.valueOf(line[cytoplasmicMembrane_Score_index]);
+					if(Double.valueOf(line[cytoplasmicMembrane_Score_index])>3)
 					{
-						if(maxFound){returnFinalLocalisation=true;}
-						else{maxFound=true;}
+						unknown=false;
 					}
 
-					if(periplasmic_Score_index>0) {
+					if(periplasmic_Score_index>0 && Double.valueOf(line[periplasmic_Score_index])>3) {
 
-						score = Double.valueOf(line[periplasmic_Score_index]);
-						pSort3_result.addCompartment("perip", score);
-						if(score==10) {
-
-							if(maxFound){returnFinalLocalisation=true;}
-							else{maxFound=true;}
-						}
+						unknown=false;
 					}
 
-					if(outerMembrane_Score_index>0) {
+					if(outerMembrane_Score_index>0 && Double.valueOf(line[outerMembrane_Score_index])>3) {
 
-						score = Double.valueOf(line[outerMembrane_Score_index]);
-						pSort3_result.addCompartment("outme", score);
-						if(score==10) {
-
-							if(maxFound){returnFinalLocalisation=true;}
-							else{maxFound=true;}
-						}
+						unknown=false;
 					}
 
-					if(cellwall_score_index>0) {
+					if(cellwall_score_index>0 && Double.valueOf(line[cellwall_score_index])>3) {
 
-						score = Double.valueOf(line[cellwall_score_index]);
-						pSort3_result.addCompartment("cellw", score);
-						if(score==10) {
-
-							if(maxFound){returnFinalLocalisation=true;}
-							else{maxFound=true;}
-						}
+						unknown=false;
 					}
 
-					score = Double.valueOf(line[cytoplasmic_Score_index]);
-					pSort3_result.addCompartment("cytop", score);
-					if(score==10)
+					if(Double.valueOf(line[extracellular_Score_index])>3) {
+
+						unknown=false;
+					}
+					if(Double.valueOf(line[cytoplasmic_Score_index])>3)
 					{
-						if(maxFound){returnFinalLocalisation=true;}
-						else{maxFound=true;}
+						unknown=false;
 					}
 
-					if(returnFinalLocalisation) {
+					double score;
+					if(line[final_Localization_index].trim().equalsIgnoreCase("Unknown")&&unknown) {
 
-						pSort3_result = new PSort3_result(line[seqID_index]);
-						String out;
-						if(line[final_Localization_index].trim().equalsIgnoreCase("Cytoplasmic")){out = "cytop";}
-						else if(line[final_Localization_index].trim().equalsIgnoreCase("CytoplasmicMembrane")){out = "cytmem";}
-						else if(line[final_Localization_index].trim().equalsIgnoreCase("Periplasmic")){out = "perip";}
-						else if(line[final_Localization_index].trim().equalsIgnoreCase("OuterMembrane")){out = "outme";}
-						else if(line[final_Localization_index].trim().equalsIgnoreCase("Cellwall")){out = "cellw";}
-						else{out = "extr";}
-
-						pSort3_result.addCompartment(out,10);
+						score = 10;
+						pSort3_result.addCompartment("unkn", score);	
 					}
+					else {
+
+						boolean maxFound=false, returnFinalLocalisation=false;
+						score = Double.valueOf(line[cytoplasmicMembrane_Score_index]);
+						pSort3_result.addCompartment("cytmem", score);
+						if(score==10){maxFound=true;}
+
+						score = Double.valueOf(line[extracellular_Score_index]);
+						pSort3_result.addCompartment("extr", score);
+						if(score==10)
+						{
+							if(maxFound){returnFinalLocalisation=true;}
+							else{maxFound=true;}
+						}
+
+						if(periplasmic_Score_index>0) {
+
+							score = Double.valueOf(line[periplasmic_Score_index]);
+							pSort3_result.addCompartment("perip", score);
+							if(score==10) {
+
+								if(maxFound){returnFinalLocalisation=true;}
+								else{maxFound=true;}
+							}
+						}
+
+						if(outerMembrane_Score_index>0) {
+
+							score = Double.valueOf(line[outerMembrane_Score_index]);
+							pSort3_result.addCompartment("outme", score);
+							if(score==10) {
+
+								if(maxFound){returnFinalLocalisation=true;}
+								else{maxFound=true;}
+							}
+						}
+
+						if(cellwall_score_index>0) {
+
+							score = Double.valueOf(line[cellwall_score_index]);
+							pSort3_result.addCompartment("cellw", score);
+							if(score==10) {
+
+								if(maxFound){returnFinalLocalisation=true;}
+								else{maxFound=true;}
+							}
+						}
+
+						score = Double.valueOf(line[cytoplasmic_Score_index]);
+						pSort3_result.addCompartment("cytop", score);
+						if(score==10)
+						{
+							if(maxFound){returnFinalLocalisation=true;}
+							else{maxFound=true;}
+						}
+
+						if(returnFinalLocalisation) {
+
+							pSort3_result = new PSort3_result(line[seqID_index]);
+							String out;
+							if(line[final_Localization_index].trim().equalsIgnoreCase("Cytoplasmic")){out = "cytop";}
+							else if(line[final_Localization_index].trim().equalsIgnoreCase("CytoplasmicMembrane")){out = "cytmem";}
+							else if(line[final_Localization_index].trim().equalsIgnoreCase("Periplasmic")){out = "perip";}
+							else if(line[final_Localization_index].trim().equalsIgnoreCase("OuterMembrane")){out = "outme";}
+							else if(line[final_Localization_index].trim().equalsIgnoreCase("Cellwall")){out = "cellw";}
+							else{out = "extr";}
+
+							pSort3_result.addCompartment(out,10);
+						}
+					}
+					compartmentLists.put(locus_tag, pSort3_result);
 				}
-
-				compartmentLists.put(locus_tag, pSort3_result);
 			}
 		}
 		in.close();
@@ -320,6 +325,7 @@ public class PSort3 implements PSortInterface{
 				pSort3_result.setGeneID(idLocus.get(id));
 				compartmentResults.put(idLocus.get(id), pSort3_result);
 			}
+			
 		}
 		return compartmentResults;
 	}

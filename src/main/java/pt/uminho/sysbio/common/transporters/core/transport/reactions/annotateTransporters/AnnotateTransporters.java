@@ -2,6 +2,7 @@ package pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTr
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -71,235 +72,232 @@ public class AnnotateTransporters {
 	 * @param tmhmmPath
 	 * @param output
 	 * @throws SQLException 
+	 * @throws IOException 
 	 */
-	public void annotate(String output) throws SQLException {
+	public void annotate(String output) throws SQLException, IOException {
 
 
 		Map<String,String[]> entry =new TreeMap<String, String[]>();
 		Map<String,String[]> recordEntries =new TreeMap<String, String[]>();
 		Map<String,String[]> ytpdbEntries =new TreeMap<String, String[]>();
 
-		try {
+		FileWriter fstream = new FileWriter(output);
+		BufferedWriter out = new BufferedWriter(fstream);
 
-			FileWriter fstream = new FileWriter(output);
-			BufferedWriter out = new BufferedWriter(fstream);
+		TCDB_Parser tp = new TCDB_Parser(new TreeSet<String>());
 
-			TCDB_Parser tp = new TCDB_Parser(new TreeSet<String>());
+		out.write(
+				"UniProt ID" + //2
+						"\tTCDB ID" + //4
+						"\tTCDB family" + //6
+						"\tTCDB description" + //7
+						"\taffinity" + //9
+						"\ttype" + //10
+						"\tTCDB location" + //11
+						"\tYTPDB gene" + //12
+						"\tYTPDB description" + //13
+						"\tYTPDB type" + //14
+						"\tYTPDB metabolites" + //15
+						"\tYTPDB location" + //16
+						"\tTC #" +
+						//"\tlocation" + //17
+						"\tdirection" + //18
+						"\tmetabolite" + //19
+						"\treversibility" + //20
+						"\treacting_metabolites" + //21
+						"\tequation" + //22
+				"\n");
 
-			out.write(
-					"UniProt ID" + //2
-					"\tTCDB ID" + //4
-					"\tTCDB family" + //6
-					"\tTCDB description" + //7
-					"\taffinity" + //9
-					"\ttype" + //10
-					"\tTCDB location" + //11
-					"\tYTPDB gene" + //12
-					"\tYTPDB description" + //13
-					"\tYTPDB type" + //14
-					"\tYTPDB metabolites" + //15
-					"\tYTPDB location" + //16
-					"\tTC #" +
-					"\tlocation" + //17
-					"\tdirection" + //18
-					"\tmetabolite" + //19
-					"\treversibility" + //20
-					"\treacting_metabolites" + //21
-					"\tequation" + //22
-					"\n");
-
-			out.write(this.getExampleAnnotation().toString());
+		out.write(this.getExampleAnnotation());
 
 
-			for(UnnannotatedTransportersContainer id : this.ids) {
+		for(UnnannotatedTransportersContainer id : this.ids) {
 
-				String uniprotID = id.getUniprot_id();
+			String uniprotID = id.getUniprot_id();
+
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//////////////////////////////////////////////tc record data////////////////////////////////////////
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//System.out.println(uniprotID+ "\t"+tcnumber);
+			recordEntries=new TreeMap<String, String[]>();
+			recordEntries=tp.parseTCDBrecord("http://www.tcdb.org/search/result.php?acc="+uniprotID,recordEntries);
+
+			if(!recordEntries.containsKey("TCID")) {
+
+				String tcnumber = null;
+				if(recordEntries.keySet().size()==1)  {
+
+					for(String key:recordEntries.keySet()) {
+
+						tcnumber=key;
+					}
+				}
+				else {
+
+					System.out.println(recordEntries.keySet());
+				}
+
+				String description2="";
+				if(recordEntries.get(tcnumber)[5]!=null){description2=recordEntries.get(tcnumber)[0];}
+
+				String tc_location="";
+				if(recordEntries.get(tcnumber)[5]!=null){tc_location=recordEntries.get(tcnumber)[5];}
+
+				String tc_affinity=" ";
+				if(description2.toLowerCase().contains("high affinity")||description2.toLowerCase().contains("high-affinity")){tc_affinity="high";}
+				else if(description2.toLowerCase().contains("low affinity")||description2.toLowerCase().contains("low-affinity")){tc_affinity="low";}
+
+				String tc_type="";
+				for(String direction:transportDirection.keySet()) {
+
+					if(description2.toLowerCase().contains(direction)) {
+
+						tc_type=tc_type.concat(direction+" ");
+					}
+				}
+				tc_type=tc_type.trim();
+
 
 				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				//////////////////////////////////////////////tc record data////////////////////////////////////////
+				//////////////////////////////////////////////family data////////////////////////////////////////
 				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				//System.out.println(uniprotID+ "\t"+tcnumber);
-				recordEntries=new TreeMap<String, String[]>();
-				recordEntries=tp.parseTCDBrecord("http://www.tcdb.org/search/result.php?acc="+uniprotID,recordEntries);
 
-				if(!recordEntries.containsKey("TCID")) {
+				String family = tcnumber.substring(0,(tcnumber.lastIndexOf(".")));
 
-					String tcnumber = null;
-					if(recordEntries.keySet().size()==1)  {
+				if(!entry.keySet().contains(family)) {
+					
+					entry=tp.parseTCDB("http://www.tcdb.org/search/result.php?tc="+family+"#"+family, entry);
+				}
 
-						for(String key:recordEntries.keySet()) {
+				String tc_family = family;
+				if(entry.keySet().contains(family)){tc_family+=": "+entry.get(family)[0];}
+				String description1= "";
+				if(entry.get(tcnumber)!=null) {
 
-							tcnumber=key;
+					description1= entry.get(tcnumber)[0];
+					if(description1.toLowerCase().contains("high affinity")||description1.toLowerCase().contains("high-affinity")) {
+
+						if(tc_affinity!=" " && tc_affinity.equals("low")) {
+
+							tc_affinity="high/low???";
 						}
+						else {
+
+							tc_affinity="high";
+						}
+					}
+					else if(description1.toLowerCase().contains("low affinity")||description1.toLowerCase().contains("low-affinity")) {
+
+						if(tc_affinity!=" " && tc_affinity.equals("high")) {
+
+							tc_affinity="high/low???";
+						}
+						else {
+
+							tc_affinity="low";
+						}
+					}
+				}
+
+				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////ytpdb data////////////////////////////////////////
+				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				String ytpdb_gene="", ytpdb_description="", ytpdb_metabolite="", ytpdb_location="", ytpdb_type="";
+
+				String yeastLocusTag;
+				if(!((yeastLocusTag=retrieveLocusTagIfScerevisiae(uniprotID)).isEmpty())) {
+
+					if(!ytpdbEntries.containsKey(yeastLocusTag)) {
+
+						ytpdbEntries =tp.parseYTPDBrecord("http://homes.esat.kuleuven.be/~sbrohee/ytpdb/index.php/Ytpdbgene:"+yeastLocusTag,ytpdbEntries);
+					}
+					if(ytpdbEntries.containsKey(yeastLocusTag)) {
+
+						ytpdb_gene=ytpdbEntries.get(yeastLocusTag)[0];
+						ytpdb_description=ytpdbEntries.get(yeastLocusTag)[1];
+						ytpdb_metabolite=ytpdbEntries.get(yeastLocusTag)[2];
+						ytpdb_location=ytpdbEntries.get(yeastLocusTag)[3];
+
+						for(String direction:transportDirection.keySet()) {
+
+							if(ytpdb_description.toLowerCase().contains(direction)) {
+
+								ytpdb_type=ytpdb_type.concat(direction+" ");
+							}
+						}
+						ytpdb_type=ytpdb_type.trim();
+					}
+				}
+				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////direction ////////////////////////////////////////
+				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				String direction="";
+				if((ytpdb_type!="" && ytpdb_type.equals(tc_type)) || (ytpdb_type!="" && tc_type=="")) {
+
+					if(transportDirection.containsKey(ytpdb_type)) {
+
+						direction = transportDirection.get(ytpdb_type);
 					}
 					else {
 
-						System.out.println(recordEntries.keySet());
+						direction = "Several directions";
 					}
-
-					String description2="";
-					if(recordEntries.get(tcnumber)[5]!=null){description2=recordEntries.get(tcnumber)[0];}
-
-					String tc_location="";
-					if(recordEntries.get(tcnumber)[5]!=null){tc_location=recordEntries.get(tcnumber)[5];}
-
-					String tc_affinity=" ";
-					if(description2.toLowerCase().contains("high affinity")||description2.toLowerCase().contains("high-affinity")){tc_affinity="high";}
-					else if(description2.toLowerCase().contains("low affinity")||description2.toLowerCase().contains("low-affinity")){tc_affinity="low";}
-
-					String tc_type="";
-					for(String direction:transportDirection.keySet()) {
-
-						if(description2.toLowerCase().contains(direction)) {
-
-							tc_type=tc_type.concat(direction+" ");
-						}
-					}
-					tc_type=tc_type.trim();
-
-
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					//////////////////////////////////////////////family data////////////////////////////////////////
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-					String family = tcnumber.substring(0,(tcnumber.lastIndexOf(".")));
-
-					if(!entry.keySet().contains(family)) {
-
-						entry=tp.parseTCDB("http://www.tcdb.org/search/result.php?tc="+family+"#"+family, entry);
-					}
-
-					String tc_family = family;
-					if(entry.keySet().contains(family)){tc_family+=": "+entry.get(family)[0];}
-					String description1= "";
-					if(entry.get(tcnumber)!=null) {
-
-						description1= entry.get(tcnumber)[0];
-						if(description1.toLowerCase().contains("high affinity")||description1.toLowerCase().contains("high-affinity")) {
-
-							if(tc_affinity!=" " && tc_affinity.equals("low")) {
-
-								tc_affinity="high/low???";
-							}
-							else {
-
-								tc_affinity="high";
-							}
-						}
-						else if(description1.toLowerCase().contains("low affinity")||description1.toLowerCase().contains("low-affinity")) {
-
-							if(tc_affinity!=" " && tc_affinity.equals("high")) {
-
-								tc_affinity="high/low???";
-							}
-							else {
-
-								tc_affinity="low";
-							}
-						}
-					}
-
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					//////////////////////////////////////////////ytpdb data////////////////////////////////////////
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					String ytpdb_gene="", ytpdb_description="", ytpdb_metabolite="", ytpdb_location="", ytpdb_type="";
-
-					String yeastLocusTag;
-					if(!((yeastLocusTag=retrieveLocusTagIfScerevisiae(uniprotID)).isEmpty())) {
-
-						if(!ytpdbEntries.containsKey(yeastLocusTag)) {
-
-							ytpdbEntries =tp.parseYTPDBrecord("http://homes.esat.kuleuven.be/~sbrohee/ytpdb/index.php/Ytpdbgene:"+yeastLocusTag,ytpdbEntries);
-						}
-						if(ytpdbEntries.containsKey(yeastLocusTag)) {
-
-							ytpdb_gene=ytpdbEntries.get(yeastLocusTag)[0];
-							ytpdb_description=ytpdbEntries.get(yeastLocusTag)[1];
-							ytpdb_metabolite=ytpdbEntries.get(yeastLocusTag)[2];
-							ytpdb_location=ytpdbEntries.get(yeastLocusTag)[3];
-
-							for(String direction:transportDirection.keySet()) {
-
-								if(ytpdb_description.toLowerCase().contains(direction)) {
-
-									ytpdb_type=ytpdb_type.concat(direction+" ");
-								}
-							}
-							ytpdb_type=ytpdb_type.trim();
-						}
-					}
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					//////////////////////////////////////////////direction ////////////////////////////////////////
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					String direction="";
-					if((ytpdb_type!="" && ytpdb_type.equals(tc_type)) || (ytpdb_type!="" && tc_type=="")) {
-
-						if(transportDirection.containsKey(ytpdb_type)) {
-
-							direction = transportDirection.get(ytpdb_type);
-						}
-						else {
-
-							direction = "Several directions";
-						}
-					}
-					else if(ytpdb_type=="" && tc_type!="") {
-
-						if(transportDirection.containsKey(tc_type)) {
-
-							direction = transportDirection.get(tc_type);
-						}
-						else {
-
-							direction = "Several directions";
-						}
-					}
-					else if(ytpdb_type!="" && tc_type!="") {
-
-						direction = "Distinct directions";
-					}
-
-					if(description1.equals(description2)){
-
-						description2="";
-					}
-
-					TransporterAnnotation transporterAnnotation = new TransporterAnnotation();
-
-					transporterAnnotation.setUniProt_ID(uniprotID);
-					transporterAnnotation.setTcdb_ID(tcnumber);
-					transporterAnnotation.setTcdb_family(tc_family);
-					transporterAnnotation.setTcdb_description(description1);
-					transporterAnnotation.setAffinity(tc_affinity);
-					transporterAnnotation.setType(tc_type);
-					transporterAnnotation.setTcdb_location(tc_location);
-					transporterAnnotation.setYtpdb_gene(ytpdb_gene);
-					transporterAnnotation.setYtpdb_description(ytpdb_description);
-					transporterAnnotation.setYtpdb_type(ytpdb_type);
-					transporterAnnotation.setYtpdb_metabolites(ytpdb_metabolite);
-					transporterAnnotation.setYtpdb_location(ytpdb_location);
-					
-					String tcnumberfamily = new String(tcnumber);
-					tcnumberfamily = tcnumberfamily.substring(0, tcnumber.lastIndexOf("."))+".#";
-					
-					transporterAnnotation.setTc_number_family(tcnumberfamily);
-					transporterAnnotation.setDirection(direction);
-					transporterAnnotation.setMetabolite(ytpdb_metabolite);
-					transporterAnnotation.setReversibility("");
-					transporterAnnotation.setReacting_metabolites("");
-					transporterAnnotation.setEquation("");
-
-					transporterAnnotation = this.getExistingAnnotation(uniprotID, transporterAnnotation);
-
-					out.write(transporterAnnotation.toString());
 				}
-			}
+				else if(ytpdb_type=="" && tc_type!="") {
 
-			//Close the output stream
-			out.close();
-			fstream.close();
+					if(transportDirection.containsKey(tc_type)) {
+
+						direction = transportDirection.get(tc_type);
+					}
+					else {
+
+						direction = "Several directions";
+					}
+				}
+				else if(ytpdb_type!="" && tc_type!="") {
+
+					direction = "Distinct directions";
+				}
+
+				if(description1.equals(description2)){
+
+					description2="";
+				}
+
+				TransporterAnnotation transporterAnnotation = new TransporterAnnotation();
+
+				transporterAnnotation.setUniProt_ID(uniprotID);
+				transporterAnnotation.setTcdb_ID(tcnumber);
+				transporterAnnotation.setTcdb_family(tc_family);
+				transporterAnnotation.setTcdb_description(description1);
+				transporterAnnotation.setAffinity(tc_affinity);
+				transporterAnnotation.setType(tc_type);
+				transporterAnnotation.setTcdb_location(tc_location);
+				transporterAnnotation.setYtpdb_gene(ytpdb_gene);
+				transporterAnnotation.setYtpdb_description(ytpdb_description);
+				transporterAnnotation.setYtpdb_type(ytpdb_type);
+				transporterAnnotation.setYtpdb_metabolites(ytpdb_metabolite);
+				transporterAnnotation.setYtpdb_location(ytpdb_location);
+
+				String tcnumberfamily = new String(tcnumber);
+				tcnumberfamily = tcnumberfamily.substring(0, tcnumber.lastIndexOf("."))+".#";
+
+				transporterAnnotation.setTc_number_family(tcnumberfamily);
+				transporterAnnotation.setDirection(direction);
+				transporterAnnotation.setMetabolite(ytpdb_metabolite);
+				transporterAnnotation.setReversibility("");
+				transporterAnnotation.setReacting_metabolites("");
+				transporterAnnotation.setEquation("");
+
+				transporterAnnotation = this.getExistingAnnotation(uniprotID, transporterAnnotation);
+
+				out.write(transporterAnnotation.toString());
+			}
 		}
-		catch (Exception e){System.err.println("Error: " + e.getMessage());e.printStackTrace();}
+
+		//Close the output stream
+		out.close();
+		fstream.close();
 	}
 
 
@@ -388,7 +386,9 @@ public class AnnotateTransporters {
 	/**
 	 * @return
 	 */
-	private TransporterAnnotation getExampleAnnotation() {
+	private String getExampleAnnotation() {
+
+		String out = null;
 
 		TransporterAnnotation transporterAnnotation = new TransporterAnnotation();
 
@@ -411,7 +411,30 @@ public class AnnotateTransporters {
 		transporterAnnotation.setReacting_metabolites("--");
 		transporterAnnotation.setEquation("Uniport: S (out) <=> S (in) || Symport: S (out) + [H+ or Na+] (out) <=> S (in) + [H+ or Na+] (in) || Antiport: S1 (out) + S2 (in) <=> S1 (in) + S2 (out) (S1 may be H+ or a solute)");
 
-		return transporterAnnotation;
+		out = transporterAnnotation.toString();
+
+		transporterAnnotation.setUniProt_ID("P39109");
+		transporterAnnotation.setTcdb_ID("3.A.1.208.11");
+		transporterAnnotation.setTcdb_family("3.A.1.208:  The Drug Conjugate Transporter (DCT) Family (ABCC) (Dębska et al., 2011)");
+		transporterAnnotation.setTcdb_description("Vacuolar metal resistance and drug detoxification protein, yeast cadmium factor (YCF1); transports cadmium-glutathione conjugates, glutathione S-conjugated leucotriene C4, organic glutathione S-conjugates, selenodigluthatione, unconjugated bilirubin, reduced glutathione, and diazaborine (Lazard et al., 2011). ");
+		transporterAnnotation.setAffinity("");
+		transporterAnnotation.setType("detoxification resistance");
+		transporterAnnotation.setTcdb_location("Vacuole membrane");
+		transporterAnnotation.setYtpdb_gene("YCF1");
+		transporterAnnotation.setYtpdb_description("Vacuolar full-size ABC transporter responsible for vacuolar sequestration of glutathione-S-conjugates ");
+		transporterAnnotation.setYtpdb_type("transporter");
+		transporterAnnotation.setYtpdb_metabolites("arsenite, bilirubin, diazaborine, glutathione-S-conjugate");
+		transporterAnnotation.setYtpdb_location("vacuolar membrane");
+		transporterAnnotation.setTc_number_family("3.A.1.208.#");
+		transporterAnnotation.setDirection("out");
+		transporterAnnotation.setMetabolite("arsenite; bilirubin; diazaborine; glutathione conjugate");
+		transporterAnnotation.setReversibility("FALSE");
+		transporterAnnotation.setReacting_metabolites("1:ATP; 1:water || 1:ADP; 1:orthophosphate");
+		transporterAnnotation.setEquation("Substrate (in) + ATP -> Substrate (out) + ADP + Pi");
+
+		out = out.concat(transporterAnnotation.toString());
+
+		return out;
 
 	}
 

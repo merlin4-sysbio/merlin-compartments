@@ -35,8 +35,9 @@ public abstract interface PSortInterface {
 	/**
 	 * @param string
 	 * @return 
+	 * @throws Exception 
 	 */
-	public boolean getCompartments(String string);
+	public boolean getCompartments(String string) throws Exception;
 
 	/**
 	 * @return

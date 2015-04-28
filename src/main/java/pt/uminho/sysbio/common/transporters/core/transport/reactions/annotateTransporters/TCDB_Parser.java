@@ -53,8 +53,8 @@ public class TCDB_Parser {
 	 */
 	public Map<String,String[]> parseTCDB(String url, Map<String,String[]> entry){
 
-		try 
-		{
+		try  {
+			
 			//String inputHTML = readFile("filemakerExport.htm","UTF-8");
 			//String inputHTML = readFile();
 			Parser parser = new Parser(new URL(url).openConnection());
@@ -68,15 +68,15 @@ public class TCDB_Parser {
 			//iterate table ->tr
 			boolean familyNotRead=true;
 			NodeList tableRows = nl.extractAllNodesThatMatch(new TagNameFilter("tr"),true);
-			for(int i=0;i<tableRows.size();i++) 
-			{
+			for(int i=0;i<tableRows.size();i++) {
+				
 				//iterate rows ->td
 				NodeList tableCells  = tableRows.elementAt(i).getChildren().extractAllNodesThatMatch(new TagNameFilter("td"),true);
-				if(tableCells.size()==1)
-				{
+				if(tableCells.size()==1) {
+					
 					String readNode = readNodeRecursive(tableCells.elementAt(0),"");
-					if(familyNotRead)
-					{
+					if(familyNotRead && !readNode.isEmpty()) {
+						
 						String[] data = new String[1];
 						data[0] = readNode.substring(readNode.indexOf(":"));
 						String family=readNode.substring(0,(readNode.indexOf(":")));
@@ -84,15 +84,15 @@ public class TCDB_Parser {
 						familyNotRead=false;
 					}
 				}
-				if(tableCells.size()==4)
-				{
+				
+				if(tableCells.size()==4) {
+					
 					familyNotRead=true;
 					String[] data = new String[3];
 					data[0] = readNodeRecursive(tableCells.elementAt(1),"");
 					data[1] = readNodeRecursive(tableCells.elementAt(2),"");
 					data[2] = readNodeRecursive(tableCells.elementAt(3),"");
 					entry.put(readNodeRecursive(tableCells.elementAt(0),""), data);
-
 				}
 			}
 			return entry;
