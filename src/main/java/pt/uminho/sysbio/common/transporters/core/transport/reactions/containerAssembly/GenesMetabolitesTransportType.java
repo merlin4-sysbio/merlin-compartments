@@ -25,28 +25,28 @@ public class GenesMetabolitesTransportType {
 		this.setGeneID(geneID);
 		this.metaboliteTransportType = new TreeMap<String, TransportTypeSelection>();
 	}
-	
+
 	/**
 	 * @param metaboliteID
 	 * @param transportTypeID
 	 * @param score
 	 */
 	public void addMetaboliteTransportType(String metaboliteID, String transportTypeID, double score) {
-		
+
 		TransportTypeSelection transportTypeSelection;
-		
+
 		if(this.metaboliteTransportType.containsKey(metaboliteID)) {
-			
+
 			transportTypeSelection=this.metaboliteTransportType.get(metaboliteID);
 			transportTypeSelection.addTransportType(transportTypeID, score);
 		}
 		else {
-			
+
 			transportTypeSelection= new TransportTypeSelection(transportTypeID, metaboliteID, score);
 		}
 		this.metaboliteTransportType.put(metaboliteID, transportTypeSelection);
 	}
-	
+
 	/**
 	 * @param metaboliteID
 	 * @param transportType
@@ -56,36 +56,46 @@ public class GenesMetabolitesTransportType {
 		double value=0;
 		String result="";
 		Set<String> similar = new HashSet<String>();
-		
+
 		Map<String,Double> map = this.metaboliteTransportType.get(metaboliteID).getTransportTypePercentage();
-		
+
+		if(transportType.equalsIgnoreCase("sensor") && map.size()>1)
+			return false;
+
 		for(String transportTypeID:map.keySet()) {
-			
-			if(map.get(transportTypeID)==value) {
-				
+
+			double score = map.get(transportTypeID);
+
+			if(score==value) {
+
 				similar.add(transportTypeID);
 				similar.add(new String(result));
 			}
-			
-			if(map.get(transportTypeID)>value) {
-				
-				value = map.get(transportTypeID);
-				result=transportTypeID;
+
+			if(score>value) {
+
+				if(transportTypeID.equalsIgnoreCase("sensor") && map.size()>0)
+					;
+				else {
+					
+					value = score;
+					result=transportTypeID;
+				}
 			}
 		}
-		
+
 		if(result.equalsIgnoreCase(transportType)) {
-			
+
 			return true;
 		}
 		else {
-			
+
 			if(similar.contains(result) && similar.contains(transportType)) {
-				
+
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -103,6 +113,22 @@ public class GenesMetabolitesTransportType {
 		return geneID;
 	}
 
+
+	/**
+	 * @return the metaboliteTransportType
+	 */
+	public Map<String, TransportTypeSelection> getMetaboliteTransportType() {
+		return metaboliteTransportType;
+	}
+
+	/**
+	 * @param metaboliteTransportType the metaboliteTransportType to set
+	 */
+	public void setMetaboliteTransportType(
+			Map<String, TransportTypeSelection> metaboliteTransportType) {
+		this.metaboliteTransportType = metaboliteTransportType;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -112,5 +138,5 @@ public class GenesMetabolitesTransportType {
 				+ metaboliteTransportType + ", geneID=" + geneID + "]";
 	}
 
-	
+
 }

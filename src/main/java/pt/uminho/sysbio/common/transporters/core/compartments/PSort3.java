@@ -9,12 +9,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.biojava.bio.seq.projection.ProjectionUtils;
-
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiEFetchSequenceStub_API;
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezFetch;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 /**
@@ -312,12 +311,14 @@ public class PSort3 implements PSortInterface{
 		Map<String, PSort3_result> compartmentResults = new HashMap<String, PSort3_result>();
 
 		if (!this.cancel.get()) {
-
-			NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
-
-			fetchStub = new NcbiEFetchSequenceStub_API(2);
-
-			Map<String, String> idLocus = fetchStub.getLocusFromID(compartmentLists.keySet(),400);
+			
+			Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(compartmentLists.keySet(), 400);
+			
+//			NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
+//
+//			fetchStub = new NcbiEFetchSequenceStub_API(2);
+//
+//			Map<String, String> idLocus = fetchStub.getLocusFromID(compartmentLists.keySet(),400);
 
 			for (String id : idLocus.keySet()) {
 

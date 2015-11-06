@@ -44,6 +44,7 @@ public class ProteinFamiliesSet implements Serializable{
 		this.alpha= alpha;
 		this.beta = beta;
 		this.minimalFrequency = minimalFrequency;
+		this.setMax_score_value(-1);
 	}
 
 
@@ -54,12 +55,8 @@ public class ProteinFamiliesSet implements Serializable{
 	public ProteinFamily get_protein_family(String tc_family){
 
 		for(ProteinFamily proteinFamilyData:this.proteins)
-		{
 			if(proteinFamilyData.getTc_family().equals(tc_family))
-			{
 				return proteinFamilyData;
-			}
-		}
 
 		ProteinFamily proteinFamily = new ProteinFamily(tc_family);
 		this.proteins.add(proteinFamily);
@@ -70,21 +67,22 @@ public class ProteinFamiliesSet implements Serializable{
 	/**
 	 * 
 	 */
-	public void getTCfamily_score(){
+	public void calculateTCfamily_score() {
+		
 		this.setMax_score_value(0);
 		double score_sum=0;
 		Map<String,Double> scores = new HashMap<String,Double>();
 
-		for(ProteinFamily protein_family : this.proteins)
-		{
+		for(ProteinFamily protein_family : this.proteins) {
 
 			double score = this.get_tc_frequency(protein_family.getSimilarity_sum(), this.alpha, protein_family.getTaxonomy_sum(),  this.originTaxonomy, protein_family.getEntries_taxonomy().size(),  this.minimalFrequency,  this.beta);
 
-			if(score>this.getMax_score_value())
-			{
+			if(score>this.getMax_score_value()) {
+				
 				this.setMax_score_value(score);
 				this.setMax_score_family(protein_family.getTc_family());
 			}
+			
 			score_sum+=score;
 
 			scores.put(protein_family.getTc_family(),score);
@@ -155,6 +153,7 @@ public class ProteinFamiliesSet implements Serializable{
 	 * @return the max_score_family
 	 */
 	public String getMax_score_family() {
+		
 		return max_score_family;
 	}
 
@@ -163,6 +162,7 @@ public class ProteinFamiliesSet implements Serializable{
 	 * @return the tc_families_abov_half
 	 */
 	public Map<String, Double> getTc_families_above_half() {
+		
 		return tc_families_above_half;
 	}
 
@@ -187,6 +187,7 @@ public class ProteinFamiliesSet implements Serializable{
 	 * @return the max_score_value
 	 */
 	public double getMax_score_value() {
+		
 		return max_score_value;
 	}
 
@@ -205,9 +206,13 @@ public class ProteinFamiliesSet implements Serializable{
 	 * @return
 	 */
 	private Map<String, Double> collect_unitl_greater_than(double threshold, Map<String,Double> data){
+		
 		HashMap<String,Double> map = new HashMap<String,Double>(data);
+		
 		this.setTc_families_map(new HashMap<String,Double>(data));
+		
 		ValueComparator vc =  new ValueComparator(map);
+		
 		TreeMap<String,Double> sorted_map = new TreeMap<String,Double>(vc);
 		sorted_map.putAll(data);
 		sorted_map.descendingMap();
@@ -216,16 +221,17 @@ public class ProteinFamiliesSet implements Serializable{
 		indexed_sorted_map.putAll(sorted_map);
 
 		IndexedHashMap<String,Double> newMap = new IndexedHashMap<String,Double>();
+
 		double sum = 0;
-		for(int i=0;i<indexed_sorted_map.size();i++)
-		{
-			if(sum<threshold)
-			{
+		for(int i=0;i<indexed_sorted_map.size();i++) {
+			
+			if(sum<threshold) {
+				
 				newMap.put(indexed_sorted_map.getKeyAt(i),indexed_sorted_map.getValueAt(i)); 
 				sum+=indexed_sorted_map.getValueAt(i);
 			}
-			else
-			{
+			else {
+				
 				i=indexed_sorted_map.size();
 			}
 		}

@@ -111,4 +111,15 @@ public class UnnannotatedTransportersContainer implements Comparable<Unnannotate
 		return this.uniprot_id.compareTo(obj.getUniprot_id());
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "UnnannotatedTransportersContainer [uniprot_id=" + uniprot_id
+				+ ", tcnumber=" + tcnumber + "]";
+	}
+	
+	
+
 }

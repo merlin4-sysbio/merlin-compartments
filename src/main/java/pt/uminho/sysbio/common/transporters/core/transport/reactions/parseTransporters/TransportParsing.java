@@ -181,10 +181,8 @@ public class TransportParsing {
 			List<String> products_stoichiometry = products_data.get(1);
 
 
-			if(metabolites_temp.size()<1) {
-
+			if(metabolites_temp.size()<1)
 				metabolites_temp.add(new ArrayList<TransportMetaboliteDirectionStoichiometryContainer>());
-			}
 
 			List<List<TransportMetaboliteDirectionStoichiometryContainer>> metabolites_temp_clone = this.copyListofLists(metabolites_temp);
 

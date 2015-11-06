@@ -10,9 +10,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.SQLException;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiServiceStub_API.KINGDOM;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
+import pt.uminho.sysbio.common.biocomponents.container.io.exceptions.ReactionAlreadyExistsException;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLMultiThread;
 import pt.uminho.sysbio.common.transporters.core.compartments.PSortInterface;
@@ -24,7 +28,7 @@ import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAs
  * 
  *
  */
-public class LaunchTransportLoad {
+public class LaunchTransportLoad extends Observable implements Observer {
 
 	private long taxonomy;
 
@@ -56,12 +60,14 @@ public class LaunchTransportLoad {
 	 * @param outputTextReactionsfileName
 	 * @param path
 	 * @param project_id
+	 * @param verbose
+	 * @param ignoreSymportMetabolites
 	 * @return
 	 * @throws Exception
 	 */
 	public TransportContainer createTransportContainer(MySQLMultiThread msqlmt, double alpha, int minimalFrequency, double beta, 
 			double threshold, boolean validateReaction, boolean saveOnlyReactionsWithKEGGmetabolites, String outputObjectFileName,
-			String outputTextReactionsfileName, String path, int project_id, boolean verbose) throws Exception {
+			String outputTextReactionsfileName, String path, int project_id, boolean verbose, Set<String> ignoreSymportMetabolites) throws Exception {
 
 		long startTime = System.currentTimeMillis();
 
@@ -91,11 +97,11 @@ public class LaunchTransportLoad {
 			
 			if(this.taxonomy>0) {
 				
-				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, this.taxonomy, project_id);
+				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, this.taxonomy, project_id, ignoreSymportMetabolites);
 			}
 			else {
 				
-				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, project_id);
+				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, project_id, ignoreSymportMetabolites);
 			}
 
 			populateTransportContainer.getDataFromDatabase();
@@ -127,13 +133,14 @@ public class LaunchTransportLoad {
 	 * @return
 	 * @throws IOException
 	 * @throws SQLException
+	 * @throws ReactionAlreadyExistsException 
 	 */
-	public TransportContainer compartmentaliseTransportContainer(String path, TransportContainer transportContainer, PSortInterface obj, KINGDOM k) throws IOException, SQLException {
+	public TransportContainer compartmentaliseTransportContainer(String path, TransportContainer transportContainer, PSortInterface obj, KINGDOM k) throws IOException, SQLException, ReactionAlreadyExistsException {
 
 		CompartmentaliseTransportContainer compartmentaliseTransportContainer = new CompartmentaliseTransportContainer(transportContainer, obj.getBestCompartmentsByGene(10), k);
 		compartmentaliseTransportContainer.loadCompartmentsToContainer();
-		compartmentaliseTransportContainer.creatReactionsFiles(path);
-		compartmentaliseTransportContainer.creatReactionsAnnotationsTabFiles(path);
+		compartmentaliseTransportContainer.createReactionsFiles(path);
+		compartmentaliseTransportContainer.createReactionsAnnotationsTabFiles(path);
 
 		return transportContainer;
 
@@ -167,6 +174,13 @@ public class LaunchTransportLoad {
 			e1.printStackTrace();
 		} 
 		return false;
+	}
+
+	@Override
+	public void update(Observable arg0, Object arg1) {
+
+		setChanged();
+		notifyObservers();
 	}
 
 //	/**

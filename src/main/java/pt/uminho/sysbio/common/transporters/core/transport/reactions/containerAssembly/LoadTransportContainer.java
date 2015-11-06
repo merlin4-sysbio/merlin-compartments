@@ -22,7 +22,7 @@ import biosynth.core.components.representation.basic.graph.Graph;
  * @author ODias
  *
  */
-public class LoadTransportContainer extends Observable implements Observer{
+public class LoadTransportContainer extends Observable implements Observer {
 
 	private ConcurrentHashMap<String, GeneCI> geneContainer;
 	private ConcurrentHashMap<String, TransportReactionCI> reactionsContainer;
@@ -33,6 +33,7 @@ public class LoadTransportContainer extends Observable implements Observer{
 	private ConcurrentLinkedDeque<String> genes;
 	private AtomicBoolean cancel;
 	private Map<String,String> genesLocusTag;
+	ConcurrentHashMap<String, String> existingReactions;
 	private Map<String, GenesMetabolitesTransportType> genesMetabolitesTransportTypeMap;
 	private ConcurrentHashMap<String,TransportReaction> transportReactionsList;
 	private Map<String, TransportMetabolite> transportMetabolites;
@@ -42,13 +43,13 @@ public class LoadTransportContainer extends Observable implements Observer{
 	private Map<String, Set<String>> selectedGenesMetabolites;
 	private Map<String, ProteinFamiliesSet> genesProteins;
 	private boolean saveOnlyReactionsWithKEGGmetabolites;
-	private AtomicInteger counter;
+	private AtomicInteger geneProcessingCounter;
 	private Map<String,String> metabolitesFormula;
 	private Graph<String, String> graph;
 	private Map<String, Map<String, Integer>> metabolite_generation;
 	private  Map<String, Map<String, Map<String, MetabolitesOntology>>> reactions_metabolites_ontology;
 	private Map<String, String> kegg_miriam, chebi_miriam;
-
+	private Set<String> ignoreSymportMetabolites;
 	
 	/**
 	 * @param genesReactions
@@ -59,16 +60,20 @@ public class LoadTransportContainer extends Observable implements Observer{
 	 * @param genesProteins
 	 * @param transportMetabolites
 	 * @param metabolites_ontology
+	 * @param metabolitesFormula
 	 * @param saveOnlyReactionsWithKEGGmetabolites
 	 * @param counter
-	 * @param graph 
+	 * @param graph
+	 * @param kegg_miriam
+	 * @param chebi_miriam
+	 * @param ignoreSymportMetabolites
 	 */
 	public LoadTransportContainer(Map<String, Set<TransportReaction>> genesReactions, AtomicBoolean cancel, Map<String,String> genesLocusTag,
 			Map<String, GenesMetabolitesTransportType> genesMetabolitesTransportTypeMap, Map<String, Set<String>> selectedGenesMetabolites,
 			Map<String, ProteinFamiliesSet> genesProteins, Map<String, TransportMetabolite> transportMetabolites, 
 			Map<String, Set<String>> metabolites_ontology, Map<String,String> metabolitesFormula, 
 			boolean saveOnlyReactionsWithKEGGmetabolites, AtomicInteger counter, Graph<String, String> graph,
-			Map<String, String> kegg_miriam, Map<String, String> chebi_miriam) {
+			Map<String, String> kegg_miriam, Map<String, String> chebi_miriam, Set<String> ignoreSymportMetabolites) {
 		
 		this.setGenesReactions(genesReactions);
 		this.setGenes(new ConcurrentLinkedDeque<String>(this.getGenesReactions().keySet()));
@@ -79,7 +84,7 @@ public class LoadTransportContainer extends Observable implements Observer{
 		this.setGenesProteins(genesProteins);
 		this.setTransportMetabolites(transportMetabolites);
 		this.setSaveOnlyReactionsWithKEGGmetabolites(saveOnlyReactionsWithKEGGmetabolites);
-		this.setCounter(counter);
+		this.setGeneProcessingCounter(counter);
 		this.setMetabolites_ontology(metabolites_ontology);
 		
 		this.setGeneContainer(new ConcurrentHashMap<String, GeneCI>());
@@ -99,6 +104,8 @@ public class LoadTransportContainer extends Observable implements Observer{
 		
 		this.setMetabolite_generation(new ConcurrentHashMap<String, Map<String, Integer>> ()); 
 		this.setReactions_metabolites_ontology(new ConcurrentHashMap<String, Map<String, Map<String, MetabolitesOntology>>>());
+		this.existingReactions = new ConcurrentHashMap<>();
+		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
 	}
 
 	/**
@@ -117,17 +124,17 @@ public class LoadTransportContainer extends Observable implements Observer{
 		
 		//numberOfCores = 1;
 		
-		System.err.println("number Of threads: "+numberOfCores);
+		System.out.println("number Of threads: "+numberOfCores);
 		
 		for(int i=0; i<numberOfCores; i++) {
 
 			Runnable lc	= new TransportContainerRunnable(genes, genesReactions, cancel, geneContainer, reactionsContainer, 
 					metabolitesContainer, genesLocusTag, genesMetabolitesTransportTypeMap, reactionsToBeReplaced, transportReactionsList,
 					transportMetabolites, metaboliteFunctionalParent_map, ontologyReactions, metabolites_ontology, selectedGenesMetabolites, 
-					genesProteins, counter, kegg_miriam, chebi_miriam, metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.graph,
-					this.metabolite_generation, this.reactions_metabolites_ontology);
+					genesProteins, geneProcessingCounter, kegg_miriam, chebi_miriam, metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.graph,
+					this.metabolite_generation, this.reactions_metabolites_ontology, existingReactions, ignoreSymportMetabolites);
 
-			((TransportContainerRunnable) lc).addObserver(this); 
+			((TransportContainerRunnable) lc).addObserver(this);
 			Thread thread = new Thread(lc);
 			threads.add(thread);
 			System.out.println("Start "+i);
@@ -419,15 +426,15 @@ public class LoadTransportContainer extends Observable implements Observer{
 	/**
 	 * @return the counter
 	 */
-	public AtomicInteger getCounter() {
-		return counter;
+	public AtomicInteger getGeneProcessingCounter() {
+		return geneProcessingCounter;
 	}
 
 	/**
 	 * @param counter the counter to set
 	 */
-	public void setCounter(AtomicInteger counter) {
-		this.counter = counter;
+	public void setGeneProcessingCounter(AtomicInteger counter) {
+		this.geneProcessingCounter = counter;
 	}
 
 	/**

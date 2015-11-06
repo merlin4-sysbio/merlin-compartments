@@ -3,6 +3,7 @@
  */
 package pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import pt.uminho.sysbio.common.biocomponents.container.components.ReactionCI;
@@ -128,6 +129,42 @@ public class TransportReactionCI extends ReactionCI {
 	public void setReversibilityConfirmed_byGene(
 			Map<String, Boolean> reversibilityConfirmed_byGene) {
 		this.reversibilityConfirmed_byGene = reversibilityConfirmed_byGene;
+	}
+	
+	
+	public TransportReactionCI clone() {
+		
+		Map<String, StoichiometryValueCI> newReactants = new HashMap<String, StoichiometryValueCI>();
+		for (StoichiometryValueCI value : reactants.values()) {
+			StoichiometryValueCI newValue = value.clone();
+			newReactants.put(newValue.getMetaboliteId(), newValue);
+		}
+
+		Map<String, StoichiometryValueCI> newProducts = new HashMap<String, StoichiometryValueCI>();
+		for (StoichiometryValueCI value : products.values()) {
+			StoichiometryValueCI newValue = value.clone();
+			newProducts.put(newValue.getMetaboliteId(), newValue);
+		}
+
+		TransportReactionCI cloneReaction = new TransportReactionCI(id, name, reversible, newReactants, newProducts);
+
+		cloneReaction.setGeneRule(this.getGeneRule());
+		cloneReaction.setProteinRule(this.proteinRule);
+		cloneReaction.setGenesIDs(this.genesIDs);
+		cloneReaction.setProteinIds(this.proteinIds);
+		cloneReaction.setType(this.type);
+		cloneReaction.setAllMetabolitesHaveKEGGId(this.isAllMetabolitesHaveKEGGId());
+		cloneReaction.setSubsystems(this.subsystems);
+		cloneReaction.setEc_number(this.ecNumber);
+		
+		cloneReaction.setTransportType(transportType);
+		cloneReaction.setChebi_ontology_byGene(chebi_ontology_byGene);
+		cloneReaction.setReversibilityConfirmed_byGene(reversibilityConfirmed_byGene);
+		cloneReaction.setGeneral_equation(general_equation);
+		cloneReaction.setIsOriginalReaction_byGene(isOriginalReaction_byGene);
+		cloneReaction.setOriginalReactionID_byGene(originalReactionID_byGene);
+		
+		return cloneReaction;
 	}
 
 }

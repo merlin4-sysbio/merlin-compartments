@@ -274,4 +274,16 @@ public class TransportMetaboliteDirectionStoichiometryContainer implements Compa
 		//return this.getName().concat("_").concat(this.getDirection()).concat("_").concat(this.getStoichiometry()+"").compareTo(o.getName().concat("_").concat(o.getDirection()).concat("_").concat(o.getStoichiometry()+""));
 	}
 
+	/**
+	 * @param transportMetaboliteCodes
+	 */
+	public void setTransportMetaboliteCodes(TransportMetaboliteCodes transportMetaboliteCodes) {
+		
+		this.setKegg_name(transportMetaboliteCodes.getKegg_name());
+		this.setKegg_miriam(transportMetaboliteCodes.getKegg_miriam());
+		this.setChebi_name(transportMetaboliteCodes.getChebi_name());
+		this.setChebi_miriam(transportMetaboliteCodes.getChebi_miriam());
+		
+	}
+
 }

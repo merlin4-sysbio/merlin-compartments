@@ -12,7 +12,8 @@ import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import jp.cbrc.togo.WoLFPsort;
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiEFetchSequenceStub_API;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezFetch;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.utilities.io.FileUtils;
 
@@ -205,11 +206,14 @@ public class WoLFPSORT implements PSortInterface{
 
 				if(this.isNCBIGenome) {
 
-					NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
-
-					fetchStub = new NcbiEFetchSequenceStub_API(2);
-
-					Map<String, String> idLocus = fetchStub.getLocusFromID(locus_tags.keySet(),1000);
+//					NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
+//
+//					fetchStub = new NcbiEFetchSequenceStub_API(2);
+//
+//					Map<String, String> idLocus = fetchStub.getLocusFromID(locus_tags.keySet(),1000);
+					
+					Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(locus_tags.keySet(), 400);
+					
 					Map<String, Integer> temp_locus_tags = new HashMap<String, Integer>();
 
 					for (String id : idLocus.keySet()) {
@@ -311,11 +315,12 @@ public class WoLFPSORT implements PSortInterface{
 
 				if(this.isNCBIGenome) {
 
-					NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
-
-					fetchStub = new NcbiEFetchSequenceStub_API(2);
-
-					Map<String, String> idLocus = fetchStub.getLocusFromID(locus_tags.keySet(),1000);
+//					NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
+//					fetchStub = new NcbiEFetchSequenceStub_API(2);
+//					Map<String, String> idLocus = fetchStub.getLocusFromID(locus_tags.keySet(),1000);
+					
+					Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(locus_tags.keySet(), 400);
+					
 					Map<String, Integer> temp_locus_tags = new HashMap<String, Integer>();
 
 					for (String id : idLocus.keySet()) {

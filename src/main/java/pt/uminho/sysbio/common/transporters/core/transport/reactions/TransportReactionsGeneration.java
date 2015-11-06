@@ -20,20 +20,22 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLMultiThread;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.AnnotateTransporters;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.UnnannotatedTransportersContainer;
+import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportMetaboliteCodes;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportMetaboliteDirectionStoichiometryContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.loadTransporters.LoadTransportersData;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.AlignedGenesContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.AlignmentResult;
+import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.MetabolitesEntry.TransportType;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.ParserContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.TransportParsing;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.TransportSystemContainer;
-import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.MetabolitesEntry.TransportType;
 import pt.uminho.sysbio.common.utilities.io.FileUtils;
 import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
 
@@ -44,8 +46,8 @@ import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
  */
 public class TransportReactionsGeneration {
 
-	private Map<String, TransportMetaboliteDirectionStoichiometryContainer> miriamData;
-	private Map<String, TransportMetaboliteDirectionStoichiometryContainer> reviewedMetsNames, reviewedMetsCodes;
+	private Map<String, TransportMetaboliteCodes> miriamData;
+	private Map<String, TransportMetaboliteCodes> reviewedMetsNames, reviewedMetsCodes;
 	private MySQLMultiThread msqlmt;
 	private List<NcbiTaxon> originTaxonomy;
 	private String originOrganism;
@@ -301,20 +303,7 @@ public class TransportReactionsGeneration {
 
 					if(this.originTaxonomy==null) {
 
-						TaxonomyContainer organism_data;
-
-						if(this.isNCBIGenome) {
-
-							organism_data = UniProtAPI.setOriginOrganism(alignedGenes.getLocusTag(),0);
-						}
-						else {
-
-							//organism_data = UniProtAPI.getTaxonomyFromNCBITaxnomyID(this.taxonomyID,0);
-							organism_data = UniProtAPI.getTaxonomyFromNCBI(this.taxonomyID,0);
-						}
-
-						this.originOrganism = organism_data.getSpeciesName();
-						this.originTaxonomy = organism_data.getTaxonomy();
+						this.setOrigintaxonomy(alignedGenes.getLocusTag());
 					}
 
 					String gene_id = ltd.loadGene(alignedGenes.getLocusTag(), project_id);
@@ -576,16 +565,16 @@ public class TransportReactionsGeneration {
 		for(int j=0; j<tmdsList.size(); j++) {
 
 			TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
-			metaboliteContainer  = this.getMiriamCodes(metaboliteContainer, verbose);
+			metaboliteContainer = this.getMiriamCodes(metaboliteContainer, verbose);
 			metaboliteContainer = this.getMiriamNames(metaboliteContainer, verbose);
 
-//			System.out.println(metaboliteContainer.getName());
-//			System.out.println(metaboliteContainer.getKegg_miriam());
-//			System.out.println(metaboliteContainer.getKegg_name());
-//			System.out.println(metaboliteContainer.getChebi_miriam());
-//			System.out.println(metaboliteContainer.getChebi_name());
-//			System.out.println();
-			
+			//			System.out.println(metaboliteContainer.getName());
+			//			System.out.println(metaboliteContainer.getKegg_miriam());
+			//			System.out.println(metaboliteContainer.getKegg_name());
+			//			System.out.println(metaboliteContainer.getChebi_miriam());
+			//			System.out.println(metaboliteContainer.getChebi_name());
+			//			System.out.println();
+
 			ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
 
 			tmdsList.set(j, metaboliteContainer);
@@ -601,42 +590,41 @@ public class TransportReactionsGeneration {
 	 */
 	private TransportMetaboliteDirectionStoichiometryContainer getMiriamNames(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose) {
 
-
 		try {
-
 
 			if(this.reviewedMetsNames.containsKey(metabolite.getName())) {
 
-				this.counter=0;
-				return this.reviewedMetsNames.get(metabolite.getName());
+				TransportMetaboliteCodes transportMetaboliteCodes = this.reviewedMetsNames.get(metabolite.getName()); 
+				metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
 			}
 			else {
 
 				if(this.miriamData.containsKey(metabolite.getName()) && this.miriamData.get(metabolite.getName()).getKegg_name()!=null && this.miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
-					this.counter=0;
-					metabolite = this.miriamData.get(metabolite.getName());
-					this.reviewedMetsNames.put(metabolite.getName(), metabolite);
+					TransportMetaboliteCodes transportMetaboliteCodes = this.miriamData.get(metabolite.getName()); 
+					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
+
+					this.reviewedMetsNames.put(metabolite.getName(), transportMetaboliteCodes);
 				}
 				else {
 
 					String[] names = MIRIAM_Data.getMIRIAM_Names(metabolite.getKegg_miriam(), metabolite.getChebi_miriam(), 0, verbose);
 
-					if(names==null) {
+					TransportMetaboliteCodes transportMetaboliteCodes = new TransportMetaboliteCodes(metabolite.getName());
 
-						this.counter=0;
-						this.reviewedMetsNames.put(metabolite.getName(), metabolite);
-						return metabolite;
+					if(names!=null) {
+
+						transportMetaboliteCodes.setKegg_miriam(metabolite.getKegg_miriam());
+						transportMetaboliteCodes.setChebi_miriam(metabolite.getChebi_miriam());
+						transportMetaboliteCodes.setKegg_name(names[0]);
+						transportMetaboliteCodes.setChebi_name(names[1]);
 					}
-					else {
 
-						metabolite.setKegg_name(names[0]);
-						metabolite.setChebi_name(names[1]);
-
-						this.reviewedMetsNames.put(metabolite.getName(), metabolite);
-						this.counter=0;
-					}
+					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
+					this.reviewedMetsNames.put(metabolite.getName(), transportMetaboliteCodes);
 				}
+
+				this.counter=0;
 				return metabolite;
 			}
 		}			
@@ -676,34 +664,40 @@ public class TransportReactionsGeneration {
 
 			if(this.reviewedMetsCodes.containsKey(metabolite.getName())) {
 
-				this.counter=0;
-				return this.reviewedMetsCodes.get(metabolite.getName());
+				TransportMetaboliteCodes transportMetaboliteCodes = this.reviewedMetsCodes.get(metabolite.getName()); 
+				metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
 			}
 			else {
 
 				if(this.miriamData.containsKey(metabolite.getName()) && this.miriamData.get(metabolite.getName()).getKegg_miriam()!=null && this.miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
-					this.counter=0;
-					metabolite = this.miriamData.get(metabolite.getName());
-					this.reviewedMetsCodes.put(metabolite.getName(), metabolite);
+					TransportMetaboliteCodes transportMetaboliteCodes = this.miriamData.get(metabolite.getName()); 
+					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
+
+					this.reviewedMetsCodes.put(metabolite.getName(), transportMetaboliteCodes);
 				}
 				else {
 
 					result=MIRIAM_Data.getMIRIAM_codes(metabolite.getName(), this.metabolitesToBeVerified, verbose);
 
+					TransportMetaboliteCodes transportMetaboliteCodes = new TransportMetaboliteCodes(metabolite.getName());
 
 					if(result!=null) {
 
 						if(result[0]==null && result[1]==null)
 							this.metabolitesNotAnnotated.add(metabolite.getName());
 
-						metabolite.setKegg_miriam(result[0]);
-						metabolite.setChebi_miriam(result[1]);
+						transportMetaboliteCodes.setKegg_miriam(result[0]);
+						transportMetaboliteCodes.setChebi_miriam(result[1]);
 					}
-					this.counter=0;
-					this.reviewedMetsCodes.put(metabolite.getName(), metabolite);
+
+					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
+					this.reviewedMetsCodes.put(metabolite.getName(), transportMetaboliteCodes);
 				}
 			}
+			this.counter=0;
+
+			return metabolite;
 		}			
 		catch(Exception u) {
 
@@ -874,7 +868,7 @@ public class TransportReactionsGeneration {
 
 					if(!this.taxonomyMap.containsKey(parserContainer.getUniprot_id())) {
 
-						TaxonomyContainer organism_data= UniProtAPI.get_uniprot_entry_organism(parserContainer.getUniprot_id(),0);
+						TaxonomyContainer organism_data= UniProtAPI.get_uniprot_entry_organism(parserContainer.getUniprot_id());
 
 						this.taxonomyMap.put(parserContainer.getUniprot_id(), organism_data);
 					}
@@ -918,7 +912,7 @@ public class TransportReactionsGeneration {
 	 * @throws SQLException 
 	 * 
 	 */
-	private void setOrganismsTaxonomyScore(LoadTransportersData ltd) throws SQLException {
+	public void setOrganismsTaxonomyScore(LoadTransportersData ltd) throws SQLException {
 
 		this.taxonomyMap = ltd.getOrganismsTaxonomyScore();
 	}
@@ -927,7 +921,7 @@ public class TransportReactionsGeneration {
 	 * @param uniprot_id
 	 * @return
 	 */
-	private double getTaxonomyScore(String uniprot_id) {
+	public double getTaxonomyScore(String uniprot_id) {
 
 		if(this.taxonomyScore.containsKey(uniprot_id)) {
 
@@ -936,26 +930,31 @@ public class TransportReactionsGeneration {
 
 		if(!this.taxonomyMap.containsKey(uniprot_id)) {
 
-			TaxonomyContainer organism_data = UniProtAPI.get_uniprot_entry_organism(uniprot_id,0);
+			TaxonomyContainer organism_data = UniProtAPI.get_uniprot_entry_organism(uniprot_id);
 
 			this.taxonomyMap.put(uniprot_id, organism_data);
 		}
 
-		if(this.taxonomyMap.get(uniprot_id)==null || this.originTaxonomy==null) {
+		if(this.taxonomyMap.get(uniprot_id)==null || this.taxonomyMap.get(uniprot_id).getTaxonomy()==null || this.originTaxonomy==null) {
 
-			return 0;	
-		}
-		else {
-
-			this.taxonomyMap.get(uniprot_id).getTaxonomy().retainAll(originTaxonomy);
+			return 0;
 		}
 
-		int size = this.taxonomyMap.get(uniprot_id).getTaxonomy().size();
+		List<String> taxonomyList = new ArrayList<>(), orgList = new ArrayList<>();
+		
+		TaxonomyContainer taxCon = this.taxonomyMap.get(uniprot_id);
+		for(NcbiTaxon n:taxCon.getTaxonomy())
+			taxonomyList.add(n.getValue());
+		taxonomyList.add(this.taxonomyMap.get(uniprot_id).getSpeciesName());
 
-		if(this.taxonomyMap.get(uniprot_id).getSpeciesName().equals(this.originOrganism)) {
+		for(NcbiTaxon n:originTaxonomy)
+			orgList.add(n.getValue());
+		orgList.add(originOrganism);
 
-			size+=1;
-		}
+		
+		taxonomyList.retainAll(orgList);
+
+		int size = taxonomyList.size();
 
 		this.taxonomyScore.put(uniprot_id, size);
 		return size;
@@ -974,7 +973,7 @@ public class TransportReactionsGeneration {
 
 			while(rs.next()) {
 
-				TransportMetaboliteDirectionStoichiometryContainer tMet = new TransportMetaboliteDirectionStoichiometryContainer(rs.getString(2));
+				TransportMetaboliteCodes tMet = new TransportMetaboliteCodes(rs.getString(2));
 
 				if(rs.getString(3)!=null && !rs.getString(3).equalsIgnoreCase("null"))
 					tMet.setKegg_miriam(rs.getString(3));
@@ -995,7 +994,7 @@ public class TransportReactionsGeneration {
 
 			while(rs.next()) {
 
-				TransportMetaboliteDirectionStoichiometryContainer tMet = new TransportMetaboliteDirectionStoichiometryContainer(rs.getString(2));
+				TransportMetaboliteCodes tMet = new TransportMetaboliteCodes(rs.getString(2));
 				if(rs.getString(6)!=null && !rs.getString(6).equalsIgnoreCase("null"))
 					tMet.setKegg_miriam(rs.getString(6));
 
@@ -1083,6 +1082,28 @@ public class TransportReactionsGeneration {
 	 */
 	public void setFileLocation(String fileLocation) {
 		this.fileLocation = fileLocation;
+	}
+
+	/**
+	 * @param locus
+	 * @throws Exception
+	 */
+	public void setOrigintaxonomy(String locus) throws Exception {
+
+		TaxonomyContainer organism_data;
+
+		if(this.isNCBIGenome) {
+
+			organism_data = UniProtAPI.setOriginOrganism(locus,0);
+		}
+		else {
+
+			//organism_data = UniProtAPI.getTaxonomyFromNCBITaxnomyID(this.taxonomyID,0);
+			organism_data = NcbiAPI.getTaxonomyFromNCBI(this.taxonomyID,0);
+		}
+
+		this.originOrganism = organism_data.getSpeciesName();
+		this.originTaxonomy = organism_data.getTaxonomy();
 	}
 
 }

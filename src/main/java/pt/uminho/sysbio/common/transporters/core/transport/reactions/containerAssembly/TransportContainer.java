@@ -87,7 +87,7 @@ public class TransportContainer extends Container {
 	 * @param beta
 	 */
 	public TransportContainer(Map<String, TransportReactionCI> reactions, Map<String, MetaboliteCI> metabolites, Map<String, CompartmentCI> compartments,
-			Map<String, GeneCI> genes, Map<String, String> keggMiriam, Map<String, String> chebiMiriam, Map<String, String> metaboliteFormula,
+			Map<String, GeneCI> genes, Map<String, String> keggMiriam, Map<String, String> chebiMiriam,
 			Map<String, ProteinFamiliesSet> genesProteins, boolean keggMetabolitesReactions, boolean reactionsValidated,
 			double alpha, int minimalFrequency, double threshold, double beta
 			) {
@@ -189,39 +189,35 @@ public class TransportContainer extends Container {
 	 */
 	public String addTransportReaction(String id, String name, boolean reversible, Map<String,StoichiometryValueCI> reactants, 
 			Map<String,StoichiometryValueCI> products, String geneID, ProteinFamiliesSet proteinID){
-		TransportReactionCI reactionCI;
+		TransportReactionCI transportReactionCI;
 		//		System.out.println("gene1: " + geneID);
 
 		if(this.reactions.containsKey(id)) {
 
-			reactionCI=this.reactions.get(id);
+			transportReactionCI=this.reactions.get(id);
 		}
 		else {
 
-			reactionCI = new TransportReactionCI(id, name, reversible, reactants, products);
-			reactionCI.setType(ReactionTypeEnum.Transport);
+			transportReactionCI = new TransportReactionCI(id, name, reversible, reactants, products);
+			transportReactionCI.setType(ReactionTypeEnum.Transport);
 
 			//reactionCI = this.verifyIfReactionExists(reactionCI);
 		}
 
-		reactionCI.addGene(geneID);
-		if(proteinID.getTc_families_above_half()==null) {
-
-			reactionCI.addProtein(proteinID.getMax_score_family());
-		}
-		else {
-
-			for(String tc_family:proteinID.getTc_families_above_half().keySet()) {
-
-				reactionCI.addProtein(tc_family);
-			}
-		}
+		transportReactionCI.addGene(geneID);
+		proteinID.calculateTCfamily_score();
+		
+		if(proteinID.getTc_families_above_half()==null || proteinID.getTc_families_above_half().isEmpty())
+			transportReactionCI.addProtein(proteinID.getMax_score_family());
+		else
+			for(String tc_family:proteinID.getTc_families_above_half().keySet()) 
+				transportReactionCI.addProtein(tc_family);
 
 		//		if(reactions.containsKey(id))
 		//			System.err.println("ERRO");
-		this.reactions.put(id, reactionCI);
+		this.reactions.put(id, transportReactionCI);
 
-		return reactionCI.getId();
+		return transportReactionCI.getId();
 	}
 
 	/**
@@ -274,21 +270,18 @@ public class TransportContainer extends Container {
 	 */
 	public void addGenetoTransportReaction(String id, String geneID, ProteinFamiliesSet proteinID) {
 
-		TransportReactionCI reactionCI = this.reactions.get(id);
-		reactionCI.addGene(geneID);
+		TransportReactionCI transportReactionCI = this.reactions.get(id);
+		transportReactionCI.addGene(geneID);
 
-		if(proteinID.getTc_families_above_half()==null) {
-
-			reactionCI.addProtein(proteinID.getMax_score_family());
-		}
-		else {
-
-			for(String tc_family:proteinID.getTc_families_above_half().keySet()) {
-
-				reactionCI.addProtein(tc_family);
-			}
-		}
-		this.reactions.put(id, reactionCI);
+		proteinID.calculateTCfamily_score();
+		
+		if(proteinID.getTc_families_above_half()==null || proteinID.getTc_families_above_half().isEmpty())
+			transportReactionCI.addProtein(proteinID.getMax_score_family());
+		else
+			for(String tc_family:proteinID.getTc_families_above_half().keySet()) 
+				transportReactionCI.addProtein(tc_family);
+		
+		this.reactions.put(id, transportReactionCI);
 	}
 
 	/**
@@ -483,7 +476,6 @@ public class TransportContainer extends Container {
 		Map<String, TransportReactionCI> reactions_map = new TreeMap<String, TransportReactionCI>();
 		Map<String, String> keggMiriam_map = new TreeMap<String, String>();
 		Map<String, String> chebiMiriam_map = new TreeMap<String, String>();
-		Map<String, String> metaboliteFormula  = new TreeMap<String, String>();
 
 		this.keggMiriam.keySet().retainAll(this.metabolites.keySet());
 
@@ -563,85 +555,13 @@ public class TransportContainer extends Container {
 			}
 		}
 
-		TransportContainer returnTransportContainer = new TransportContainer(reactions_map, this.metabolites, this.compartments, this.genes, keggMiriam_map, chebiMiriam_map, metaboliteFormula, 
+		TransportContainer returnTransportContainer = new TransportContainer(reactions_map, this.metabolites, this.compartments, this.genes, keggMiriam_map, chebiMiriam_map, 
 				this.genesProteins, this.keggMetabolitesReactions, this.reactionsValidated,
 				alpha, minimalFrequency, threshold, beta); 
 
 		returnTransportContainer.verifyDepBetweenClass();
 
 		return returnTransportContainer;
-	}
-
-	public void verifyDepBetweenClass() throws IOException {
-
-		for(CompartmentCI comp : getCompartments().values())
-			comp.setMetabolitesInCompartmentID(new HashSet<String>());
-
-		for(MetaboliteCI comp : getMetabolites().values())
-			comp.setReactionsId(new HashSet<String>());
-
-		for(String rid : this.getTransportReactions().keySet()) {
-
-			TransportReactionCI reaction = this.getTransportReactions().get(rid);
-			verifyStoiDep(reaction.getProducts(),rid);
-			verifyStoiDep(reaction.getReactants(), rid);
-
-			for(String g : reaction.getGenesIDs()) {
-
-				GeneCI gene = genes.get(g);
-
-				if(gene==null){
-
-					gene = new GeneCI(g, "");
-					genes.put(g, gene);
-				}
-
-				gene.addReactionId(rid);
-			}
-		}
-
-		Set<String> metaboliteToRemove = new HashSet<String>();
-
-		for(MetaboliteCI comp : metabolites.values()) { 
-
-			if(comp.getReactionsId().size()==0) {
-
-				metaboliteToRemove.add(comp.getId());
-			}
-		}
-
-		if(metaboliteToRemove.size()>0)
-			if(metaboliteToRemove.size()>50)	
-				System.out.println("Metabolites To remove: " + metaboliteToRemove.size());
-			else
-				System.out.println("Metabolites To remove: " + metaboliteToRemove);
-
-		for(String id : metaboliteToRemove) {
-
-			this._removeMetabolite(id);
-			this.keggMiriam.remove(id);
-			this.chebiMiriam.remove(id);
-		}
-	}
-
-
-
-	private void verifyStoiDep(Map<String, StoichiometryValueCI> stoi, String reactionId) throws IOException{
-
-		for(StoichiometryValueCI val : stoi.values()){
-
-			String metaboliteId = val.getMetaboliteId();
-			String compartmentId = val.getCompartmentId();
-
-			if(metabolites.get(metaboliteId)==null)
-				throw new IOException("Metabolite " + metaboliteId + " present in reaction "+ reactionId + " was not declared");
-			if(compartments.get(compartmentId)==null)
-				throw new IOException("Compartment " + compartmentId + " present in reaction "+ reactionId + "was not declared");
-
-			metabolites.get(metaboliteId).getReactionsId().add(reactionId);
-			compartments.get(compartmentId).getMetabolitesInCompartmentID().add(metaboliteId);
-		}
-
 	}
 
 }

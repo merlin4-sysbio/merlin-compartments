@@ -14,9 +14,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
-import uk.ac.ebi.kraken.interfaces.uniprot.UniProtEntry;
-import uk.ac.ebi.kraken.uuw.services.remoting.EntryRetrievalService;
-import uk.ac.ebi.kraken.uuw.services.remoting.UniProtJAPI;
 
 /**
  * 
@@ -109,10 +106,9 @@ public class AnnotateTransporters {
 				"\n");
 
 		out.write(this.getExampleAnnotation());
-
-
+		
 		for(UnnannotatedTransportersContainer id : this.ids) {
-
+			
 			String uniprotID = id.getUniprot_id();
 
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -136,7 +132,7 @@ public class AnnotateTransporters {
 
 					System.out.println(recordEntries.keySet());
 				}
-
+				
 				String description2="";
 				if(recordEntries.get(tcnumber)[5]!=null){description2=recordEntries.get(tcnumber)[0];}
 
@@ -161,8 +157,11 @@ public class AnnotateTransporters {
 				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				//////////////////////////////////////////////family data////////////////////////////////////////
 				////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-				String family = tcnumber.substring(0,(tcnumber.lastIndexOf(".")));
+				
+				String family = "";
+				
+				if(tcnumber!=null && !tcnumber.isEmpty())
+					family=tcnumber.substring(0,(tcnumber.lastIndexOf(".")));
 
 				if(!entry.keySet().contains(family)) {
 					
@@ -264,6 +263,9 @@ public class AnnotateTransporters {
 					description2="";
 				}
 
+				if(tcnumber==null || tcnumber.isEmpty())
+					tcnumber = id.getTcnumber();
+				
 				TransporterAnnotation transporterAnnotation = new TransporterAnnotation();
 
 				transporterAnnotation.setUniProt_ID(uniprotID);
@@ -280,7 +282,8 @@ public class AnnotateTransporters {
 				transporterAnnotation.setYtpdb_location(ytpdb_location);
 
 				String tcnumberfamily = new String(tcnumber);
-				tcnumberfamily = tcnumberfamily.substring(0, tcnumber.lastIndexOf("."))+".#";
+				if(tcnumber!=null && !tcnumber.isEmpty())
+					tcnumberfamily = tcnumberfamily.substring(0, tcnumber.lastIndexOf("."))+".#";
 
 				transporterAnnotation.setTc_number_family(tcnumberfamily);
 				transporterAnnotation.setDirection(direction);
@@ -349,38 +352,8 @@ public class AnnotateTransporters {
 	 * @return
 	 */
 	private String retrieveLocusTagIfScerevisiae(String accessionNumber) {
-
-		//Create entry retrival service
-		EntryRetrievalService entryRetrievalService = UniProtJAPI.factory.getEntryRetrievalService();
-
-		//Retrieve UniProt entry by its accession number
-		UniProtEntry entry = UniProtAPI.getUniprotEntry(entryRetrievalService, accessionNumber, 0);
-
-		//If entry with a given accession number is not found, entry will be equal null
-		if (entry != null) {
-
-			if(entry.getOrganism().getScientificName().getValue().contains("Saccharomyces cerevisiae")) {
-
-				//System.out.println("entry = " + entry.getUniProtId().getValue());
-				if(entry.getGenes().size()>0 && entry.getGenes().get(0).getOrderedLocusNames().size()>0) {
-
-					String locusTag = entry.getGenes().get(0).getOrderedLocusNames().get(0).getValue();
-					if(locusTag!=null) {
-
-						return locusTag;
-					}
-				}
-			}
-		}
-		return "";
-
-		//Retrieve UniRef entry by its ID
-		//	    UniRefEntry uniRefEntry = entryRetrievalService.getUniRefEntry("UniRef90_Q12979-2");
-		//
-		//	    if (uniRefEntry != null) {
-		//	      System.out.println("Representative Member Organism = " +
-		//	       uniRefEntry.getRepresentativeMember().getSourceOrganism().getValue());
-		//	    }
+	
+		return UniProtAPI.retrieveLocusTagIfOrganism(accessionNumber, "Saccharomyces cerevisiae");
 	}
 
 	/**

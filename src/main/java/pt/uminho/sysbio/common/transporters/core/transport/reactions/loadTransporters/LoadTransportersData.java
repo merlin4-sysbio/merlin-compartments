@@ -128,7 +128,7 @@ public class LoadTransportersData {
 					"AND status='"+DatabaseProgressStatus.PROCESSED+"' AND project_id = "+project_id+";");
 
 			if(!rs.next()) {
-				
+
 				this.statement.clearWarnings();
 				this.statement.execute("INSERT INTO genes (project_id, locus_tag, status) VALUES("+project_id+",'"+locus_tag+"', '"+DatabaseProgressStatus.PROCESSING+"')");
 				rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
@@ -156,7 +156,7 @@ public class LoadTransportersData {
 
 		for(String uniprot_id : uniprot_ids) {
 
-			TaxonomyContainer data = UniProtAPI.get_uniprot_entry_organism(uniprot_id,0);
+			TaxonomyContainer data = UniProtAPI.get_uniprot_entry_organism(uniprot_id);
 
 			taxonomyMap.put(uniprot_id, data);
 		}
@@ -597,7 +597,7 @@ public class LoadTransportersData {
 
 		}
 		catch (SQLException e) {
-			
+
 			System.err.println("Gene id "+gene_id);
 			System.err.println("Metabolites id "+metabolites_id);
 			e.printStackTrace();}
@@ -729,13 +729,22 @@ public class LoadTransportersData {
 	 */
 	public String loadDirection(String direction){
 
-		if(this.directionMap.containsKey(direction)){return this.directionMap.get(direction);}
-		try
-		{
+		if(this.directionMap.containsKey(direction)) {
+
+			return this.directionMap.get(direction);
+		}
+
+		try {
 
 			String result;
 			ResultSet rs = this.statement.executeQuery("SELECT id FROM directions WHERE direction='"+direction+"';");
-			if(rs.next()){result=rs.getString(1); this.directionMap.put(direction, result); return result;}
+
+			if(rs.next()) { 
+
+				result=rs.getString(1);
+				this.directionMap.put(direction, result);
+				return result;
+			}
 
 			this.statement.execute("INSERT INTO directions (direction) VALUES('"+direction+"')");
 			rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
@@ -745,7 +754,10 @@ public class LoadTransportersData {
 
 			return result;
 		}
-		catch (SQLException e) {e.printStackTrace();}
+		catch (SQLException e) {
+
+			e.printStackTrace();
+		}
 		return null;
 	}
 
@@ -805,10 +817,10 @@ public class LoadTransportersData {
 	 * @throws SQLException
 	 */
 	public int loadMetabolite(TransportMetaboliteDirectionStoichiometryContainer metabolite, LoadTransportersData.DATATYPE datatype) throws SQLException {
-		
+
 		String kegg=metabolite.getKegg_miriam(),
 				chebi=metabolite.getChebi_miriam();
-		
+
 		String kegg_name = metabolite.getKegg_name(), 
 				chebi_name=metabolite.getChebi_name();
 
@@ -824,7 +836,7 @@ public class LoadTransportersData {
 		}
 
 		if(kegg_name!= null && this.metabolites_id_map.containsKey(kegg_name.toLowerCase())) {
-			
+
 			kegg_name = kegg_name.toLowerCase();
 
 			if(!this.synonyms.contains(name)) {
@@ -841,7 +853,7 @@ public class LoadTransportersData {
 		}
 
 		if(chebi_name!=null && this.metabolites_id_map.containsKey(chebi_name.toLowerCase())) {
-			
+
 			chebi_name = chebi_name.toLowerCase();
 
 			if(!this.synonyms.contains(name)) {
@@ -1057,7 +1069,7 @@ public class LoadTransportersData {
 			return "";
 
 		} catch (Exception e) {
-			
+
 			if(counter<10)
 			{
 				counter = counter+1;
@@ -1247,6 +1259,8 @@ public class LoadTransportersData {
 
 				TransportSystemContainer ts = new TransportSystemContainer(transport_system_id, reversibility);
 				List<TransportMetaboliteDirectionStoichiometryContainer> metabolites_data= new ArrayList<TransportMetaboliteDirectionStoichiometryContainer>();
+				Map<String, Integer> metabolite_name_index = new HashMap<>();
+				int counter=0;
 
 				rs = this.statement.executeQuery("SELECT metabolites.name, direction, stoichiometry, reversible, kegg_name, chebi_name, synonyms.name FROM transported_metabolites_directions " +
 						"LEFT JOIN metabolites ON metabolites.id = transported_metabolites_directions.metabolite_id " +
@@ -1264,18 +1278,20 @@ public class LoadTransportersData {
 					tmds.setKegg_name(rs.getString(5));
 					tmds.setChebi_name(rs.getString(6));
 
-					if(metabolites_data.contains(tmds)) {
+					if(metabolite_name_index.containsKey(rs.getString(1))) {
 
-						Set<String> synonyms = metabolites_data.get(metabolites_data.indexOf(tmds)).getSynonyms();
+						Set<String> synonyms = metabolites_data.get(metabolite_name_index.get(rs.getString(1))).getSynonyms();
 						synonyms.add(rs.getString(7));
-						metabolites_data.get(metabolites_data.indexOf(tmds)).setSynonyms(synonyms);
+						metabolites_data.get(metabolite_name_index.get(rs.getString(1))).setSynonyms(synonyms);
 					}
 					else {
 
 						Set<String> synonyms = new HashSet<String>();
 						synonyms.add(rs.getString(7));
 						tmds.setSynonyms(synonyms);
-						metabolites_data.add(tmds);
+						metabolites_data.add(counter, tmds);
+						
+						metabolite_name_index.put(rs.getString(1), counter);
 					}
 				}
 				ts.setMetabolites(metabolites_data);
@@ -1716,9 +1732,10 @@ public class LoadTransportersData {
 
 
 	/**
-	 * @param genome_id
+	 * @param reaction
+	 * @param project_id
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public TracebackAnnotations tracebackReactionAnnotation(TransportReactionCI reaction, int project_id) throws Exception {
 
@@ -1727,10 +1744,10 @@ public class LoadTransportersData {
 		Map<String, Set<String>> protein_metabolites = new HashMap<String, Set<String>>();
 
 		for(String locus_tag : reaction.getGenesIDs()) {
-			
+
 			ResultSet rs;
 			try {
-				
+
 				rs = this.statement.executeQuery(
 						"SELECT genes_has_tcdb_registries.uniprot_id, tc_numbers_has_transport_systems.tc_number, metabolites.name, similarity, equation "+
 								"FROM genes "+
@@ -1742,33 +1759,33 @@ public class LoadTransportersData {
 								"LEFT JOIN transported_metabolites_directions ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id "+
 								"LEFT JOIN metabolites ON metabolite_id = metabolites.id "+
 								"WHERE project_id = "+project_id+" AND locus_tag = '"+locus_tag+"';");
-				
-			while(rs.next()) {
-				
-				Map<String, Double> proteins = new HashMap<String, Double>();
-				if(geneProtein.containsKey(locus_tag)) {
 
-					proteins = geneProtein.get(locus_tag);
+				while(rs.next()) {
+
+					Map<String, Double> proteins = new HashMap<String, Double>();
+					if(geneProtein.containsKey(locus_tag)) {
+
+						proteins = geneProtein.get(locus_tag);
+					}
+					proteins.put(rs.getString(1), rs.getDouble(4));
+
+					geneProtein.put(locus_tag, proteins);
+
+					if(!protein_tcnumber.containsKey(rs.getString(1))) {
+
+						protein_tcnumber.put(rs.getString(1), new String[] {rs.getString(2), rs.getString(5)});
+					}
+
+					Set<String> metabolites = new HashSet<String>();
+					if(protein_metabolites.containsKey(rs.getString(1))) {
+
+						metabolites = protein_metabolites.get(rs.getString(1));
+					}
+					metabolites.add(rs.getString(3));
+					protein_metabolites.put(rs.getString(1), metabolites);
 				}
-				proteins.put(rs.getString(1), rs.getDouble(4));
-				
-				geneProtein.put(locus_tag, proteins);
+				rs.close();
 
-				if(!protein_tcnumber.containsKey(rs.getString(1))) {
-
-					protein_tcnumber.put(rs.getString(1), new String[] {rs.getString(2), rs.getString(5)});
-				}
-
-				Set<String> metabolites = new HashSet<String>();
-				if(protein_metabolites.containsKey(rs.getString(1))) {
-
-					metabolites = protein_metabolites.get(rs.getString(1));
-				}
-				metabolites.add(rs.getString(3));
-				protein_metabolites.put(rs.getString(1), metabolites);
-			}
-			rs.close();
-			
 			} catch (SQLException e) {
 
 				e.printStackTrace();
@@ -1781,7 +1798,7 @@ public class LoadTransportersData {
 		for(String locus_tag : geneProtein.keySet()) {
 
 			GeneProteinAnnotation geneProteinAnnotation = new GeneProteinAnnotation(locus_tag);
-			
+
 			Map<String, Double> protein = geneProtein.get(locus_tag);
 
 			for(String uniprot_id : protein.keySet()) {
@@ -1792,10 +1809,10 @@ public class LoadTransportersData {
 				geneProteinAnnotation.setTc_number(protein_tcnumber.get(uniprot_id)[0]);
 				geneProteinAnnotation.setEquation(protein_tcnumber.get(uniprot_id)[1]);
 			}
-			
+
 			tracebackAnnotations.addGeneProteinAnnotation(geneProteinAnnotation);
 		}
-		
+
 		return tracebackAnnotations;
 	}
 

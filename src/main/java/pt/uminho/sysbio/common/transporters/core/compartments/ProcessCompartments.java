@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiServiceStub_API.KINGDOM;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 /**
@@ -26,12 +26,19 @@ public class ProcessCompartments {
 	private boolean processCompartmentsInitiated = false;
 
 	/**
-	 * 
 	 */
 	public ProcessCompartments() {
 
-
 	}
+	
+	/**
+	 * @param interiorCompartment
+	 */
+	public ProcessCompartments(String interiorCompartment) {
+
+		this.interiorCompartment = interiorCompartment;
+	}
+
 
 
 	/**

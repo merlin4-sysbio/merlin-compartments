@@ -115,4 +115,17 @@ public class GeneProteinAnnotation implements Serializable{
 		this.tc_number = tc_number;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "GeneProteinAnnotation [locus_tag=" + locus_tag
+				+ ", uniprot_id=" + uniprot_id + ", similarity=" + similarity
+				+ ", equation=" + equation + ", metabolites=" + metabolites
+				+ ", tc_number=" + tc_number + "]";
+	}
+	
+	
+
 }

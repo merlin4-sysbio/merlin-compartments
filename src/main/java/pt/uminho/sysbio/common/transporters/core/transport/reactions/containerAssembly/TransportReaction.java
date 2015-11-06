@@ -32,10 +32,13 @@ public class TransportReaction implements Comparable<TransportReaction> {
 
 
 	/**
+	 * @param reDS
 	 * @param reactionID
 	 * @param transportType
 	 * @param reversibilty
 	 * @param originalReaction
+	 * @param geneID
+	 * @param originalReactionID
 	 */
 	public TransportReaction(String reactionID, String transportType, boolean reversibilty, boolean originalReaction, String geneID, String originalReactionID) {
 		this.setTransportType(transportType);

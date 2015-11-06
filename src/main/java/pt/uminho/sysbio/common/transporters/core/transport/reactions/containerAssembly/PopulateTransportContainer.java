@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -22,7 +23,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.xml.rpc.ServiceException;
+
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.biocomponents.container.components.StoichiometryValueCI;
@@ -35,9 +39,10 @@ import biosynth.core.components.representation.basic.graph.Graph;
 
 /**
  * @author ODias
+ * @author Oscar
  *
  */
-public class PopulateTransportContainer extends Observable {
+public class PopulateTransportContainer extends Observable implements Observer {
 
 	private Statement stmt;
 	private Map<String, Set<String>> selectedGenesMetabolites;
@@ -57,11 +62,12 @@ public class PopulateTransportContainer extends Observable {
 	private HashMap<String, Set<String>> child_IDs_Map;
 	private Map<String,String> metabolitesFormula;
 	private AtomicBoolean cancel;
-	private AtomicInteger counter;
+	private AtomicInteger geneProcessingCounter;
 	private AtomicInteger querySize;
 	private int project_id;
 	private Graph<String, String> graph;
 	private Map<String, String> kegg_miriam, chebi_miriam;
+	private Set<String> ignoreSymportMetabolites;
 
 	/**
 	 * @param conn
@@ -69,9 +75,11 @@ public class PopulateTransportContainer extends Observable {
 	 * @param minimalFrequency
 	 * @param beta
 	 * @param threshold
-	 * @throws SQLException
+	 * @param project_id
+	 * @param ignoreSymportMetabolites
+	 * @throws Exception
 	 */
-	public PopulateTransportContainer(Connection conn, double alpha, int minimalFrequency, double beta, double threshold, int project_id) throws Exception {
+	public PopulateTransportContainer(Connection conn, double alpha, int minimalFrequency, double beta, double threshold, int project_id, Set<String> ignoreSymportMetabolites) throws Exception {
 
 		this.stmt = conn.createStatement();
 		this.child_IDs_Map = new HashMap<String, Set<String>>();
@@ -87,14 +95,15 @@ public class PopulateTransportContainer extends Observable {
 
 		this.metabolitesFormula = new HashMap<String,String>();
 		this.cancel = new AtomicBoolean(false);
-		this.counter = new AtomicInteger();
+		this.geneProcessingCounter = new AtomicInteger();
 		this.querySize = new AtomicInteger();
 		this.project_id = project_id;
 		this.graph = new Graph<String, String>();
 		this.kegg_miriam = new ConcurrentHashMap<String, String>();
 		this.chebi_miriam = new ConcurrentHashMap<String, String>();
+		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
 	}
-
+	
 	/**
 	 * @param conn
 	 * @param alpha
@@ -103,9 +112,10 @@ public class PopulateTransportContainer extends Observable {
 	 * @param threshold
 	 * @param taxonomy_id
 	 * @param project_id
+	 * @param ignoreSymportMetabolites
 	 * @throws Exception
 	 */
-	public PopulateTransportContainer(Connection conn, double alpha, int minimalFrequency, double beta, double threshold, long taxonomy_id, int project_id) throws Exception {
+	public PopulateTransportContainer(Connection conn, double alpha, int minimalFrequency, double beta, double threshold, long taxonomy_id, int project_id, Set<String> ignoreSymportMetabolites) throws Exception {
 
 		this.stmt = conn.createStatement();
 		this.child_IDs_Map = new HashMap<String, Set<String>>();
@@ -121,35 +131,43 @@ public class PopulateTransportContainer extends Observable {
 
 		this.metabolitesFormula = new HashMap<String,String>();
 		this.cancel = new AtomicBoolean(false);
-		this.counter = new AtomicInteger();
+		this.geneProcessingCounter = new AtomicInteger();
 		this.querySize = new AtomicInteger();
 		this.project_id = project_id;
 		
 		this.graph = new Graph<String, String>();
 		this.kegg_miriam = new ConcurrentHashMap<String, String>();
 		this.chebi_miriam = new ConcurrentHashMap<String, String>();
+		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
 	}
+	
+	/**
+	 * @param conn
+	 * @throws SQLException 
+	 */
+	public PopulateTransportContainer (Connection conn) throws SQLException {
+		
+		this.stmt = conn.createStatement();
+	}
+
 
 	/**
 	 * @return
 	 * @throws SQLException 
 	 */
-	public boolean getDataFromDatabase() throws SQLException {
+	public boolean getDataFromDatabase() throws Exception {
 
 		long startTime = System.currentTimeMillis();
-		this.getTransportTypeList();
+		this.transport_type_list = PopulateTransportContainer.getTransportTypeList(this.stmt);
 		long endTime = System.currentTimeMillis();
 
-
 		this.populateGraph();
-
 		System.out.println("Total elapsed time in execution of populate Graph is :"+ String.format("%d min, %d sec", 
 				TimeUnit.MILLISECONDS.toMinutes(endTime-startTime),TimeUnit.MILLISECONDS.toSeconds(endTime-startTime)
 				- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(endTime-startTime))));
 		
 		this.setMetaboltitesFormulas();
-
-		System.out.println("Total elapsed time in execution of getTransportTypeList is :"+ String.format("%d min, %d sec", 
+		System.out.println("Total elapsed time in execution of setMetaboltitesFormulas is :"+ String.format("%d min, %d sec", 
 				TimeUnit.MILLISECONDS.toMinutes(endTime-startTime),TimeUnit.MILLISECONDS.toSeconds(endTime-startTime)
 				- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(endTime-startTime))));
 
@@ -158,7 +176,7 @@ public class PopulateTransportContainer extends Observable {
 		System.out.println("Total elapsed time in execution of getMetabolitesAboveThreshold is :"+ String.format("%d min, %d sec", 
 				TimeUnit.MILLISECONDS.toMinutes(endTime-startTime),TimeUnit.MILLISECONDS.toSeconds(endTime-startTime)
 				- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(endTime-startTime))));
-
+		
 		this.getTransportTypeTaxonomyScore();
 		endTime = System.currentTimeMillis();
 		System.out.println("Total elapsed time in execution of getTransportTypeTaxonomyScore is :"+ String.format("%d min, %d sec", 
@@ -175,6 +193,9 @@ public class PopulateTransportContainer extends Observable {
 	}
 
 	
+	/**
+	 * @throws SQLException
+	 */
 	private void populateGraph() throws SQLException {
 
 		ResultSet rs = stmt.executeQuery("SELECT metabolites_ontology.id, metabolite_id, child_id, kegg_miriam as child_kegg_miriam, chebi_miriam as child_chebi_miriam " +
@@ -209,14 +230,16 @@ public class PopulateTransportContainer extends Observable {
 	 * @throws SQLException 
 	 * 
 	 */
-	private void getTransportTypeList() throws SQLException {
+	public static Map<String, String> getTransportTypeList(Statement stmt) throws SQLException {
 
-		this.transport_type_list = new TreeMap<String, String>();
+		Map<String, String> transport_type_list = new TreeMap<>();
 		ResultSet rs = stmt.executeQuery("SELECT * FROM transport_types");
 		while(rs.next()) {
 
-			this.transport_type_list.put(rs.getString(1),rs.getString(2));
+			transport_type_list.put(rs.getString(1),rs.getString(2));
 		}
+		
+		return transport_type_list;
 	}
 
 
@@ -252,7 +275,7 @@ public class PopulateTransportContainer extends Observable {
 					data = this.getOntologyMetabolites(metabolite, data);
 					this.metabolites_ontology.put(metabolite, data);
 				}
-
+				
 				this.selectedGenesMetabolites.put(gene, metabolitesList);
 			}
 			else {
@@ -263,6 +286,7 @@ public class PopulateTransportContainer extends Observable {
 	}
 
 	/**
+	 * @param ignoreMetabolites
 	 * @return
 	 * @throws SQLException
 	 */
@@ -271,11 +295,8 @@ public class PopulateTransportContainer extends Observable {
 		Map<Integer, MetaboliteTaxonomyScores> temp = new HashMap<Integer, MetaboliteTaxonomyScores>();
 		int counter = 0;
 
-		//System.out.println("CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
+		System.out.println("CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
 		ResultSet rs = this.stmt.executeQuery("CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
-
-		//rs.last();
-		//rs.beforeFirst();
 
 		while(rs.next()) {
 
@@ -410,7 +431,7 @@ public class PopulateTransportContainer extends Observable {
 	 * @throws SQLException 
 	 * 
 	 */
-	private void getReactions() throws SQLException {
+	private void getReactions() throws Exception {
 
 		this.genesReactions = new HashMap<String, Set<TransportReaction>>();
 		this.genesLocusTag= new HashMap<String, String>();
@@ -433,7 +454,7 @@ public class PopulateTransportContainer extends Observable {
 				" stoichiometry, direction, metabolite_name, kegg_miriam, chebi_miriam, metabolite_kegg_name, tc_number, similarity, taxonomy_data_id, transport_type, reversible, uniprot_id " +
 				" FROM gene_to_metabolite_direction " +
 				" WHERE project_id = "+this.project_id+" " +
-				" ORDER BY gene_id, transport_reaction_id, uniprot_id,  metabolite_id"
+				" ORDER BY gene_id, transport_reaction_id, uniprot_id,  metabolite_id;"
 				);
 
 		while(rs.next()) {
@@ -457,7 +478,7 @@ public class PopulateTransportContainer extends Observable {
 			proteinFamily.add_tc_number(rs.getString(17), rs.getString(12), rs.getDouble(13), rs.getString(14), organismsTaxonomyScore.get(rs.getInt(14)));
 			//sum+=rs.getDouble(13);
 
-			proteins.getTCfamily_score();
+			proteins.calculateTCfamily_score();
 			this.genesProteins.put(geneID, proteins);
 
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,8 +574,9 @@ public class PopulateTransportContainer extends Observable {
 		
 		LoadTransportContainer ltc = new LoadTransportContainer(this.genesReactions, this.cancel, this.genesLocusTag, this.genesMetabolitesTransportTypeMap, 
 				this.selectedGenesMetabolites, this.genesProteins, this.transportMetabolites, this.metabolites_ontology, 
-				this.metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.counter, this.graph, this.kegg_miriam, this.chebi_miriam);
+				this.metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.geneProcessingCounter, this.graph, this.kegg_miriam, this.chebi_miriam, this.ignoreSymportMetabolites);
 
+		ltc.addObserver(this);
 		ltc.loadContainer();
 		transportContainer.setMetabolites(ltc.getMetabolitesContainer());
 		transportContainer.setTransportReactions(ltc.getReactionsContainer());
@@ -712,24 +734,33 @@ public class PopulateTransportContainer extends Observable {
 		if(firstLocusTag!=null) {
 
 			try {
-
+				
 				UniProtEntry entry  = UniProtAPI.getEntry(firstLocusTag, 0);
-
+				
 				if (entry != null) {
 
 					this.origin_array = new String[entry.getTaxonomy().size()+1];
 
 					for(int i=0; i<entry.getTaxonomy().size();i++) {
+						
+						System.out.println(entry.getTaxonomy().get(i).getValue());
 
 						this.origin_array[i]=entry.getTaxonomy().get(i).getValue();
 					}
 					this.origin_array[this.origin_array.length-1]=entry.getOrganism().getScientificName().getValue();
-					return entry.getTaxonomy().size()+1;
+					
+					int res = entry.getTaxonomy().size()+1;
+					
+					System.out.println("Origin taxonomy "+res);
+					
+					return res;
 				}
 			}
 			catch(Exception ex) {
 
 				if(remoteExceptionTrials<10) {
+					
+					System.out.println(firstLocusTag);
 
 					remoteExceptionTrials = remoteExceptionTrials+1;
 					return this.getOriginTaxonomy(remoteExceptionTrials);
@@ -750,13 +781,13 @@ public class PopulateTransportContainer extends Observable {
 	 * @return
 	 * @throws Exception
 	 */
-	private double getOriginTaxonomy(long taxonomy_id, int remoteExceptionTrials) throws Exception {
+	public double getOriginTaxonomy(long taxonomy_id, int remoteExceptionTrials) throws Exception {
 
 		String firstLocusTag = this.getFirstLocusTag();
 
 		if(firstLocusTag!=null) {
 
-			TaxonomyContainer result = UniProtAPI.getTaxonomyFromNCBI(taxonomy_id, remoteExceptionTrials);
+			TaxonomyContainer result = NcbiAPI.getTaxonomyFromNCBI(taxonomy_id, remoteExceptionTrials);
 
 			this.origin_array = new String[result.getTaxonomy().size()+1];
 
@@ -785,11 +816,10 @@ public class PopulateTransportContainer extends Observable {
 
 		ResultSet rs = this.stmt.executeQuery("SELECT * FROM genes;");
 
-		if(rs.next()) {
+		if(rs.next())
+			locusTag=rs.getString("locus_tag");
 
-			locusTag=rs.getString(1);
-		}
-		return locusTag;
+			return locusTag;
 	}
 
 	/**
@@ -818,7 +848,7 @@ public class PopulateTransportContainer extends Observable {
 	 * @return
 	 * @throws SQLException 
 	 */
-	private Map<Integer, Double> getOrganismsTaxonomyScore() throws SQLException {
+	private Map<Integer, Double> getOrganismsTaxonomyScore() throws Exception {
 
 		Map<Integer, Double> map = new HashMap<Integer, Double>();
 		ResultSet rs = stmt.executeQuery("SELECT organism, taxonomy, id FROM taxonomy_data");
@@ -827,7 +857,7 @@ public class PopulateTransportContainer extends Observable {
 
 			double counter=0;
 			String[] other_array = rs.getString(2).replace("[", "").replace("]", "").split(",");
-
+			
 			for(int i=0;i<this.origin_array.length;i++) {
 
 				if(i==other_array.length) {
@@ -924,15 +954,15 @@ public class PopulateTransportContainer extends Observable {
 	/**
 	 * @param counter the counter to set
 	 */
-	public void setCounter(AtomicInteger counter) {
-		this.counter = counter;
+	public void setGeneProcessingCounter(AtomicInteger counter) {
+		this.geneProcessingCounter = counter;
 	}
 
 	/**
 	 * @return the counter
 	 */
-	public AtomicInteger getCounter() {
-		return counter;
+	public AtomicInteger getGeneProcessingCounter() {
+		return geneProcessingCounter;
 	}
 
 	/**
@@ -950,19 +980,12 @@ public class PopulateTransportContainer extends Observable {
 		this.cancel = cancel;
 	}
 
-	public static void main(String [] args) throws Exception{
+	
+	@Override
+	public void update(Observable arg0, Object arg1) {
 
-		Connection conn = new Connection("127.0.0.1", "3306", "kla_model", "root", "password");
-
-		PopulateTransportContainer pop = new PopulateTransportContainer(conn, 0.3, 2, 0.05, 0.2, 1);
-
-		//System.out.println(pop.getOntologyMetabolites("15810", new HashSet<String>()));
-
-		//pop.getMetabolitesAboveThreshold();
-		pop.getDataFromDatabase();
-
-		pop.creatReactionsFiles(pop.loadContainer(true),"D:/My Dropbox/WORK/KLA/KLA");
-
+		setChanged();
+		notifyObservers();
 	}
 
 }
