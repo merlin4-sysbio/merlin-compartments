@@ -25,12 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.rpc.ServiceException;
 
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.validation.chemestry.BalanceValidator;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
-import pt.uminho.sysbio.common.biocomponents.container.components.StoichiometryValueCI;
-import pt.uminho.sysbio.common.biocomponents.validation.chemestry.BalanceValidator;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.MetaboliteTaxonomyScores;
 import uk.ac.ebi.kraken.interfaces.uniprot.UniProtEntry;

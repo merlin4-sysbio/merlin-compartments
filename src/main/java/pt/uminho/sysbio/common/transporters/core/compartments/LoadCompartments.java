@@ -86,14 +86,13 @@ public class LoadCompartments {
 
 	/**
 	 * @return
+	 * @throws SQLException 
 	 */
-	public Map<String, GeneCompartments> getBestCompartmenForGene(double threshold, int knn, int project_id) {
+	public Map<String, GeneCompartments> getBestCompartmenForGene(double threshold, int knn, int project_id) throws SQLException {
 
 		Map<String, GeneCompartments> compartments = new HashMap<String, GeneCompartments>();
 		Statement stmt;
 		ResultSet rs;
-
-		try  {
 
 			stmt = this.conn.createStatement();
 			rs = stmt.executeQuery("SELECT psort_report_id, locus_tag, score, abbreviation, name FROM psort_reports_has_compartments " +
@@ -131,12 +130,6 @@ public class LoadCompartments {
 			}
 			stmt.close();
 			return compartments;
-		} 
-		catch (SQLException e) {
-
-			e.printStackTrace();
-		}
-		return null;
 	}
 
 	/**

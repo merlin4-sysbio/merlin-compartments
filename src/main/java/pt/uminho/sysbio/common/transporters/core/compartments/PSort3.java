@@ -7,13 +7,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezFetch;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 /**
@@ -117,10 +116,8 @@ public class PSort3 implements PSortInterface{
 
 		Map<String, PSort3_result> compartmentResults = compartmentLists;
 
-		if(this.isNCBIGenome) {
-
+		if(this.isNCBIGenome)
 			compartmentResults = this.getLocusTags(compartmentLists);
-		}
 
 		return compartmentResults;
 
@@ -314,12 +311,6 @@ public class PSort3 implements PSortInterface{
 			
 			Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(compartmentLists.keySet(), 400);
 			
-//			NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
-//
-//			fetchStub = new NcbiEFetchSequenceStub_API(2);
-//
-//			Map<String, String> idLocus = fetchStub.getLocusFromID(compartmentLists.keySet(),400);
-
 			for (String id : idLocus.keySet()) {
 
 				PSort3_result pSort3_result = compartmentLists.get(id);
@@ -334,7 +325,7 @@ public class PSort3 implements PSortInterface{
 	/* (non-Javadoc)
 	 * @see compartments.PSortInterface#getBestCompartmentsByGene(double, int)
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold){
+	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException{
 
 		return loadCompartments.getBestCompartmenForGene(threshold,this.normalization, this.project_id);
 	}

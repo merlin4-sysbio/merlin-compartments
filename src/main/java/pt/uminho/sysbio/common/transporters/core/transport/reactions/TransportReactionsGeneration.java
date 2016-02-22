@@ -20,6 +20,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
@@ -36,7 +37,6 @@ import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransp
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.ParserContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.TransportParsing;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.TransportSystemContainer;
-import pt.uminho.sysbio.common.utilities.io.FileUtils;
 import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
 
 

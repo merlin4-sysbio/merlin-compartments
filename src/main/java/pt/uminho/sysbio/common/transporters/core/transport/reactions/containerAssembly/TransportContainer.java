@@ -1,6 +1,5 @@
 package pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -8,15 +7,15 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.Container;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.CompartmentCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.MetaboliteCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionTypeEnum;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
+import pt.uminho.ceb.biosystems.mew.utilities.datastructures.map.MapUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
-import pt.uminho.sysbio.common.biocomponents.container.Container;
-import pt.uminho.sysbio.common.biocomponents.container.components.CompartmentCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.GeneCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.MetaboliteCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.ReactionCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.ReactionTypeEnum;
-import pt.uminho.sysbio.common.biocomponents.container.components.StoichiometryValueCI;
-import pt.uminho.sysbio.common.utilities.datastructures.map.MapUtils;
 
 public class TransportContainer extends Container {
 

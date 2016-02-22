@@ -6,8 +6,8 @@ package pt.uminho.sysbio.common.transporters.core.transport.reactions.containerA
 import java.util.HashMap;
 import java.util.Map;
 
-import pt.uminho.sysbio.common.biocomponents.container.components.ReactionCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.StoichiometryValueCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 
 /**
  * @author ODias

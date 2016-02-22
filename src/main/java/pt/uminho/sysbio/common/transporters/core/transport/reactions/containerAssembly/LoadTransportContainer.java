@@ -14,8 +14,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import pt.uminho.sysbio.common.biocomponents.container.components.GeneCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.MetaboliteCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.MetaboliteCI;
 import biosynth.core.components.representation.basic.graph.Graph;
 
 /**

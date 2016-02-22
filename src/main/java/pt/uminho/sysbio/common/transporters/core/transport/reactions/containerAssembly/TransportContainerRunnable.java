@@ -16,12 +16,12 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.MetaboliteCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionTypeEnum;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiAPIInterface;
-import pt.uminho.sysbio.common.biocomponents.container.components.GeneCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.MetaboliteCI;
-import pt.uminho.sysbio.common.biocomponents.container.components.ReactionTypeEnum;
-import pt.uminho.sysbio.common.biocomponents.container.components.StoichiometryValueCI;
 import biosynth.core.algorithm.graph.Dijkstra;
 import biosynth.core.components.representation.basic.graph.Graph;
 

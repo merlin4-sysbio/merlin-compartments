@@ -3,6 +3,7 @@ package pt.uminho.sysbio.common.transporters.core.compartments;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,10 +13,9 @@ import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import jp.cbrc.togo.WoLFPsort;
+import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezFetch;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
-import pt.uminho.sysbio.common.utilities.io.FileUtils;
 
 public class WoLFPSORT implements PSortInterface{
 
@@ -443,7 +443,7 @@ public class WoLFPSORT implements PSortInterface{
 	/* (non-Javadoc)
 	 * @see compartments.PSortInterface#getBestCompartmentsForGene(double)
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold)  {
+	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException  {
 
 		return this.loadCompartments.getBestCompartmenForGene(threshold,this.normalization, this.project_id);
 	}

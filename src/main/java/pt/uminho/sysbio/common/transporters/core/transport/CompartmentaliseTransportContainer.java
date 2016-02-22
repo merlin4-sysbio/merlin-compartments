@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
+import pt.uminho.ceb.biosystems.mew.biocomponents.container.io.exceptions.ReactionAlreadyExistsException;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
-import pt.uminho.sysbio.common.biocomponents.container.components.StoichiometryValueCI;
-import pt.uminho.sysbio.common.biocomponents.container.io.exceptions.ReactionAlreadyExistsException;
 import pt.uminho.sysbio.common.transporters.core.compartments.GeneCompartments;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;

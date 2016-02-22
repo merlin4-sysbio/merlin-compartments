@@ -3,6 +3,7 @@
  */
 package pt.uminho.sysbio.common.transporters.core.compartments;
 
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,7 +31,7 @@ public abstract interface PSortInterface {
 	 * @param project_id
 	 * @return
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold);
+	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException;
 
 	/**
 	 * @param string
