@@ -75,24 +75,32 @@ public class TCDB_Parser {
 				if(tableCells.size()==1) {
 					
 					String readNode = readNodeRecursive(tableCells.elementAt(0),"");
-					if(familyNotRead && !readNode.isEmpty()) {
+					if(familyNotRead && !readNode.isEmpty() && readNode.contains(":")) {
 						
+//						String[] data = new String[1];
+//						data[0] = readNode.substring(readNode.indexOf(":"));
+//						String family=readNode.substring(0,(readNode.indexOf(":")));
+//						entry.put(family,data);
+//						familyNotRead=false;
+						
+						String[] s = readNode.split("\\:");
+						String family=s[0];
 						String[] data = new String[1];
-						data[0] = readNode.substring(readNode.indexOf(":"));
-						String family=readNode.substring(0,(readNode.indexOf(":")));
+						data[0] = s[1];
 						entry.put(family,data);
-						familyNotRead=false;
+						familyNotRead=false;				
 					}
 				}
 				
-				if(tableCells.size()==4) {
+				if(tableCells.size()>3) {
 					
 					familyNotRead=true;
 					String[] data = new String[3];
 					data[0] = readNodeRecursive(tableCells.elementAt(1),"");
 					data[1] = readNodeRecursive(tableCells.elementAt(2),"");
 					data[2] = readNodeRecursive(tableCells.elementAt(3),"");
-					entry.put(readNodeRecursive(tableCells.elementAt(0),""), data);
+					String key = readNodeRecursive(tableCells.elementAt(0),"");
+					entry.put(key, data);
 				}
 			}
 			return entry;
@@ -187,7 +195,6 @@ public class TCDB_Parser {
 				}
 				if(readNode.startsWith("Location")){data[3] = readNode.substring(readNode.indexOf(" ")).trim();}
 
-				//System.out.println(readNode);
 			}
 			ytpdbEntries.put(locusTag, data);
 			return ytpdbEntries;

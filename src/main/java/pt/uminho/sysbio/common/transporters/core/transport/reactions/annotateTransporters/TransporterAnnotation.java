@@ -6,7 +6,7 @@ package pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTr
  */
 public class TransporterAnnotation {
 	
-	private String id, uniProt_ID, tcdb_ID, tcdb_family, tcdb_description, affinity, type, tcdb_location,
+	private String id, uniProt_ID, tcdb_ID, tcdb_family, tcdb_family_description, tcdb_description, affinity, type, tcdb_location,
 	ytpdb_gene, ytpdb_description, ytpdb_type ,ytpdb_metabolites, ytpdb_location, 
 	tc_number_family, direction, metabolite, reversibility, reacting_metabolites, equation;
 
@@ -24,6 +24,7 @@ public class TransporterAnnotation {
 		return 	uniProt_ID
 				+ "\t" + tcdb_ID 
 				+ "\t" + tcdb_family 
+				//+ "\t" + tcdb_family_description 
 				+ "\t" + tcdb_description 
 				+ "\t" + affinity 
 				+ "\t" + type 
@@ -306,6 +307,20 @@ public class TransporterAnnotation {
 	 */
 	public void setEquation(String equation) {
 		this.equation = equation;
+	}
+
+	/**
+	 * @return the tcdb_family_description
+	 */
+	public String getTcdb_family_description() {
+		return tcdb_family_description;
+	}
+
+	/**
+	 * @param tcdb_family_description the tcdb_family_description to set
+	 */
+	public void setTcdb_family_description(String tcdb_family_description) {
+		this.tcdb_family_description = tcdb_family_description;
 	}
 
 }

@@ -87,6 +87,7 @@ public class AnnotateTransporters {
 				"UniProt ID" + //2
 						"\tTCDB ID" + //4
 						"\tTCDB family" + //6
+					//	"\tTCDB family description" + 
 						"\tTCDB description" + //7
 						"\taffinity" + //9
 						"\ttype" + //10
@@ -133,20 +134,22 @@ public class AnnotateTransporters {
 					System.out.println(recordEntries.keySet());
 				}
 				
-				String description2="";
-				if(recordEntries.get(tcnumber)[5]!=null){description2=recordEntries.get(tcnumber)[0];}
+				String description="";
+				if(recordEntries.get(tcnumber)[2]!=null){description=recordEntries.get(tcnumber)[0];}
 
 				String tc_location="";
 				if(recordEntries.get(tcnumber)[5]!=null){tc_location=recordEntries.get(tcnumber)[5];}
 
 				String tc_affinity=" ";
-				if(description2.toLowerCase().contains("high affinity")||description2.toLowerCase().contains("high-affinity")){tc_affinity="high";}
-				else if(description2.toLowerCase().contains("low affinity")||description2.toLowerCase().contains("low-affinity")){tc_affinity="low";}
+				if(description.toLowerCase().contains("high affinity")||description.toLowerCase().contains("high-affinity"))
+					tc_affinity="high";
+				else if(description.toLowerCase().contains("low affinity")||description.toLowerCase().contains("low-affinity"))
+					tc_affinity="low";
 
 				String tc_type="";
 				for(String direction:transportDirection.keySet()) {
 
-					if(description2.toLowerCase().contains(direction)) {
+					if(description.toLowerCase().contains(direction)) {
 
 						tc_type=tc_type.concat(direction+" ");
 					}
@@ -163,38 +166,33 @@ public class AnnotateTransporters {
 				if(tcnumber!=null && !tcnumber.isEmpty())
 					family=tcnumber.substring(0,(tcnumber.lastIndexOf(".")));
 
-				if(!entry.keySet().contains(family)) {
-					
+				//System.out.println("http://www.tcdb.org/search/result.php?tc="+family+"#"+family);
+				
+				if(!entry.keySet().contains(family))					
 					entry=tp.parseTCDB("http://www.tcdb.org/search/result.php?tc="+family+"#"+family, entry);
-				}
-
+				
 				String tc_family = family;
-				if(entry.keySet().contains(family)){tc_family+=": "+entry.get(family)[0];}
-				String description1= "";
-				if(entry.get(tcnumber)!=null) {
+				if(entry.keySet().contains(family))
+					tc_family+=": "+entry.get(family)[0];
+				
+				String family_description= "";
+				
+				if(entry.get(family)!=null) {
 
-					description1= entry.get(tcnumber)[0];
-					if(description1.toLowerCase().contains("high affinity")||description1.toLowerCase().contains("high-affinity")) {
+					family_description= entry.get(family)[0];
+					if(family_description.toLowerCase().contains("high affinity")||family_description.toLowerCase().contains("high-affinity")) {
 
-						if(tc_affinity!=" " && tc_affinity.equals("low")) {
-
+						if(tc_affinity!=" " && tc_affinity.equals("low"))
 							tc_affinity="high/low???";
-						}
-						else {
-
+						else 
 							tc_affinity="high";
-						}
 					}
-					else if(description1.toLowerCase().contains("low affinity")||description1.toLowerCase().contains("low-affinity")) {
+					else if(family_description.toLowerCase().contains("low affinity")||family_description.toLowerCase().contains("low-affinity")) {
 
-						if(tc_affinity!=" " && tc_affinity.equals("high")) {
-
+						if(tc_affinity!=" " && tc_affinity.equals("high"))
 							tc_affinity="high/low???";
-						}
-						else {
-
+						else
 							tc_affinity="low";
-						}
 					}
 				}
 
@@ -258,20 +256,20 @@ public class AnnotateTransporters {
 					direction = "Distinct directions";
 				}
 
-				if(description1.equals(description2)){
-
-					description2="";
-				}
+//				if(description1.equals(description2)){
+//
+//					description2="";
+//				}
 
 				if(tcnumber==null || tcnumber.isEmpty())
 					tcnumber = id.getTcnumber();
 				
 				TransporterAnnotation transporterAnnotation = new TransporterAnnotation();
-
 				transporterAnnotation.setUniProt_ID(uniprotID);
 				transporterAnnotation.setTcdb_ID(tcnumber);
 				transporterAnnotation.setTcdb_family(tc_family);
-				transporterAnnotation.setTcdb_description(description1);
+				transporterAnnotation.setTcdb_family_description(family_description);
+				transporterAnnotation.setTcdb_description(description);
 				transporterAnnotation.setAffinity(tc_affinity);
 				transporterAnnotation.setType(tc_type);
 				transporterAnnotation.setTcdb_location(tc_location);
@@ -367,7 +365,8 @@ public class AnnotateTransporters {
 
 		transporterAnnotation.setUniProt_ID("P39003");
 		transporterAnnotation.setTcdb_ID("2.A.1.1.31");
-		transporterAnnotation.setTcdb_family("2.A.1.1: :The Sugar Porter (SP) Family");
+		transporterAnnotation.setTcdb_family("2.A.1.1");
+		transporterAnnotation.setTcdb_family_description("The Sugar Porter (SP) Family");
 		transporterAnnotation.setTcdb_description("High affinity, glucose-repressible, glucose (hexose) uniporter (Hxt6).");
 		transporterAnnotation.setAffinity("high");
 		transporterAnnotation.setType("uniport");
@@ -388,7 +387,8 @@ public class AnnotateTransporters {
 
 		transporterAnnotation.setUniProt_ID("P39109");
 		transporterAnnotation.setTcdb_ID("3.A.1.208.11");
-		transporterAnnotation.setTcdb_family("3.A.1.208:  The Drug Conjugate Transporter (DCT) Family (ABCC) (Dębska et al., 2011)");
+		transporterAnnotation.setTcdb_family("3.A.1.208");
+		transporterAnnotation.setTcdb_family_description("The Drug Conjugate Transporter (DCT) Family (ABCC) (Dębska et al., 2011)");
 		transporterAnnotation.setTcdb_description("Vacuolar metal resistance and drug detoxification protein, yeast cadmium factor (YCF1); transports cadmium-glutathione conjugates, glutathione S-conjugated leucotriene C4, organic glutathione S-conjugates, selenodigluthatione, unconjugated bilirubin, reduced glutathione, and diazaborine (Lazard et al., 2011). ");
 		transporterAnnotation.setAffinity("");
 		transporterAnnotation.setType("detoxification resistance");
