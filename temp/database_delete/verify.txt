@@ -1,0 +1,235 @@
+cesium
+cation
+ion
+anion
+osmolytes
+antimony(3+)
+arsenic(3+)
+polyols
+silicic acid
+antimonite
+colanic acid
+antimicrobial
+bacteriocins
+propidium iodide
+neurotransmitters
+arabinose
+glucopyranose
+galacturonate
+carbohydrate acid
+pentoses
+polyol
+tetroses
+3-o-methylglucose
+6-o-methyl-d-glucose
+sialic acids
+mevalonate
+poly(3-hydroxybutyrate)
+isoleucinate
+iodothyronines
+tetraiodothyroacetic acid
+triacetylfusarinine c
+siderophore
+p-aminohippuric acid
+organic anion
+organic cation
+monoamine
+p-aminohippurate
+butyryl-l-carnitine
+famotidine
+oxaliplatin
+ranitidine
+4-hpp
+quinolones
+drugs
+fluconazole
+crystal violet
+ketoconazole
+dityrosine
+ethidium
+organic cations
+fluoroquinolone antibiotic
+alpha-methylglucoside
+aminoglycoside
+iptg
+flavonoids
+phytoalexins
+sapienic acid
+achromobactin
+cetrimonium
+domiphen bromide
+phenazine
+dapi
+florfenicol
+trichothecene
+tosufloxacin
+homocysteine thiolactone
+azole
+bifonazole
+flucytosine
+miconazole
+abietane
+fosmidomycin
+vibrioferrin
+phosphoglycerate
+2,4-diacetylphloroglucinol
+threonine
+selenocysteine
+thiazole
+glycerophosphoinositol
+monosaccharide
+dihydroorotate
+tellurite
+tripeptide
+pentoside
+arabinoside
+sialic acid
+monocarboxylic acid
+vitamin
+pipecolate
+c4-dicarboxylate
+thiamine pyrophosphate
+mgatp(2-)
+palmitoylcarnitine
+2-aminoadipic acid
+7-keto-8-aminopelargonic acid
+vitamin b6
+8-azaguanine
+8-azaadenine
+2,6-diaminopurine
+1-methylguanine
+2-amino-6-hydroxyaminopurine
+2-aminopurine
+silicate
+tricarboxylic acid
+chromate
+tricarboxylate
+heavy metal
+3-chlorobenzoate
+propylbenzene
+aminoglycosides
+tetracyclines
+macrolides
+xenobiotics
+n-(3-hydroxy)-decanoyl-homoserine lactone
+n-(3-hydroxy)-octanoyl-homoserine lactone
+n-(3-oxo)-decanoyl-homoserine lactone
+n-(3-oxo)-tetradecanoyl-homoserine lactone
+gold
+isoflavonoids
+antimicrobials
+detergent
+meropenem
+nodulation factor
+alkaloids
+ganciclovir
+antibiotics
+detergents
+pyrrolidinones
+capsular polysaccharide
+teichuronic acid
+agrocin
+exopolysaccharide
+pentapeptide
+phytosiderophore
+n-(4-aminobenzoyl)-l-glutamate
+auxin
+gdp-fucose
+methyl viologen
+indigoidine
+homoserine
+rhamnose
+antibiotic
+udp-d-galactofuranose
+organic phosphate ester
+short-chain fatty acid
+organic anions
+roseoflavin
+queuosine
+cobalamin
+mannotetraose
+glucosylglycerol
+inositol phosphate
+alpha-glucoside
+glucoside
+glucitol
+cyclodextrin
+chromomycin
+glycerophospholipids
+nisin
+chrysopine
+microcin
+protease a
+lipase
+protease
+alkaline protease
+bacteriocin
+lantibiotic
+type a lantibiotic
+lipoproteins
+peptide cation
+defensin
+albomycin
+coprogen
+rhodotorulic acid
+ferric-vibriobactin
+sulfonate
+cilofungin
+xenobiotic
+indole-3-propionic acid
+flavopiridol
+brefeldin a
+itraconazole
+phytohormones
+strigolactones
+fluorescein
+sorbic acid
+amorolfine
+caspofungin
+dicarboximides
+pheromone
+cysteinyl
+anthracycline
+benzbromarone
+diazaborine
+glutathione conjugate
+monochlorobimane
+vinca alkaloids
+oligomycin a
+methionine sulfoxide
+tgdg
+diaminopimelate
+s-methyl-l-cysteine
+oligopeptides
+xyloside
+mannoside
+beta-glucoside
+microcin c
+protamine
+galactoside
+tripeptides
+agrocin 84
+agrocinopine
+laminaritriose
+maltooligosaccharides
+cellooligosaccharides
+phosphoric ester
+transition element cation
+aminophospholipid
+miltefosine
+bromate
+phospho-beta-d-glucoside
+d-psicose 6-phosphate
+glucosamine
+glucosamine phosphate
+arabinitol
+d-glucose monophosphate
+d-glucose bisphosphate
+fatty acyl-coa
+polysaccharides
+lipids
+7-aminocholesterol
+dehydrophytosphingosine
+tellurium
+organosulfur compound
+porphyrins

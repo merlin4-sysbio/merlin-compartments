@@ -33,10 +33,10 @@ import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAs
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.loadTransporters.LoadTransportersData;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.AlignedGenesContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.AlignmentResult;
-import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.MetabolitesEntry.TransportType;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.ParserContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.TransportParsing;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.TransportSystemContainer;
+import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.TransportType;
 import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
 
 
@@ -456,6 +456,14 @@ public class TransportReactionsGeneration {
 								list_of_metabolites.add(metaboliteContainer.getName());
 								list_of_direction.add(metaboliteContainer.getDirection());
 							}
+
+//							if(!go) {
+//
+//								System.out.println(parserContainer.getUniprot_id());
+//								System.out.println(metaboliteContainer.getName());
+//								System.out.println();
+//							}
+
 						}
 
 						if(go) {
@@ -466,41 +474,20 @@ public class TransportReactionsGeneration {
 
 								TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
 
-								//String[] miriam_codes = this.getMiriamCodes(metaboliteContainer, verbose);
-
-								//this.getMiriamNames(metaboliteContainer, miriam_codes, verbose);
-
 								int metabolites_id = ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
 
-								//								if(miriam_codes[1]!=null) {
-								//
-								//									String metaboliteChebiID = ExternalRefSource.CHEBI.getSourceId(miriam_codes[1]);
-								//
-								//									// not CoA childs
-								//									if(metaboliteChebiID!=null && !miriam_codes[1].equals("urn:miriam:obo.chebi:CHEBI:15346"))  {
-								//
-								//										Map<String, ChebiER> chebi_entity = MIRIAM_Data.get_chebi_miriam_child_metabolites(metaboliteChebiID);
-								//
-								//										if(chebi_entity!=null) {
-								//
-								//											ltd.load_metabolites_ontology(metaboliteChebiID, metabolites_id, chebi_entity,0);
-								//										}
-								//									}
-								//								}
 								String direction_id=ltd.loadDirection(metaboliteContainer.getDirection());
 								ltd.load_transported_metabolites_direction(metabolites_id, direction_id, transport_system_id, metaboliteContainer.getStoichiometry());
 							}
 						}
 						else {
 
-							System.out.println("Jumping "+tmdsList.get(0).getName()+" transport.");
+							System.out.println("Jumping "+tmdsList.get(0).getName()+" symport/antiport, for transporter "+parserContainer.getUniprot_id());
 						}
 					}
 
-					if(go) {
-
+					if(go)
 						transportSystemIds.add(transport_system_id);
-					}
 				}
 
 				ltd.loadTCnumber(parserContainer, transportSystemIds);
@@ -751,7 +738,8 @@ public class TransportReactionsGeneration {
 	 * @param ltd
 	 * @param reversibility
 	 * @param invertDirections
-	 * @param type_id 
+	 * @param transport_type
+	 * @param type_id
 	 * @return
 	 */
 	private int get_transporter_id_if_exists(List<TransportMetaboliteDirectionStoichiometryContainer> metabolitesContainerList, LoadTransportersData ltd, boolean reversibility, boolean invertDirections, String transport_type, int type_id) {
@@ -760,7 +748,8 @@ public class TransportReactionsGeneration {
 
 			for(TransportMetaboliteDirectionStoichiometryContainer tmds : metabolitesContainerList) {
 
-				// retrieve reactions ids associated to this metabolite 
+				// retrieve reactions ids associated to this metabolite
+
 				Set<Integer> transporter_ids=ltd.get_transporter_ids(tmds.getName(), type_id);
 
 				// retrieve Transport Systems associated to  each reaction id
@@ -782,14 +771,10 @@ public class TransportReactionsGeneration {
 
 						if(invertDirections) {
 
-							if(metaboliteData.getDirection().equalsIgnoreCase("in")) {
-
+							if(metaboliteData.getDirection().equalsIgnoreCase("in"))
 								metaboliteData.setDirection("out");
-							}
-							else if(metaboliteData.getDirection().equalsIgnoreCase("out")) {
-
+							else if(metaboliteData.getDirection().equalsIgnoreCase("out"))
 								metaboliteData.setDirection("in");
-							}
 						}
 
 						boolean existsInClone = false;
@@ -802,40 +787,33 @@ public class TransportReactionsGeneration {
 
 								existsInClone = true;
 								metaboliteData = metaboliteDataClone;
-
+								t=metabolitesContainerClone.size();
 							}
 						}
 
-						if(existsInClone) {
-
+						if(existsInClone)
 							metabolitesContainerClone.remove(metaboliteData);
-						}
-						else {
-
+						else
 							transportSystemEmpty = false;
-						}
-
-						//System.out.println("\tNumber of remaining metabolites " + metabolitesContainerClone.size());
 					}
 
 					//System.out.println("Number of remaining metabolites " + metabolitesContainerClone.size());
+					//System.out.println("container size "+metabolitesContainerClone.size());
+					//System.out.println("rev "+(ts.isReversibility()==reversibility));
+					//System.out.println("transporters empty "+transportSystemEmpty);
+					//System.out.println("existing reaction id "+ts.getId());
+					//System.out.println();
 
-					if(metabolitesContainerClone.isEmpty() && transportSystemEmpty && ts.isReversibility()==reversibility) {
+					boolean returnID = metabolitesContainerClone.isEmpty() && transportSystemEmpty && ts.isReversibility()==reversibility; 
 
-						//System.out.println("returning id  "+ts.getId());
-						//System.out.println("#####################################################################################################################");
+					if(returnID)
 						return ts.getId();
-					}
 				}
-				//				System.out.println("no id");
-				//				System.out.println("#####################################################################################################################");
 			}
 
-			if((transport_type.equalsIgnoreCase("influx") || transport_type.equalsIgnoreCase("efflux")) && reversibility && !invertDirections) {
-
-				//System.out.println("Reversing directions on reversible reactions to check reaction.");
+			//Reversing directions on reversible reactions to check reaction.
+			if((transport_type.equalsIgnoreCase("influx") || transport_type.equalsIgnoreCase("efflux")) && reversibility && !invertDirections)
 				return this.get_transporter_id_if_exists(metabolitesContainerList, ltd, reversibility, true, transport_type, type_id);
-			}
 		}		
 		return -1;
 	}
@@ -855,10 +833,14 @@ public class TransportReactionsGeneration {
 
 			reader = new BufferedReader(new FileReader(file));
 			String text = null;
-
+			boolean go = false;
+			
 			while ((text = reader.readLine()) != null) {
+				
+				if (!go)
+					go = text.trim().length()>0 && !text.contains("homologue ID") && !text.contains("UniProt ID") && !text.contains("TCDB description");
 
-				if(text.trim().length()>0 && !text.contains("homologue ID") && !text.contains("UniProt ID") && !text.contains("TCDB description")) {
+				if(go) {
 
 					StringTokenizer st = new StringTokenizer(text,"\t");
 
@@ -941,7 +923,7 @@ public class TransportReactionsGeneration {
 		}
 
 		List<String> taxonomyList = new ArrayList<>(), orgList = new ArrayList<>();
-		
+
 		TaxonomyContainer taxCon = this.taxonomyMap.get(uniprot_id);
 		for(NcbiTaxon n:taxCon.getTaxonomy())
 			taxonomyList.add(n.getValue());
@@ -951,7 +933,7 @@ public class TransportReactionsGeneration {
 			orgList.add(n.getValue());
 		orgList.add(originOrganism);
 
-		
+
 		taxonomyList.retainAll(orgList);
 
 		int size = taxonomyList.size();
@@ -1023,6 +1005,9 @@ public class TransportReactionsGeneration {
 
 		if(tc_direction_data.equals("in:in"))
 			return "symport";
+		
+		if(tc_direction_data.equals("out:out"))
+			return "symport_out";
 
 		if(tc_direction_data.equals("in // out"))
 			return "antiport";

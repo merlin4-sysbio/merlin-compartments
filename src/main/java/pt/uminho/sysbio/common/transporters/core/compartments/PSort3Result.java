@@ -7,19 +7,19 @@ import java.util.List;
 import pt.uminho.sysbio.merlin.utilities.Pair;
 
 
-public class PSort3_result implements Serializable {
+public class PSort3Result implements Serializable, CompartmentResult {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 7061067245990913130L;
+	private static final long serialVersionUID = 1L;
 	private String geneID;
 	private List<Pair<String, Double>> compartments;
 	
 	/**
 	 * @param geneID
 	 */
-	public PSort3_result(String geneID) {
+	public PSort3Result(String geneID) {
 		this.setGeneID(geneID);
 		this.setCompartments(new ArrayList<Pair<String, Double>>());
 	}
@@ -65,7 +65,7 @@ public class PSort3_result implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return "PSort3_result ["
+		return "PSort3Result ["
 				+ (this.geneID != null ? "geneID=" + this.geneID + ", " : "")
 				+ (this.compartments != null ? "compartments=" + this.compartments : "")
 				+ "]";

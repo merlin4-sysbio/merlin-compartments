@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.MetabolitesEntry.TransportType;
+import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.TransportType;
 import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
 
 /**

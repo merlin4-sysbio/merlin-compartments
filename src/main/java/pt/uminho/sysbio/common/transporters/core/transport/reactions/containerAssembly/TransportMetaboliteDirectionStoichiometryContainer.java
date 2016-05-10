@@ -166,40 +166,28 @@ public class TransportMetaboliteDirectionStoichiometryContainer implements Compa
 		boolean sameName = false;
 
 		String name = "";
-		if(this.name != null) {
-
+		if(this.name != null)
 			name = this.name.toLowerCase();
-		}
 
 		String kegg = "";
-		if(this.kegg_name != null) {
-
+		if(this.kegg_name != null)
 			kegg = this.kegg_name.toLowerCase();
-		}
 
 		String chebi = "";
-		if(this.chebi_name != null) {
-
+		if(this.chebi_name != null)
 			chebi = this.chebi_name.toLowerCase();
-		}
 
 		String otherTmds_name = "";
-		if(otherTmds.getName() != null) {
-
+		if(otherTmds.getName() != null)
 			otherTmds_name = otherTmds.getName().toLowerCase();
-		}
 
 		String otherTmds_kegg = "";
-		if(otherTmds.getKegg_name() != null) {
-
+		if(otherTmds.getKegg_name() != null)
 			otherTmds_kegg = otherTmds.getKegg_name().toLowerCase();
-		}
 
 		String otherTmds_chebi = "";
-		if(otherTmds.getChebi_name() != null) {
-
+		if(otherTmds.getChebi_name() != null)
 			otherTmds_chebi = otherTmds.getChebi_name().toLowerCase();
-		}
 
 		if((name.equalsIgnoreCase(otherTmds_name)) 
 				|| (name.equalsIgnoreCase(otherTmds_kegg))

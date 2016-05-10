@@ -1,0 +1,224 @@
+unknown
+glutathione conjugates
+colicin e1
+colicin e7
+pentavalent methylated arsenicals
+methylglyoxal trivatent metalloids
+fimbrium
+adhesin
+cytotoxyn
+invasin
+outer membrane protein
+cytolysin
+cytotoxin precursor
+murein hydrolase
+cuticle
+1-beta-d-glucopyranosyl-4-glucose
+diidothyronine
+hydroxybutyrate
+thyronamines
+triiodothyroacetic acid
+protocatachuate
+triacetylfusarinine
+4-[4-(dimethylamino)-styryl]-n-methylpyridinium asp
+fluoroquinolone
+guanine 2-fluoroadenine
+hypoxanthine adenine
+tetraphenylphosphonium chloride
+benomyl sodium dodecyl sulfate
+aromatic galactosides
+aromatic glucosides
+ferripyochelin
+methylenomycin
+pyonine b
+cetalkonium chloride
+dofanium chloride
+methylbenzethonium chloride
+tetraethylammonium bromide
+d-alanyl-griseoluteic acid
+10-n-nonyl acridine orange
+acriflavin
+kurstakin
+2-chloropropionate
+bromoacetate
+1-carboxymethyl-pyridinium
+rhizopine
+valanimycin
+1-arseno-3-phosphoglycerate
+ectosine
+alpha-(methylamino)isobutyrate
+alpha-xyloside
+rhamnogalacturonide
+alpha-hydroxybutylate
+1-methyl-4-tetrahydropyridinium
+n-methyl-l-proline
+succinamide
+l-selenaproline
+l-selenazolidine-4-carboxylic acid
+l-selenocystine
+alpha-methylglutamate
+homocysteate
+l-fructolysine
+hydroxymethylpyrimidine
+urate-xanthine
+n6-benzoyladenine
+n6-hydroxyadenine
+vanidate
+4-bromobenzoate
+4-iodobenzoate
+2-ketomonocarboxylate
+benzalkonium
+biocides
+anthacene
+lipophilic beta-lactams
+organic solvents
+n -(3-hydroxy)-decanoyl-homoserine lactone
+n -(3-hydroxy)-octanoyl-homoserine lactone
+n -(3-oxo)-decanoyl-homoserine lactone
+n -(3-oxo)-tetradecanoyl-homoserine lactone
+n-decanoyl-homoserine lactone
+n-octanoyl-homoserine lactone
+fluoroquinolines
+lincosamides
+microlides
+teracycline
+antibacterial peptide
+gonadal steroid
+twin arginine
+2-n-methyl ellipticinium
+o-antigen
+anionic o-antigen
+succinoglycan
+undecaprenol-pyrophosphate o-antigen
+acetan
+amylovoran
+man5glcnac(2)-pp-dolicho
+toxoflavin
+5-fluoroorotate
+4-amino-4-deoxy-l-arabinose-phosphoundecaprenol
+undecaprenyl phosphate-a-aminoarabinose
+beta-hydroxynorvaline
+3-methyarginine
+3,4-dehydro-dl-proline
+azaleucine
+l-alpha-amino-n-butyrate
+s (2-aminoethyl)-l-cysteine
+2,3-diamino-2,3-bis(hydroxymethyl)-1,4-butanediol
+tetraphenyl arsonium chloride
+iron(iii) dicitrate
+bacteriophage dna
+colicin a
+colicin e2
+colicin e3
+colicin k
+saturated oligogalacturonides
+unsaturated oligogalacturonides
+6-o-alpha-d-glucopyranosyl-d-fructose
+fructooligosaccharides
+higher cellooligonucleosides
+aldouronate
+alpha-1,5-arabinooligosaccharides
+alpha-1,5-arabinotetraose
+alpha-1,5-arabinotriose
+alpha-1,4-digalacturonate
+gluco-n-biose
+lacto-n-biose i
+4a-4e-o-dideacetyl-chromomycin a3
+pyoluteorin
+streptolysin
+salmochelin
+hemolysin
+cyclolysin
+c-5-epimerase
+protease b
+protease c
+protease g
+colicin
+plya
+plyb
+subtilin
+lacticin
+salivaricin 9
+heptadecapeptide
+pediocin pa-1
+lactococcin a
+sublancin
+microcin j25
+hop
+exochelin
+dimethyl proline
+homobetaine
+choline-o-sulfate
+antimicrobial peptide
+enterocin as-48
+aureocin
+salivericin a
+vancoresmycin
+2, 3-dihydroxybenzoate-glycine-threonine
+schizakinen
+iron-chrysobactine
+ferric-ferrichrome
+ferric-ferrioxamine b
+ferric-vibrioferrin
+ethyl viologen
+pilin
+aromatic sulfonate
+rhodamine
+7-hydroxymethotrexate
+methotrexate diglutamate
+anilinopyrimidine
+phenylpyridylamine
+phenylpyrrole
+strobirulin
+epipodophyllotoxins
+antimonial tartrate
+epipodophyllotosine
+pteroyl-1-glutamate
+reveromycin a
+cyanidin 3-glucoside-glutathione
+metolachlor-glutathione
+arsenic triglutathione conjugates
+n-retinylidene-phosphatidylethanolamine
+hydroxyethyl thiazole
+l-djenkolate
+d-glutamine acid
+n-acetyl l-glutamic acid
+methylthio adenosine
+phenylpropeneoid
+murein tripeptide
+ethylene diamine tetraacetate
+human defensin
+signalling peptide
+alpha-galactoside
+d-alanyl-d-alanyl
+peptide antibiotics
+pullulanase
+tail-anchored protein
+pre-protein
+nucleoprotein
+2-hydroxyphenazine
+dihydro-2-hydroxyphenazine
+heterodisulfide
+lichenan phosphate
+n,n'-diacetylchitobiose phosphate
+fatty choloyl-coa
+antimicrobial long-chain fatty acids
+mesentericin y105
+ca+
+conotoxin
+tap
+voltage-gated potassium channels
+colicin j
+enterocin
+pediocin
+ec
+3.4.24.84
+3.4.24.-
+3.4.22.-
+1.3.99.5
+rab proteins
+glycosyl
+2.7.8.15
+acetyl choline
+leukotoxins
+periplasmic amidases

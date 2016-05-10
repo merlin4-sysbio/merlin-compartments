@@ -11,7 +11,7 @@ import java.util.TreeSet;
 
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.TransportReactionsGeneration;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportMetaboliteDirectionStoichiometryContainer;
-import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.MetabolitesEntry.TransportType;
+import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.TransportType;
 
 
 /**
@@ -34,8 +34,9 @@ public class TransportParsing {
 
 
 	/**
+	/**
 	 * @param metabolitesString
-	 * @param transportType 
+	 * @param directions
 	 */
 	public void parseMetabolites(String metabolitesString, String directions) {
 

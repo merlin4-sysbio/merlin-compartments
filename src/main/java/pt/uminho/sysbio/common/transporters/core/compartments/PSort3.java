@@ -19,33 +19,34 @@ import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
  * @author ODias
  *
  */
-public class PSort3 implements PSortInterface{
+public class PSort3 implements CompartmentsInterface{
 
-	private int normalization=10;
-	private Map<String, PSort3_result> results;
+	private static int normalization=10;
+	private Map<String, CompartmentResult> results;
 	private LoadCompartments loadCompartments;
 	private AtomicBoolean cancel;
 	private boolean isNCBIGenome = true;
 	private int project_id;
 
 
-	/**
-	 * @param conn
-	 * @param results
-	 */
-	public PSort3(Connection conn, Map<String, PSort3_result> results, int project_id) {
-		this.cancel = new AtomicBoolean(false);
-		this.loadCompartments = new LoadCompartments(conn);
-		this.results = results;
-		this.project_id = project_id;
-	}
+//	/**
+//	 * @param conn
+//	 * @param results
+//	 * @param project_id
+//	 */
+//	public PSort3(Connection conn, Map<String, CompartmentResult> results, int project_id) {
+//		this.cancel = new AtomicBoolean(false);
+//		this.loadCompartments = new LoadCompartments(conn);
+//		this.results = results;
+//		this.project_id = project_id;
+//	}
 
 	/**
 	 * @param conn
 	 * @param results
 	 * @param isNCBI
 	 */
-	public PSort3(Connection conn, Map<String, PSort3_result> results, boolean isNCBI, int project_id) {
+	public PSort3(Connection conn, Map<String, CompartmentResult> results, boolean isNCBI, int project_id) {
 
 		this.isNCBIGenome = isNCBI;
 		this.cancel = new AtomicBoolean(false);
@@ -95,14 +96,12 @@ public class PSort3 implements PSortInterface{
 	}
 
 	/* (non-Javadoc)
-	 * @see compartments.PSortInterface#loadCompartmentsInformation()
+	 * @see compartments.CompartmentsInterface#loadCompartmentsInformation()
 	 */
 	public void loadCompartmentsInformation() {
 
-		for(PSort3_result pSORT3_Result : this.results.values()) {
-
-			this.loadCompartments.loadData(pSORT3_Result.getGeneID(), pSORT3_Result.getCompartments(), project_id);
-		}
+		for(CompartmentResult pSORT3Result : this.results.values())
+			this.loadCompartments.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), project_id);
 	}
 
 	/**
@@ -110,11 +109,11 @@ public class PSort3 implements PSortInterface{
 	 * @return
 	 * @throws Exception 
 	 */
-	public Map<String, PSort3_result> addGeneInformation(File outFile) throws Exception {
+	public Map<String, CompartmentResult> addGeneInformation(File outFile) throws Exception {
 
-		Map<String, PSort3_result> compartmentLists = this.readPSortFile(outFile);
+		Map<String, CompartmentResult> compartmentLists = this.readPSortFile(outFile);
 
-		Map<String, PSort3_result> compartmentResults = compartmentLists;
+		Map<String, CompartmentResult> compartmentResults = compartmentLists;
 
 		if(this.isNCBIGenome)
 			compartmentResults = this.getLocusTags(compartmentLists);
@@ -130,9 +129,9 @@ public class PSort3 implements PSortInterface{
 	 * @throws NumberFormatException
 	 * @throws IOException
 	 */
-	private Map<String, PSort3_result> readPSortFile(File outFile) throws NumberFormatException, IOException {
+	private Map<String, CompartmentResult> readPSortFile(File outFile) throws NumberFormatException, IOException {
 
-		Map<String, PSort3_result> compartmentLists = new HashMap<String, PSort3_result>();
+		Map<String, CompartmentResult> compartmentLists = new HashMap<>();
 
 		BufferedReader in = new BufferedReader(new FileReader(outFile));
 		String str;
@@ -176,7 +175,7 @@ public class PSort3 implements PSortInterface{
 				}
 				else {
 
-					PSort3_result pSort3_result = new PSort3_result(line[seqID_index]);
+					PSort3Result pSort3Result = new PSort3Result(line[seqID_index]);
 					String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
 
 					boolean unknown=true;
@@ -215,17 +214,17 @@ public class PSort3 implements PSortInterface{
 					if(line[final_Localization_index].trim().equalsIgnoreCase("Unknown")&&unknown) {
 
 						score = 10;
-						pSort3_result.addCompartment("unkn", score);	
+						pSort3Result.addCompartment("unkn", score);	
 					}
 					else {
 
 						boolean maxFound=false, returnFinalLocalisation=false;
 						score = Double.valueOf(line[cytoplasmicMembrane_Score_index]);
-						pSort3_result.addCompartment("cytmem", score);
+						pSort3Result.addCompartment("cytmem", score);
 						if(score==10){maxFound=true;}
 
 						score = Double.valueOf(line[extracellular_Score_index]);
-						pSort3_result.addCompartment("extr", score);
+						pSort3Result.addCompartment("extr", score);
 						if(score==10)
 						{
 							if(maxFound){returnFinalLocalisation=true;}
@@ -235,7 +234,7 @@ public class PSort3 implements PSortInterface{
 						if(periplasmic_Score_index>0) {
 
 							score = Double.valueOf(line[periplasmic_Score_index]);
-							pSort3_result.addCompartment("perip", score);
+							pSort3Result.addCompartment("perip", score);
 							if(score==10) {
 
 								if(maxFound){returnFinalLocalisation=true;}
@@ -246,7 +245,7 @@ public class PSort3 implements PSortInterface{
 						if(outerMembrane_Score_index>0) {
 
 							score = Double.valueOf(line[outerMembrane_Score_index]);
-							pSort3_result.addCompartment("outme", score);
+							pSort3Result.addCompartment("outme", score);
 							if(score==10) {
 
 								if(maxFound){returnFinalLocalisation=true;}
@@ -257,7 +256,7 @@ public class PSort3 implements PSortInterface{
 						if(cellwall_score_index>0) {
 
 							score = Double.valueOf(line[cellwall_score_index]);
-							pSort3_result.addCompartment("cellw", score);
+							pSort3Result.addCompartment("cellw", score);
 							if(score==10) {
 
 								if(maxFound){returnFinalLocalisation=true;}
@@ -266,7 +265,7 @@ public class PSort3 implements PSortInterface{
 						}
 
 						score = Double.valueOf(line[cytoplasmic_Score_index]);
-						pSort3_result.addCompartment("cytop", score);
+						pSort3Result.addCompartment("cytop", score);
 						if(score==10)
 						{
 							if(maxFound){returnFinalLocalisation=true;}
@@ -275,7 +274,7 @@ public class PSort3 implements PSortInterface{
 
 						if(returnFinalLocalisation) {
 
-							pSort3_result = new PSort3_result(line[seqID_index]);
+							pSort3Result = new PSort3Result(line[seqID_index]);
 							String out;
 							if(line[final_Localization_index].trim().equalsIgnoreCase("Cytoplasmic")){out = "cytop";}
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("CytoplasmicMembrane")){out = "cytmem";}
@@ -284,10 +283,10 @@ public class PSort3 implements PSortInterface{
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("Cellwall")){out = "cellw";}
 							else{out = "extr";}
 
-							pSort3_result.addCompartment(out,10);
+							pSort3Result.addCompartment(out,10);
 						}
 					}
-					compartmentLists.put(locus_tag, pSort3_result);
+					compartmentLists.put(locus_tag, pSort3Result);
 				}
 			}
 		}
@@ -303,19 +302,19 @@ public class PSort3 implements PSortInterface{
 	 * @return
 	 * @throws Exception
 	 */
-	private Map<String, PSort3_result> getLocusTags(Map<String, PSort3_result> compartmentLists) throws Exception {
+	private Map<String, CompartmentResult> getLocusTags(Map<String, CompartmentResult> compartmentLists) throws Exception {
 
-		Map<String, PSort3_result> compartmentResults = new HashMap<String, PSort3_result>();
+		Map<String, CompartmentResult> compartmentResults = new HashMap<>();
 
 		if (!this.cancel.get()) {
 			
-			Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(compartmentLists.keySet(), 400);
+			Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(compartmentLists.keySet(), 500);
 			
 			for (String id : idLocus.keySet()) {
 
-				PSort3_result pSort3_result = compartmentLists.get(id);
-				pSort3_result.setGeneID(idLocus.get(id));
-				compartmentResults.put(idLocus.get(id), pSort3_result);
+				CompartmentResult pSort3Result = compartmentLists.get(id);
+				pSort3Result.setGeneID(idLocus.get(id));
+				compartmentResults.put(idLocus.get(id), pSort3Result);
 			}
 			
 		}
@@ -323,11 +322,11 @@ public class PSort3 implements PSortInterface{
 	}
 
 	/* (non-Javadoc)
-	 * @see compartments.PSortInterface#getBestCompartmentsByGene(double, int)
+	 * @see compartments.CompartmentsInterface#getBestCompartmentsByGene(double, int)
 	 */
 	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException{
 
-		return loadCompartments.getBestCompartmenForGene(threshold,this.normalization, this.project_id);
+		return loadCompartments.getBestCompartmenForGene(threshold, PSort3.normalization, this.project_id);
 	}
 
 	//	/**

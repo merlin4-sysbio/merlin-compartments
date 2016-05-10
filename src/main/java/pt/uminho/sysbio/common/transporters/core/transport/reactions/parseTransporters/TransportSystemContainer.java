@@ -23,8 +23,17 @@ public class TransportSystemContainer implements Comparable<TransportSystemConta
 		this.setId(id);
 		this.setReversibility(reversibility);
 	}
-
-
+	
+	/**
+	 * @param metabolites
+	 * @param reversibility
+	 */
+	public TransportSystemContainer(List<TransportMetaboliteDirectionStoichiometryContainer> metabolites, boolean reversibility) {
+		
+		this.metabolites = metabolites;
+		this.reversibility = reversibility;
+	}
+	
 	/**
 	 * @return the id
 	 */
@@ -79,15 +88,13 @@ public class TransportSystemContainer implements Comparable<TransportSystemConta
 		
 		if(other_tsc.isReversibility() == this.reversibility) {
 			
-			equals = true;
-			
-			for(TransportMetaboliteDirectionStoichiometryContainer metaboliteDirectionStoichiometryContainer : this.metabolites) {
-				
-				if(!other_tsc.getMetabolites().contains(metaboliteDirectionStoichiometryContainer)) {
-					
+			for(TransportMetaboliteDirectionStoichiometryContainer metaboliteDirectionStoichiometryContainer : this.metabolites)
+				if(!other_tsc.getMetabolites().contains(metaboliteDirectionStoichiometryContainer))					
 					equals = false;
-				}
-			}
+			
+			for(TransportMetaboliteDirectionStoichiometryContainer metaboliteDirectionStoichiometryContainer : other_tsc.getMetabolites())				
+				if(!this.metabolites.contains(metaboliteDirectionStoichiometryContainer))					
+					equals = false;
 		}
 		return equals;
 	}

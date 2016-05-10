@@ -3,6 +3,8 @@ package pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTrans
 import java.util.ArrayList;
 import java.util.List;
 
+import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.TransportType;
+
 /**
  * @author ODias
  *
@@ -96,30 +98,7 @@ public class MetabolitesEntry {
 		"\n\t\t\t\t\t]";
 	}
 
-	/**
-	 * @author ODias
-	 *
-	 */
-	public enum TransportType
-	{
-		symport(0),
-		antiport(0),
-		//simple,
-		complex(0),
-		transport(2),
-		influx(0),
-		sensor (3),
-		efflux(1);
 
-		private int transport_type;
-		private TransportType(int transport_type){
-			this.transport_type = transport_type;
-		}
-
-		public int getTransport(){
-			return this.transport_type;
-		}
-	}
 
 	/**
 	 * @param direction

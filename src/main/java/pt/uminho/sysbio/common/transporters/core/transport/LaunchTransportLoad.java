@@ -19,7 +19,7 @@ import pt.uminho.ceb.biosystems.mew.biocomponents.container.io.exceptions.Reacti
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLMultiThread;
-import pt.uminho.sysbio.common.transporters.core.compartments.PSortInterface;
+import pt.uminho.sysbio.common.transporters.core.compartments.CompartmentsInterface;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.PopulateTransportContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportContainer;
 
@@ -135,7 +135,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 	 * @throws SQLException
 	 * @throws ReactionAlreadyExistsException 
 	 */
-	public TransportContainer compartmentaliseTransportContainer(String path, TransportContainer transportContainer, PSortInterface obj, KINGDOM k) throws IOException, SQLException, ReactionAlreadyExistsException {
+	public TransportContainer compartmentaliseTransportContainer(String path, TransportContainer transportContainer, CompartmentsInterface obj, KINGDOM k) throws IOException, SQLException, ReactionAlreadyExistsException {
 
 		CompartmentaliseTransportContainer compartmentaliseTransportContainer = new CompartmentaliseTransportContainer(transportContainer, obj.getBestCompartmentsByGene(10), k);
 		compartmentaliseTransportContainer.loadCompartmentsToContainer();
@@ -225,7 +225,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 //
 //		KINGDOM k;
 //
-//		PSortInterface obj;
+//		CompartmentsInterface obj;
 //		///////////////////////////
 //
 //		//for Eukaryotes
@@ -269,7 +269,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 //
 //				if(genome_file.isFile()) {
 //
-//					List<PSort3_result>  results_list = bact_obj.addGeneInformation(new File(psort_prediction_file_path));
+//					List<PSort3Result>  results_list = bact_obj.addGeneInformation(new File(psort_prediction_file_path));
 //
 //					bact_obj = new PSort3(conn,results_list);
 //					bact_obj.loadCompartmentsInformation();

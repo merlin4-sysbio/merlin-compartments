@@ -195,89 +195,73 @@ public class LoadTransportersData {
 
 		String taxonomyString="";
 
-		if(parserContainer.getTaxonomyContainer() != null && parserContainer.getTaxonomyContainer().getTaxonomy() !=null) {
-
+		if(parserContainer.getTaxonomyContainer() != null && parserContainer.getTaxonomyContainer().getTaxonomy() !=null)
 			taxonomyString=parserContainer.getTaxonomyContainer().getTaxonomy().toString();
-		}
 
 		String uniprot_id = parserContainer.getUniprot_id();
 		String tc_number = parserContainer.getTc_number();
 
 		//verify reactions associated to uniprot id 
 
-		Set<Integer> loadedTransportSystemIds = this.getTransportSystems(uniprot_id); 
+		Set<Integer> loadedTransportSystemIds = this.getTransportSystems(uniprot_id, tc_number); 
 
 		// process transporters with new tc numbers
 
 		Set<Integer> loadedClone = new TreeSet<Integer>(loadedTransportSystemIds);
 		Set<Integer> newClone = new TreeSet<Integer>(newTransportSystemIds);
-
+		
 		loadedClone.removeAll(newTransportSystemIds);
 		newClone.removeAll(loadedTransportSystemIds);
 
-		// verify tc numbers associated to uniprot
+		// verify tc numbers associated to uniprot registry
 
-		String old_tcnumber = this.getUniprotLastestVersionTCnumber(uniprot_id);
+	//	String old_tcnumber = this.getUniprotLastestVersionTCnumber(uniprot_id);
 
 		int tc_version = -1;
 
-		tc_version = this.getTC_version(tc_number);
-
-		if(old_tcnumber == null || !old_tcnumber.equalsIgnoreCase(tc_number)) {
+		tc_version = this.getTC_version(tc_number, uniprot_id);
+		
+		// tc version is updated if tc is new or if the existing reaction set does not match exactly the new reaction set
+		boolean //update = true, 
+				addTC = false;
+		
+	//	if(old_tcnumber == null || !old_tcnumber.equalsIgnoreCase(tc_number)) {
 
 			if(tc_version<0) {
 
 				int taxonomy_data_id = this.getOrganismID(parserContainer.getTaxonomyContainer().getSpeciesName(), taxonomyString.replace("'", "\\'"));
-
 				int general_equation_id = this.load_general_equation(parserContainer.getGeneral_equation());
-
 				tc_version = this.addTC_number(parserContainer, taxonomy_data_id, general_equation_id);
+				//update = false;
+				addTC = true;
 			}
-			else {
-
-				if(!loadedClone.isEmpty()) {
-
-					tc_version = this.updateTC_version(tc_number);
-				}
-				else {
-
-					if(!newClone.isEmpty() && loadedTransportSystemIds.size()>0) {
-
-						tc_version = this.updateTC_version(tc_number);
-					}
-				}
-			}
-
+	//	}
+		
+	//	if(update) {
+			
+			if(!loadedClone.isEmpty())
+				tc_version = this.updateTC_version(tc_number, parserContainer.getUniprot_id());
+			else
+				if(!newClone.isEmpty() && loadedTransportSystemIds.size()>0)
+					tc_version = this.updateTC_version(tc_number, parserContainer.getUniprot_id());
+	//	}
+		
+		if(addTC)
 			this.add_tcdb_registry(parserContainer, tc_version);
-		}
-		else {
-
-			if(!loadedClone.isEmpty()) {
-
-				tc_version = this.updateTC_version(tc_number);
-			}
-			else {
-
-				if(!newClone.isEmpty() && loadedTransportSystemIds.size()>0) {
-
-					tc_version = this.updateTC_version(tc_number);
-				}
-			}
-		}
-
-		for(int transport_system_id : newTransportSystemIds) {
-
+		
+		
+		for(int transport_system_id : newTransportSystemIds)
 			this.load_tc_number_has_transport_system(tc_number, transport_system_id, tc_version);
-		}
 	}
 
 
 	/**
 	 * @param uniprot_id
+	 * @param tc_number 
 	 * @return
 	 * @throws SQLException
 	 */
-	private Set<Integer> getTransportSystems(String uniprot_id) throws SQLException {
+	private Set<Integer> getTransportSystems(String uniprot_id, String tc_number) throws SQLException {
 
 		Set<Integer> loadedTransportSystemIds = new TreeSet<Integer>(); 
 
@@ -285,58 +269,54 @@ public class LoadTransportersData {
 				" INNER JOIN tc_numbers_has_transport_systems " +
 				" ON (tc_numbers_has_transport_systems.tc_version = tcdb_registries.tc_version " +
 				"AND tc_numbers_has_transport_systems.tc_number = tcdb_registries.tc_number)" +
-				" WHERE uniprot_id='"+uniprot_id+"' AND latest_version");
+				" WHERE uniprot_id='"+uniprot_id+"' AND tcdb_registries.tc_number='"+tc_number+"' AND latest_version");
 
-		while (rs.next()) {
-
+		while (rs.next())
 			loadedTransportSystemIds.add(rs.getInt(1));
-		}
 
 		rs.close();
 
 		return loadedTransportSystemIds;
 	}
-
-	/**
-	 * @param uniprot_id
-	 * @return
-	 * @throws SQLException 
-	 */
-	private String getUniprotLastestVersionTCnumber(String uniprot_id) throws SQLException {
-
-		String tc_number = null;
-
-		ResultSet rs = this.statement.executeQuery("SELECT tc_number FROM tcdb_registries " +
-				" WHERE uniprot_id='"+uniprot_id+"' AND latest_version");
-
-		if (rs.next()) {
-
-			tc_number = rs.getString(1);
-		}
-
-		return tc_number;
-	}
+//
+//	/**
+//	 * @param uniprot_id
+//	 * @return
+//	 * @throws SQLException 
+//	 */
+//	private String getUniprotLastestVersionTCnumber(String uniprot_id) throws SQLException {
+//
+//		String tc_number = null;
+//
+//		ResultSet rs = this.statement.executeQuery("SELECT tc_number FROM tcdb_registries " +
+//				" WHERE uniprot_id='"+uniprot_id+"' AND latest_version");
+//
+//		if (rs.next())
+//			tc_number = rs.getString(1);
+//
+//		return tc_number;
+//	}
 
 	/**
 	 * @param tc_number
+	 * @param uniprot_id 
 	 * @return
 	 * @throws SQLException 
 	 */
-	private int getTC_version(String tc_number) throws SQLException {
+	private int getTC_version(String tc_number, String uniprot_id) throws SQLException {
 
 		int tc_version = -1;
 
-		ResultSet rs = this.statement.executeQuery("SELECT MAX(tc_version) " +
-				" FROM tc_numbers WHERE tc_number='"+tc_number+"';");
-
-		if(rs.next()) {
-
-			if(rs.getInt(1)>0) {
-
+//		ResultSet rs = this.statement.executeQuery("SELECT MAX(tc_version) " +
+//				" FROM tc_numbers WHERE tc_number='"+tc_number+"';");
+		
+		ResultSet rs = this.statement.executeQuery("SELECT tc_version " +
+				" FROM tcdb_registries WHERE tc_number='"+tc_number+"' AND uniprot_id = '"+uniprot_id+"' AND latest_version;");
+		
+		if(rs.next())
+			if(rs.getInt(1)>0)
 				tc_version = rs.getInt(1);
-			}
-		}
-
+		
 		return tc_version;
 	}
 
@@ -349,7 +329,7 @@ public class LoadTransportersData {
 	 */
 	private int addTC_number(ParserContainer parserContainer, int taxonomy_data_id, int general_equation_id) throws SQLException {
 
-		int tc_version = this.getTC_version(parserContainer.getTc_number());
+		int tc_version = this.getTC_version(parserContainer.getTc_number(), parserContainer.getUniprot_id());
 
 		if(tc_version<0) {
 
@@ -375,7 +355,10 @@ public class LoadTransportersData {
 	 */
 	private int addTC_number(String tc_number, int tc_version, String tc_family, String tc_location, String affinity, int taxonomy_data_id, int general_equation_id) throws SQLException {
 
-		this.statement.execute("INSERT INTO tc_numbers (tc_number, tc_version, tc_family, tc_location, affinity, taxonomy_data_id, general_equation_id)" +
+		ResultSet rs = this.statement.executeQuery("SELECT * FROM tc_numbers WHERE tc_number='"+tc_number+"' AND tc_version = "+tc_version+";");
+
+		if(!rs.next())
+			this.statement.execute("INSERT INTO tc_numbers (tc_number, tc_version, tc_family, tc_location, affinity, taxonomy_data_id, general_equation_id)" +
 				" VALUES('"+tc_number+"', "+tc_version+", '"+tc_family+"','"+tc_location+"'," + "'"+affinity+"', "+taxonomy_data_id+", "+general_equation_id+")");
 
 		return tc_version;
@@ -405,17 +388,13 @@ public class LoadTransportersData {
 		ResultSet rs = this.statement.executeQuery("SELECT MAX(version) " +
 				" FROM tcdb_registries WHERE uniprot_id='"+uniprot_id+"';");
 
-		if(rs.next()) {
-
-			if(rs.getInt(1)>0) {
-
+		if(rs.next())
+			if(rs.getInt(1)>0)
 				currentVersion = currentVersion + rs.getInt(1);
-			}
-		}
 		rs.close();
 
-		this.statement.execute("UPDATE tcdb_registries SET latest_version = false " +
-				" WHERE uniprot_id = '"+uniprot_id+"'");
+		this.statement.execute("UPDATE tcdb_registries SET latest_version = false, loaded_at=loaded_at " +
+				" WHERE uniprot_id = '"+uniprot_id+"' AND tc_number = '"+tc_number+"';");
 
 		this.statement.execute("INSERT INTO tcdb_registries (uniprot_id, version, tc_number, tc_version, status, latest_version) " +
 				" VALUES('"+uniprot_id+"', "+currentVersion+", '"+tc_number+"', "+tc_version+", '"+processing+"', true)");
@@ -425,10 +404,11 @@ public class LoadTransportersData {
 
 	/**
 	 * @param tc_number
+	 * @param uniprot
 	 * @return
 	 * @throws SQLException
 	 */
-	private int updateTC_version(String tc_number) throws SQLException {
+	private int updateTC_version(String tc_number, String uniprot) throws SQLException {
 
 		int tc_version = -1;
 
@@ -447,7 +427,10 @@ public class LoadTransportersData {
 			general_equation_id = rs.getInt(6);
 
 			this.addTC_number(tc_number, tc_version, tc_family, tc_location, affinity, taxonomy_data_id, general_equation_id);
-			this.updateUniprotRegistries(tc_number, tc_version);
+			//this.updateUniprotRegistries(tc_number, tc_version);
+			System.out.println("updating annotations for "+uniprot);
+			this.add_tcdb_registry(uniprot, tc_number, tc_version, DatabaseProgressStatus.PROCESSED);
+			
 		}
 		else {
 
@@ -459,30 +442,28 @@ public class LoadTransportersData {
 	}
 
 	/**
+	 * update all registries for a tc number
+	 * 
 	 * @param tc_number
 	 * @param version
 	 * @return
 	 * @throws SQLException
 	 */
-	private void updateUniprotRegistries(String tc_number, int tc_version) throws SQLException {
+	public void updateUniprotRegistries(String tc_number, int tc_version) throws SQLException {
 
 		Set<String> uniprot_ids = new HashSet<String>();
 		ResultSet rs = this.statement.executeQuery("SELECT uniprot_id FROM tcdb_registries WHERE tc_number='"+tc_number+"' AND latest_version");
 
-		while(rs.next()) {
-
+		while(rs.next())
 			uniprot_ids.add(rs.getString(1));
-		}
 		rs.close();
 
 		if(uniprot_ids.size()>0) {
 
 			System.out.println("updating annotations for "+uniprot_ids);
 
-			for(String uniprot : uniprot_ids) {
-
+			for(String uniprot : uniprot_ids)
 				this.add_tcdb_registry(uniprot, tc_number, tc_version, DatabaseProgressStatus.PROCESSED);
-			}
 		}
 
 	}
@@ -553,15 +534,11 @@ public class LoadTransportersData {
 			}
 			else {
 
-				if(this.uniprot_latest_version.containsKey(alignmentResult.getUniprot_id().toUpperCase())) {
-
+				if(this.uniprot_latest_version.containsKey(alignmentResult.getUniprot_id().toUpperCase()))
 					this.statement.execute("INSERT INTO genes_has_tcdb_registries (gene_id, version, uniprot_id, similarity)" +
 							" VALUES('"+genes_id+"', "+this.uniprot_latest_version.get(alignmentResult.getUniprot_id().toUpperCase())+", '"+alignmentResult.getUniprot_id()+"','"+alignmentResult.getSimilarity()+"')");
-				}
-				else {
-
+				else
 					System.out.println("Uniprot record "+alignmentResult.getUniprot_id()+" not available in database!");
-				}
 			}
 		}
 	}
@@ -648,12 +625,9 @@ public class LoadTransportersData {
 			ResultSet rs = this.statement.executeQuery("SELECT * FROM tc_numbers_has_transport_systems" +
 					" WHERE tc_number='"+tcnumber_id+"' AND transport_system_id="+transport_system_id+" AND tc_version = "+tc_version+";");
 
-			if(!rs.next()) {
-
+			if(!rs.next())
 				this.statement.execute("INSERT INTO tc_numbers_has_transport_systems (tc_number, tc_version, transport_system_id)" +
 						" VALUES('"+tcnumber_id+"', "+tc_version+", "+transport_system_id+")");
-			}
-
 		}
 		catch (SQLException e) {
 
@@ -1314,45 +1288,55 @@ public class LoadTransportersData {
 
 		try {
 
-			ResultSet rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
-					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
+//			ResultSet rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
+//					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
+//					" INNER JOIN metabolites ON metabolites.id= metabolite_id " +
+//					" WHERE UPPER(metabolites.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
+//			
+//			while(rs.next())
+//				result.add(rs.getInt(1));
+//
+//			rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
+//					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
+//					" INNER JOIN synonyms ON transported_metabolites_directions.metabolite_id= synonyms.metabolite_id " +
+//					" WHERE UPPER(synonyms.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
+//
+//			while(rs.next())
+//				result.add(rs.getInt(1));
+//
+//			rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
+//					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
+//					" INNER JOIN metabolites ON metabolites.id= metabolite_id " +
+//					" WHERE UPPER(kegg_name)= UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
+//
+//			while(rs.next())
+//				result.add(rs.getInt(1));
+//
+//			rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
+//					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
+//					" INNER JOIN metabolites ON metabolites.id= metabolite_id " +
+//					" WHERE UPPER(chebi_name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
+//
+//			while(rs.next())
+//				result.add(rs.getInt(1));
+
+			ResultSet rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems " +
+					" LEFT JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id ) " +
 					" LEFT JOIN metabolites ON metabolites.id= metabolite_id " +
-					" WHERE UPPER(metabolites.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
-
-			while(rs.next()) {
-
-				result.add(rs.getInt(1));
-			}
-
-			rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
-					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
 					" LEFT JOIN synonyms ON transported_metabolites_directions.metabolite_id= synonyms.metabolite_id " +
-					" WHERE UPPER(synonyms.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
-
-			while(rs.next()) {
-
+					" LEFT JOIN directions on direction_id=directions.id " +
+					" WHERE (" +
+					" UPPER(metabolites.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
+					" UPPER(synonyms.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
+					" UPPER(kegg_name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
+					" UPPER(chebi_name) = UPPER('"+metabolites_name.replace("'", "\\'")+"')" +
+					")" +
+					" AND direction <> 'reactant' " +
+					" AND direction <> 'product' " +
+					" AND transport_type_id = "+type_id );
+			
+			while(rs.next())
 				result.add(rs.getInt(1));
-			}
-
-			rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
-					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
-					" LEFT JOIN metabolites ON metabolites.id= metabolite_id " +
-					" WHERE UPPER(kegg_name)= UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
-
-			while(rs.next()) {
-
-				result.add(rs.getInt(1));
-			}
-
-			rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems" +
-					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id )" +
-					" LEFT JOIN metabolites ON metabolites.id= metabolite_id " +
-					" WHERE UPPER(chebi_name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') AND transport_type_id = "+type_id);
-
-			while(rs.next()) {
-
-				result.add(rs.getInt(1));
-			}
 
 			return result;
 		}

@@ -3,6 +3,7 @@
  */
 package pt.uminho.sysbio.common.transporters.core.compartments;
 
+import java.io.File;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author ODias
  *
  */
-public abstract interface PSortInterface {
+public abstract interface CompartmentsInterface {
 	
 	
 	/**
@@ -49,5 +50,17 @@ public abstract interface PSortInterface {
 	 * @param cancel
 	 */
 	public void setCancel(AtomicBoolean cancel);
+
+	/**
+	 * @param ncbiGenome
+	 */
+	public void setNCBIGenome(boolean ncbiGenome);
+
+	/**
+	 * @param outFile
+	 * @return
+	 * @throws Exception 
+	 */
+	public Map<String, CompartmentResult> addGeneInformation(File outFile) throws Exception;
 
 }

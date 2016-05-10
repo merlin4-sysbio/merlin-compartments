@@ -1,6 +1,7 @@
 package pt.uminho.sysbio.common.transporters.core.compartments;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -17,7 +18,7 @@ import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
-public class WoLFPSORT implements PSortInterface{
+public class WoLFPSORT implements CompartmentsInterface{
 
 	private String genomeCode;
 	private String tempPath;
@@ -73,7 +74,7 @@ public class WoLFPSORT implements PSortInterface{
 	//	}
 
 	/* (non-Javadoc)
-	 * @see compartments.PSortInterface#getCompartments(java.lang.String)
+	 * @see compartments.CompartmentsInterface#getCompartments(java.lang.String)
 	 */
 	public boolean getCompartments(String type) throws Exception {
 
@@ -125,7 +126,7 @@ public class WoLFPSORT implements PSortInterface{
 	}
 
 	/* (non-Javadoc)
-	 * @see compartments.PSortInterface#loadCompartmentsInformation()
+	 * @see compartments.CompartmentsInterface#loadCompartmentsInformation()
 	 */
 	public void loadCompartmentsInformation(boolean silico) throws Exception {
 
@@ -441,7 +442,7 @@ public class WoLFPSORT implements PSortInterface{
 	}
 
 	/* (non-Javadoc)
-	 * @see compartments.PSortInterface#getBestCompartmentsForGene(double)
+	 * @see compartments.CompartmentsInterface#getBestCompartmentsForGene(double)
 	 */
 	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException  {
 
@@ -465,20 +466,16 @@ public class WoLFPSORT implements PSortInterface{
 		return true;
 	}
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
 
-		//obj.getCompartments("C:/Users/ODias/Desktop/CR382121.faa", "fungi");
+	@Override
+	public void setNCBIGenome(boolean ncbiGenome) {
+		this.isNCBIGenome = ncbiGenome;
+	}
 
-		String out = "C:/Users/ODias/Desktop/out.out";
-		try {
-			WoLFPSORT.getCompartments("fungi","C:/Users/Oscar/Desktop/CP004143.faa", out);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	@Override
+	public Map<String, CompartmentResult> addGeneInformation(File outFile) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
