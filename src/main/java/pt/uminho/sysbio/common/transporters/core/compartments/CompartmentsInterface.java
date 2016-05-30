@@ -52,11 +52,6 @@ public abstract interface CompartmentsInterface {
 	public void setCancel(AtomicBoolean cancel);
 
 	/**
-	 * @param ncbiGenome
-	 */
-	public void setNCBIGenome(boolean ncbiGenome);
-
-	/**
 	 * @param outFile
 	 * @return
 	 * @throws Exception 

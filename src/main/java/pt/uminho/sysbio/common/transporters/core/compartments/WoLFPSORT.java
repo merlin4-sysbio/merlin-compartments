@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import jp.cbrc.togo.WoLFPsort;
 import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 public class WoLFPSORT implements CompartmentsInterface{
@@ -24,7 +23,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 	private String tempPath;
 	private LoadCompartments loadCompartments;
 	private int normalization=27;
-	private boolean isNCBIGenome;
 	private AtomicBoolean cancel;
 	private boolean isUseProxy, isUseAuthentication;
 	private String host, port, user, pass;
@@ -33,12 +31,10 @@ public class WoLFPSORT implements CompartmentsInterface{
 	/**
 	 * @param conn
 	 * @param genomeCode
-	 * @param isNCBIGenome
 	 * @param project_id
 	 */
-	public WoLFPSORT(Connection conn, String genomeCode, boolean isNCBIGenome, int project_id) {
+	public WoLFPSORT(Connection conn, String genomeCode, int project_id) {
 
-		this.isNCBIGenome=isNCBIGenome;
 		this.loadCompartments = new LoadCompartments(conn);
 		this.genomeCode = genomeCode;
 		this.tempPath = FileUtils.getCurrentTempDirectory();
@@ -51,11 +47,9 @@ public class WoLFPSORT implements CompartmentsInterface{
 	 * @param conn
 	 * @param genomeID
 	 * @param tempPath
-	 * @param isNCBIGenome
 	 */
-	public WoLFPSORT(Connection conn, String genomeCode, String tempPath, boolean isNCBIGenome, int project_id) {
+	public WoLFPSORT(Connection conn, String genomeCode, String tempPath, int project_id) {
 
-		this.isNCBIGenome=isNCBIGenome;
 		this.loadCompartments = new LoadCompartments(conn);
 		this.genomeCode = genomeCode;
 		this.tempPath = FileUtils.getCurrentTempDirectory();
@@ -177,15 +171,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 					double score = Double.valueOf(id_result_tokenizer.nextToken());
 					WoLFPSORT_Result woLFPSORT_Result = new WoLFPSORT_Result(id);
 
-					//					if(this.isNCBIGenome) {
-					//						
-					//						locus_tags.put(id.split("\\|")[3], index);
-					//					}
-					//					else {
-					//						
-					//						locus_tags.put(id.split("\\|")[0], index);
-					//					}
-
 					locus_tags.put(id, index);
 
 					woLFPSORT_Result.addCompartment(result, score);
@@ -204,31 +189,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 			in.close();
 
 			if(!this.cancel.get()) {
-
-				if(this.isNCBIGenome) {
-
-//					NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
-//
-//					fetchStub = new NcbiEFetchSequenceStub_API(2);
-//
-//					Map<String, String> idLocus = fetchStub.getLocusFromID(locus_tags.keySet(),1000);
-					
-					Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(locus_tags.keySet(), 400);
-					
-					Map<String, Integer> temp_locus_tags = new HashMap<String, Integer>();
-
-					for (String id : idLocus.keySet()) {
-
-						for(String acc:locus_tags.keySet()) {
-
-							if(acc.contains(id)) {
-
-								temp_locus_tags.put(idLocus.get(id), locus_tags.get(acc));
-							}
-						}
-					}
-					locus_tags = temp_locus_tags;
-				}
 
 				List<WoLFPSORT_Result> compartmentResults = new ArrayList<WoLFPSORT_Result>();
 				for(String locus_tag:locus_tags.keySet()) {
@@ -313,23 +273,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 			in.close();
 
 			if(!this.cancel.get()) {
-
-				if(this.isNCBIGenome) {
-
-//					NcbiEFetchSequenceStub_API fetchStub = new NcbiEFetchSequenceStub_API(2);
-//					fetchStub = new NcbiEFetchSequenceStub_API(2);
-//					Map<String, String> idLocus = fetchStub.getLocusFromID(locus_tags.keySet(),1000);
-					
-					Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(locus_tags.keySet(), 400);
-					
-					Map<String, Integer> temp_locus_tags = new HashMap<String, Integer>();
-
-					for (String id : idLocus.keySet()) {
-
-						temp_locus_tags.put(idLocus.get(id), locus_tags.get(id));
-					}
-					locus_tags = temp_locus_tags;
-				}
 
 				List<WoLFPSORT_Result> compartmentResults = new ArrayList<WoLFPSORT_Result>();
 				for(String locus_tag:locus_tags.keySet()) {
@@ -464,12 +407,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 	public boolean isEukaryote() {
 
 		return true;
-	}
-
-
-	@Override
-	public void setNCBIGenome(boolean ncbiGenome) {
-		this.isNCBIGenome = ncbiGenome;
 	}
 
 	@Override

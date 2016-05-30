@@ -10,6 +10,7 @@ import java.util.Set;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
+import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.STAIN;
 import pt.uminho.sysbio.common.transporters.core.utils.Utilities;
 
 /**
@@ -170,6 +171,7 @@ public class ProcessCompartments {
 		Statement stmt = connection.createStatement();
 
 		String abbreviation;
+		
 		if(compartment.length()>3) {
 
 			abbreviation=compartment.substring(0,3).toUpperCase();
@@ -178,11 +180,11 @@ public class ProcessCompartments {
 
 			abbreviation=compartment.toUpperCase().concat("_");
 
-			while(abbreviation.length()<4) {
-
+			while(abbreviation.length()<4)
 				abbreviation=abbreviation.concat("_");
-			}
 		}
+		
+		abbreviation=abbreviation.toUpperCase();
 
 		ResultSet rs = stmt.executeQuery("SELECT idcompartment FROM compartment WHERE name ='"+compartment+"' AND abbreviation ='"+abbreviation+"'");
 
@@ -211,7 +213,7 @@ public class ProcessCompartments {
 	}
 	
 	/**
-	 * Static method for parsing comparmtents
+	 * Static method for parsing compartmtents for metabolic reactions
 	 * 
 	 * @param list
 	 * @param compartmentsAbb_ids
@@ -246,8 +248,10 @@ public class ProcessCompartments {
 						if(!hasCellWall)
 							compartments.add(idCompartmentAbbIdMap.get("extr"));
 				}
-				else if(abb.equalsIgnoreCase("cellw"))
+				else if(abb.equalsIgnoreCase("cellw")) {
+					
 					compartments.add(idCompartmentAbbIdMap.get("extr"));
+				}
 				else if(abb.equalsIgnoreCase("outme")) {
 
 					compartments.add(idCompartmentAbbIdMap.get("perip"));
@@ -257,6 +261,11 @@ public class ProcessCompartments {
 
 					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
 					compartments.add(idCompartmentAbbIdMap.get("extr"));
+				} 
+				else if (abb.contains("me")) {
+
+					for(String newAbb : Utilities.getOutsideMembranes(abb))
+						compartments.add(idCompartmentAbbIdMap.get(newAbb.toLowerCase()));
 				}
 				else if(abb.equalsIgnoreCase("unkn")) {
 
@@ -355,8 +364,6 @@ public class ProcessCompartments {
 		this.ignoreCompartmentsID = ignoreCompartmentsID;
 	}
 
-
-
 	/**
 	 * @return the hascellwall
 	 */
@@ -370,7 +377,6 @@ public class ProcessCompartments {
 	public void setHasCellWall(boolean hascellwall) {
 		this.hasCellWall = hascellwall;
 	}
-
 
 
 	/**
@@ -390,10 +396,4 @@ public class ProcessCompartments {
 	}
 
 
-
-	public enum STAIN {
-
-		gram_positive,
-		gram_negative
-	}
 }

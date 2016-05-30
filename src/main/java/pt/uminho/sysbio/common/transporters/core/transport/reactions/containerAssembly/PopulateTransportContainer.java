@@ -25,17 +25,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.rpc.ServiceException;
 
+import biosynth.core.components.representation.basic.graph.DefaultBinaryEdge;
+import biosynth.core.components.representation.basic.graph.Graph;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.validation.chemestry.BalanceValidator;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters.MetaboliteTaxonomyScores;
-import uk.ac.ebi.kraken.interfaces.uniprot.UniProtEntry;
-import biosynth.core.components.representation.basic.graph.DefaultBinaryEdge;
-import biosynth.core.components.representation.basic.graph.Graph;
 
 /**
  * @author ODias
@@ -78,7 +76,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	 * @param project_id
 	 * @param ignoreSymportMetabolites
 	 * @throws Exception
-	 */
+
 	public PopulateTransportContainer(Connection conn, double alpha, int minimalFrequency, double beta, double threshold, int project_id, Set<String> ignoreSymportMetabolites) throws Exception {
 
 		this.stmt = conn.createStatement();
@@ -103,7 +101,8 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		this.chebi_miriam = new ConcurrentHashMap<String, String>();
 		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
 	}
-	
+	 */
+
 	/**
 	 * @param conn
 	 * @param alpha
@@ -134,19 +133,19 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		this.geneProcessingCounter = new AtomicInteger();
 		this.querySize = new AtomicInteger();
 		this.project_id = project_id;
-		
+
 		this.graph = new Graph<String, String>();
 		this.kegg_miriam = new ConcurrentHashMap<String, String>();
 		this.chebi_miriam = new ConcurrentHashMap<String, String>();
 		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
 	}
-	
+
 	/**
 	 * @param conn
 	 * @throws SQLException 
 	 */
 	public PopulateTransportContainer (Connection conn) throws SQLException {
-		
+
 		this.stmt = conn.createStatement();
 	}
 
@@ -165,7 +164,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		System.out.println("Total elapsed time in execution of populate Graph is :"+ String.format("%d min, %d sec", 
 				TimeUnit.MILLISECONDS.toMinutes(endTime-startTime),TimeUnit.MILLISECONDS.toSeconds(endTime-startTime)
 				- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(endTime-startTime))));
-		
+
 		this.setMetaboltitesFormulas();
 		System.out.println("Total elapsed time in execution of setMetaboltitesFormulas is :"+ String.format("%d min, %d sec", 
 				TimeUnit.MILLISECONDS.toMinutes(endTime-startTime),TimeUnit.MILLISECONDS.toSeconds(endTime-startTime)
@@ -176,7 +175,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		System.out.println("Total elapsed time in execution of getMetabolitesAboveThreshold is :"+ String.format("%d min, %d sec", 
 				TimeUnit.MILLISECONDS.toMinutes(endTime-startTime),TimeUnit.MILLISECONDS.toSeconds(endTime-startTime)
 				- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(endTime-startTime))));
-		
+
 		this.getTransportTypeTaxonomyScore();
 		endTime = System.currentTimeMillis();
 		System.out.println("Total elapsed time in execution of getTransportTypeTaxonomyScore is :"+ String.format("%d min, %d sec", 
@@ -192,7 +191,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		return true;
 	}
 
-	
+
 	/**
 	 * @throws SQLException
 	 */
@@ -203,24 +202,24 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				"LEFT JOIN metabolites ON (child_id = metabolites.id)");
 
 		while(rs.next()) {
-			
+
 			this.graph.addEdge(new DefaultBinaryEdge<String, String>(rs.getString(1), rs.getString(2), rs.getString(3)));
 		}
 		rs.close();
-		
+
 		rs = stmt.executeQuery("SELECT id, kegg_miriam, chebi_miriam " +
 				"FROM metabolites");
 
 		while(rs.next()) {
-			
+
 			if(rs.getString(3)!=null  && !rs.getString(3).equalsIgnoreCase("null")) {
-				
+
 				this.chebi_miriam.put(rs.getString(1), rs.getString(3));
 			}
-			
+
 			//if(rs.getString(2)!=null  && !rs.getString(2).equalsIgnoreCase("null")) {
-				
-				//this.kegg_miriam.put(rs.getString(1), rs.getString(2));
+
+			//this.kegg_miriam.put(rs.getString(1), rs.getString(2));
 			//}
 		}
 		rs.close();
@@ -238,7 +237,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 			transport_type_list.put(rs.getString(1),rs.getString(2));
 		}
-		
+
 		return transport_type_list;
 	}
 
@@ -275,7 +274,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 					data = this.getOntologyMetabolites(metabolite, data);
 					this.metabolites_ontology.put(metabolite, data);
 				}
-				
+
 				this.selectedGenesMetabolites.put(gene, metabolitesList);
 			}
 			else {
@@ -349,10 +348,8 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	 */
 	private Set<String> getChildId(String id) throws SQLException {
 
-		if(this.child_IDs_Map.containsKey(id)) {
-
+		if(this.child_IDs_Map.containsKey(id))
 			return this.child_IDs_Map.get(id);
-		}
 
 		Set<String> child_ids_results = new TreeSet<String>();
 		ResultSet rs = stmt.executeQuery("SELECT child_id, name, kegg_miriam, kegg_name, chebi_miriam, chebi_name, datatype, metabolites_ontology.id FROM metabolites_ontology LEFT JOIN metabolites ON metabolites.id= child_id WHERE metabolite_id='"+id+"'");
@@ -360,7 +357,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		while(rs.next()) {
 
 			child_ids_results.add(rs.getString(1));
-			
+
 			TransportMetabolite transportMetabolite;
 
 			if(this.transportMetabolites.containsKey(rs.getString(1))) {
@@ -440,7 +437,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		String previousUniprotEntry="";
 		boolean openReaction=true;
 		Map<String, String> tc_numbers_equations = new HashMap<String, String>();
-		
+
 		ResultSet rs = stmt.executeQuery("SELECT tc_number, equation FROM general_equation " +
 				"INNER JOIN tc_numbers ON (general_equation.id = general_equation_id) ");
 
@@ -465,15 +462,11 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			this.genesLocusTag.put(geneID, rs.getString(2));
 			ProteinFamiliesSet proteins;
 
-			if(this.genesProteins.containsKey(geneID)) {
-
+			if(this.genesProteins.containsKey(geneID))
 				proteins=this.genesProteins.get(geneID);
-
-			}
-			else {
-
+			else
 				proteins=new ProteinFamiliesSet(originTaxonomy, alpha, beta, minimalFrequency);
-			}
+
 			ProteinFamily proteinFamily = proteins.get_protein_family(rs.getString(3));
 			proteinFamily.add_tc_number(rs.getString(17), rs.getString(12), rs.getDouble(13), rs.getString(14), organismsTaxonomyScore.get(rs.getInt(14)));
 			//sum+=rs.getDouble(13);
@@ -571,7 +564,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		this.querySize.set(new Integer(this.genesReactions.keySet().size()));
 		setChanged();
 		notifyObservers();
-		
+
 		LoadTransportContainer ltc = new LoadTransportContainer(this.genesReactions, this.cancel, this.genesLocusTag, this.genesMetabolitesTransportTypeMap, 
 				this.selectedGenesMetabolites, this.genesProteins, this.transportMetabolites, this.metabolites_ontology, 
 				this.metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.geneProcessingCounter, this.graph, this.kegg_miriam, this.chebi_miriam, this.ignoreSymportMetabolites);
@@ -589,15 +582,15 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		return transportContainer;
 	}
-	
-	
+
+
 	private void replaceGeneProteinsIds() {
-		
+
 		for(String id : this.genesLocusTag.keySet()) {
-			
+
 			this.genesProteins.put(this.genesLocusTag.get(id), this.genesProteins.get(id));
 		}
-		
+
 		this.genesProteins.keySet().retainAll(this.genesLocusTag.values());
 	}
 
@@ -726,7 +719,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	 * @param remoteExceptionTrials
 	 * @return
 	 * @throws Exception
-	 */
+
 	private double getOriginTaxonomy(int remoteExceptionTrials) throws Exception {
 
 		String firstLocusTag = this.getFirstLocusTag();
@@ -734,32 +727,32 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		if(firstLocusTag!=null) {
 
 			try {
-				
+
 				UniProtEntry entry  = UniProtAPI.getEntry(firstLocusTag, 0);
-				
+
 				if (entry != null) {
 
 					this.origin_array = new String[entry.getTaxonomy().size()+1];
 
 					for(int i=0; i<entry.getTaxonomy().size();i++) {
-						
+
 						System.out.println(entry.getTaxonomy().get(i).getValue());
 
 						this.origin_array[i]=entry.getTaxonomy().get(i).getValue();
 					}
 					this.origin_array[this.origin_array.length-1]=entry.getOrganism().getScientificName().getValue();
-					
+
 					int res = entry.getTaxonomy().size()+1;
-					
+
 					System.out.println("Origin taxonomy "+res);
-					
+
 					return res;
 				}
 			}
 			catch(Exception ex) {
 
 				if(remoteExceptionTrials<10) {
-					
+
 					System.out.println(firstLocusTag);
 
 					remoteExceptionTrials = remoteExceptionTrials+1;
@@ -775,7 +768,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		}
 		return 0;
 	}
-
+	 */
 	/**
 	 * @param remoteExceptionTrials
 	 * @return
@@ -819,7 +812,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		if(rs.next())
 			locusTag=rs.getString("locus_tag");
 
-			return locusTag;
+		return locusTag;
 	}
 
 	/**
@@ -857,7 +850,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 			double counter=0;
 			String[] other_array = rs.getString(2).replace("[", "").replace("]", "").split(",");
-			
+
 			for(int i=0;i<this.origin_array.length;i++) {
 
 				if(i==other_array.length) {
@@ -980,7 +973,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		this.cancel = cancel;
 	}
 
-	
+
 	@Override
 	public void update(Observable arg0, Object arg1) {
 

@@ -12,20 +12,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 /**
  * @author ODias
  *
  */
-public class PSort3 implements CompartmentsInterface{
+public class ReadPSort3 implements CompartmentsInterface{
 
 	private static int normalization=10;
 	private Map<String, CompartmentResult> results;
 	private LoadCompartments loadCompartments;
 	private AtomicBoolean cancel;
-	private boolean isNCBIGenome = true;
 	private int project_id;
 
 
@@ -34,7 +32,7 @@ public class PSort3 implements CompartmentsInterface{
 //	 * @param results
 //	 * @param project_id
 //	 */
-//	public PSort3(Connection conn, Map<String, CompartmentResult> results, int project_id) {
+//	public ReadPSort3(Connection conn, Map<String, CompartmentResult> results, int project_id) {
 //		this.cancel = new AtomicBoolean(false);
 //		this.loadCompartments = new LoadCompartments(conn);
 //		this.results = results;
@@ -44,11 +42,9 @@ public class PSort3 implements CompartmentsInterface{
 	/**
 	 * @param conn
 	 * @param results
-	 * @param isNCBI
 	 */
-	public PSort3(Connection conn, Map<String, CompartmentResult> results, boolean isNCBI, int project_id) {
+	public ReadPSort3(Connection conn, Map<String, CompartmentResult> results, int project_id) {
 
-		this.isNCBIGenome = isNCBI;
 		this.cancel = new AtomicBoolean(false);
 		this.loadCompartments = new LoadCompartments(conn);
 		this.results = results;
@@ -58,20 +54,8 @@ public class PSort3 implements CompartmentsInterface{
 	/**
 	 * @param connection
 	 */
-	public PSort3(Connection connection, int project_id) {
+	public ReadPSort3(Connection connection, int project_id) {
 
-		this.cancel = new AtomicBoolean(false);
-		this.loadCompartments = new LoadCompartments(connection);
-		this.project_id = project_id;
-	}
-
-	/**
-	 * @param connection
-	 * @param isNCBI
-	 */
-	public PSort3(Connection connection, boolean isNCBI, int project_id) {
-
-		this.isNCBIGenome = isNCBI;
 		this.cancel = new AtomicBoolean(false);
 		this.loadCompartments = new LoadCompartments(connection);
 		this.project_id = project_id;
@@ -80,17 +64,16 @@ public class PSort3 implements CompartmentsInterface{
 	/**
 	 * 
 	 */
-	public PSort3() {
+	public ReadPSort3() {
 
 		this.cancel = new AtomicBoolean(false);
 	}
 
 	/**
-	 * @param isNCBI
+	 * @param project_id
 	 */
-	public PSort3(boolean isNCBI, int project_id) {
+	public ReadPSort3(int project_id) {
 
-		this.isNCBIGenome = isNCBI;
 		this.cancel = new AtomicBoolean(false);
 		this.project_id = project_id;
 	}
@@ -114,9 +97,6 @@ public class PSort3 implements CompartmentsInterface{
 		Map<String, CompartmentResult> compartmentLists = this.readPSortFile(outFile);
 
 		Map<String, CompartmentResult> compartmentResults = compartmentLists;
-
-		if(this.isNCBIGenome)
-			compartmentResults = this.getLocusTags(compartmentLists);
 
 		return compartmentResults;
 
@@ -295,80 +275,13 @@ public class PSort3 implements CompartmentsInterface{
 	}
 
 
-	/**
-	 * 
-	 * 
-	 * @param compartmentLists
-	 * @return
-	 * @throws Exception
-	 */
-	private Map<String, CompartmentResult> getLocusTags(Map<String, CompartmentResult> compartmentLists) throws Exception {
-
-		Map<String, CompartmentResult> compartmentResults = new HashMap<>();
-
-		if (!this.cancel.get()) {
-			
-			Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(compartmentLists.keySet(), 500);
-			
-			for (String id : idLocus.keySet()) {
-
-				CompartmentResult pSort3Result = compartmentLists.get(id);
-				pSort3Result.setGeneID(idLocus.get(id));
-				compartmentResults.put(idLocus.get(id), pSort3Result);
-			}
-			
-		}
-		return compartmentResults;
-	}
-
 	/* (non-Javadoc)
 	 * @see compartments.CompartmentsInterface#getBestCompartmentsByGene(double, int)
 	 */
 	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException{
 
-		return loadCompartments.getBestCompartmenForGene(threshold, PSort3.normalization, this.project_id);
+		return loadCompartments.getBestCompartmenForGene(threshold, ReadPSort3.normalization, this.project_id);
 	}
-
-	//	/**
-	//	 * @param args
-	//	 * @throws IOException
-	//	 * @throws ParseException
-	//	 */
-	//	public static void main(String[] args) throws IOException, ParseException{
-	//		String database_name= 
-	//				"psort_ecoli";
-	//		//"psort_hpylori";
-	//		MySQLMultiThread mysql = new MySQLMultiThread("root","password","localhost",3306,database_name);
-	//
-	//		//PSort3 obj = new PSort3(mysql,PSort3.addGeneInformation(new File("C:/Users/ODias/Desktop/transport_eco_hpy/ecoli")));
-	//		//obj.loadCompartmentsInformation();
-	//		//obj.loadDatabase("C:/Users/ODias/Desktop/transport_eco_hpy/hpy");
-	//		
-	//		PSort3 obj = new PSort3(mysql);
-	//		
-	//		String path = FileUtils.getCurrentTempDirectory(database_name);
-	//		FileWriter fstream = new FileWriter(path+database_name+"_compartments.xls");  
-	//		System.out.println(path);
-	//		BufferedWriter out = new BufferedWriter(fstream);  
-	//		StringBuffer buffer = new StringBuffer();
-	//		buffer.append("gene\tlocation\tscore\tis dual\tlocation\tscore\n");
-	//
-	//		Map<String,GeneCompartments> temp = obj.getBestCompartmentsForGene(10);
-	//		for(String gene : temp.keySet())
-	//		{
-	//			if(temp.get(gene).isDualLocalisation())
-	//			{
-	//				buffer.append(temp.get(gene).getGene()+"\t"+temp.get(gene).getPrimary_location()+"\t"+temp.get(gene).getPrimary_score()+"\t"+temp.get(gene).isDualLocalisation()+"\t"+temp.get(gene).getSecondary_location()+"\t"+"\n");
-	//			}
-	//			else
-	//			{
-	//				buffer.append(temp.get(gene).getGene()+"\t"+temp.get(gene).getPrimary_location()+"\t"+temp.get(gene).getPrimary_score()+"\n");
-	//			}
-	//		}
-	//		out.append(buffer);
-	//		out.close();
-	//		fstream.close();
-	//	}
 
 	@Override
 	public boolean getCompartments(String string) {
@@ -387,20 +300,6 @@ public class PSort3 implements CompartmentsInterface{
 	 */
 	public void setCancel(AtomicBoolean cancel) {
 		this.cancel = cancel;
-	}
-
-	/**
-	 * @return the isNcbiGenome
-	 */
-	public boolean isNCBIGenome() {
-		return isNCBIGenome;
-	}
-
-	/**
-	 * @param isNCBIGenome the isNcbiGenome to set
-	 */
-	public void setNCBIGenome(boolean isNCBIGenome) {
-		this.isNCBIGenome = isNCBIGenome;
 	}
 
 	@Override

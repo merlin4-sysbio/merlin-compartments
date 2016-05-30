@@ -14,10 +14,7 @@ import pt.uminho.sysbio.merlin.utilities.Pair;
 
 public class LoadCompartments {
 
-
 	private Connection conn;
-	//private String databaseName;
-
 
 
 	/**
@@ -25,14 +22,9 @@ public class LoadCompartments {
 	 * @throws SQLException 
 	 */
 	public LoadCompartments(Connection connection) {
-		//try {
 
 		this.conn = connection;
 		this.initCompartments();
-		//this.setDatabaseName(msqlmt.get_database_name());
-		//}
-		//catch (SQLException e) {e.printStackTrace();}
-
 	}
 
 
@@ -46,7 +38,7 @@ public class LoadCompartments {
 
 			java.sql.Date sqlToday = new java.sql.Date((new java.util.Date()).getTime());
 			Statement stmt = this.conn.createStatement();
-
+			
 			ResultSet rs = stmt.executeQuery("SELECT id FROM psort_reports WHERE locus_tag='"+locust_tag+"' AND project_id = "+project_id);
 			if(!rs.next()) {
 				
@@ -59,13 +51,13 @@ public class LoadCompartments {
 
 			for(Pair<String, Double> compartment: probabilities) {
 
-				if(compartment.getB()>0) {
+				if(compartment.getB()>=0) {
 
-					rs = stmt.executeQuery("SELECT id FROM compartments WHERE abbreviation='"+compartment.getA()+"'");
+					rs = stmt.executeQuery("SELECT id FROM compartments WHERE abbreviation='"+compartment.getA().toUpperCase()+"'");
 
 					if(!rs.next()) {
 
-						stmt.execute("INSERT INTO compartments (name,abbreviation) VALUES('"+Utilities.parseAbbreviation(compartment.getA())+"', '"+compartment.getA()+"')");
+						stmt.execute("INSERT INTO compartments (name,abbreviation) VALUES('"+Utilities.parseAbbreviation(compartment.getA())+"', '"+compartment.getA().toUpperCase()+"')");
 						rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
 						rs.next();
 					}
@@ -104,6 +96,7 @@ public class LoadCompartments {
 					"WHERE project_id = "+project_id+" "+
 					"ORDER BY psort_report_id ASC, score DESC;"
 					);
+			
 			double score = 0;
 			
 			while(rs.next()) {

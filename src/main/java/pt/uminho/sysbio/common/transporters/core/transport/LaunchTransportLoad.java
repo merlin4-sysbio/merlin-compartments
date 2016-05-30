@@ -30,23 +30,6 @@ import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAs
  */
 public class LaunchTransportLoad extends Observable implements Observer {
 
-	private long taxonomy;
-
-	/**
-	 * @throws Exception
-	 */
-	public LaunchTransportLoad() throws Exception {
-
-
-	}	
-
-	/**
-	 * @param taxonomy
-	 */
-	public LaunchTransportLoad(long taxonomy) {
-		
-		this.taxonomy = taxonomy;
-	}
 
 	/**
 	 * @param msqlmt
@@ -65,9 +48,9 @@ public class LaunchTransportLoad extends Observable implements Observer {
 	 * @return
 	 * @throws Exception
 	 */
-	public TransportContainer createTransportContainer(MySQLMultiThread msqlmt, double alpha, int minimalFrequency, double beta, 
+	public static TransportContainer createTransportContainer(MySQLMultiThread msqlmt, double alpha, int minimalFrequency, double beta, 
 			double threshold, boolean validateReaction, boolean saveOnlyReactionsWithKEGGmetabolites, String outputObjectFileName,
-			String outputTextReactionsfileName, String path, int project_id, boolean verbose, Set<String> ignoreSymportMetabolites) throws Exception {
+			String outputTextReactionsfileName, String path, int project_id, boolean verbose, Set<String> ignoreSymportMetabolites, long taxonomy) throws Exception {
 
 		long startTime = System.currentTimeMillis();
 
@@ -95,14 +78,10 @@ public class LaunchTransportLoad extends Observable implements Observer {
 		}
 		else {
 			
-			if(this.taxonomy>0) {
-				
-				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, this.taxonomy, project_id, ignoreSymportMetabolites);
-			}
-			else {
-				
-				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, project_id, ignoreSymportMetabolites);
-			}
+			//if(this.taxonomy>0)				
+				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, taxonomy, project_id, ignoreSymportMetabolites);
+//			else				
+//				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, project_id, ignoreSymportMetabolites);
 
 			populateTransportContainer.getDataFromDatabase();
 			saveOnlyReactionsWithKEGGmetabolites = true;
@@ -115,7 +94,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 			}
 			if(outputObjectFileName!=null) {
 				
-				this.saveTransportContainerFile(transportContainer, outputObjectFileName);
+				LaunchTransportLoad.saveTransportContainerFile(transportContainer, outputObjectFileName);
 			}
 		}
 
@@ -156,7 +135,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 	 * @param fileName
 	 * @return
 	 */
-	private boolean saveTransportContainerFile(TransportContainer transportContainer, String fileName) {
+	private static boolean saveTransportContainerFile(TransportContainer transportContainer, String fileName) {
 
 		try {
 
@@ -182,110 +161,4 @@ public class LaunchTransportLoad extends Observable implements Observer {
 		setChanged();
 		notifyObservers();
 	}
-
-//	/**
-//	 * @param args
-//	 * @throws SQLException 
-//	 * @throws IOException 
-//	 * @throws ServiceException 
-//	 * @throws NullPointerException 
-//	 */
-//	public static void main(String[] args) throws Exception {
-//
-//		LaunchTransportLoad ltl = new LaunchTransportLoad();
-//
-//		String db_name = "test_transporters"; //transporters database name
-//		MySQLMultiThread msqlmt = new MySQLMultiThread("localhost","3306", db_name,"root","");
-//
-//		double threshold = 0.2;
-//		double alpha = 0.3;
-//		int minimalFrequency = 2;
-//		double beta = 0.05;
-//		boolean validateReaction = true;
-//		boolean saveOnlyReactionsWithKEGGmetabolites = false;
-//
-//
-//		String filePrefix = "Th_"+threshold+"__al_"+alpha+"__be_"+beta;
-//		String dir = (msqlmt.get_database_name()+"/"+filePrefix+"/reactionValidation"+validateReaction+"/kegg_only"+saveOnlyReactionsWithKEGGmetabolites);
-//		String path = FileUtils.getCurrentTempDirectory(dir);
-//		String fileName = path + msqlmt.get_database_name() + "__" + filePrefix + ".transContainer";
-//
-//		TransportContainer transportContainer = ltl.createTransportContainer(msqlmt, alpha, minimalFrequency, beta, threshold, validateReaction, 
-//				saveOnlyReactionsWithKEGGmetabolites, fileName, filePrefix, path, 1, true);
-//
-//		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//		//compartmentalization
-//		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//		String psort_db_name = "test_transporters";			//psort dbName
-//		boolean isNCBIGenome = true;	// downloaded from NCBI
-//
-//		msqlmt = new MySQLMultiThread("localhost","3306", psort_db_name,"root","");
-//		Connection conn = new Connection(msqlmt); // connection to psort_db_name
-//
-//		KINGDOM k;
-//
-//		CompartmentsInterface obj;
-//		///////////////////////////
-//
-//		//for Eukaryotes
-//		k = KINGDOM.Eukaryota;
-//
-//		String org = "fungi"; //"animal"; "plant";
-//		int counter=0;
-//
-//		WoLFPSORT euk_obj = new WoLFPSORT(conn, ""+counter, isNCBIGenome);
-//		String genome_dir ="../transport_systems/test";
-//		File genome_files = new File(genome_dir);
-//
-//		if(genome_files.isDirectory()) {
-//
-//			for(File genome_file:genome_files.listFiles()) {
-//
-//				if(genome_file.isFile()) {
-//
-//					euk_obj.getCompartments(org, genome_file.getAbsolutePath());
-//					euk_obj.loadCompartmentsInformation(true);
-//					counter++;
-//					euk_obj = new WoLFPSORT(conn, ""+counter, isNCBIGenome);
-//
-//				}
-//			}
-//		}
-//		obj = euk_obj;
-//
-//		///////////////////////////
-//
-//		//for bacteria
-//		k = KINGDOM.Bacteria;
-//		String psort_prediction_file_path=""; // predictions file from psort
-//
-//		PSort3 bact_obj = new PSort3(conn);
-//
-//
-//		if(genome_files.isDirectory()) {
-//
-//			for(File genome_file:genome_files.listFiles()) {
-//
-//				if(genome_file.isFile()) {
-//
-//					List<PSort3Result>  results_list = bact_obj.addGeneInformation(new File(psort_prediction_file_path));
-//
-//					bact_obj = new PSort3(conn,results_list);
-//					bact_obj.loadCompartmentsInformation();
-//
-//				}
-//			}
-//		}
-//
-//		obj = bact_obj;
-//
-//		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//		//compartmentalization
-//		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//		transportContainer = ltl.compartmentaliseTransportContainer(path,transportContainer, obj, k);
-//
-//	}
-
 }

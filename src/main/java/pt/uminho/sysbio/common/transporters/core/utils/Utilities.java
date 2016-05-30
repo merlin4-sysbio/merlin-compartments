@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import pt.uminho.sysbio.common.transporters.core.compartments.GeneCompartments;
-import pt.uminho.sysbio.common.transporters.core.compartments.ProcessCompartments.STAIN;
+import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.STAIN;
 
 public class Utilities {
 
@@ -81,7 +81,7 @@ public class Utilities {
 			return "golgi_apparatus";
 
 		else if(abbreviation.equals("vac") || abbreviation.equals("vacu"))
-			return "vacuolar_membrane";
+			return "vacuole";
 
 		else if(abbreviation.equals("mit") || abbreviation.equals("mito"))
 			return "mitochondria";
@@ -153,7 +153,7 @@ public class Utilities {
 	 */
 	public static String getAbbreviation(String compartmentID) {
 
-		if(compartmentID.equals("peroxisome membrane"))			
+		if(compartmentID.equals("peroxisome membrane") || compartmentID.equals("peroxisomal_membrane"))			
 			return "permem";
 
 		if(compartmentID.equals("mitochondrion membrane"))			
@@ -162,13 +162,13 @@ public class Utilities {
 		if(compartmentID.equals("endoplasmic reticulum membrane"))
 			return "ermem";
 
-		if(compartmentID.equals("vacuole membrane"))			
+		if(compartmentID.equals("vacuole membrane") || compartmentID.equals("vacuolar_membrane"))			
 			return "vacmem";
 
-		if(compartmentID.equals("golgi apparatus membrane"))
+		if(compartmentID.equals("golgi apparatus membrane") || compartmentID.equals("golgi_membrane"))
 			return "golmem";
 
-		if(compartmentID.equals("nucleus membrane"))
+		if(compartmentID.equals("nucleus membrane") || compartmentID.equals("nuclear_membrane") )
 			return "nucmem";
 
 		if(compartmentID.equals("plastid"))
@@ -189,13 +189,13 @@ public class Utilities {
 		if(compartmentID.equals("cytoplasm"))
 			return "cytop";
 
-		else if(compartmentID.equals("golgi apparatus"))
+		else if(compartmentID.equals("golgi apparatus") || compartmentID.equals("golgi"))
 			return "golg";
 
 		else if(compartmentID.equals("vacuole"))
 			return "vac";
 
-		else if(compartmentID.equals("mitochondrion"))
+		else if(compartmentID.equals("mitochondrion") || compartmentID.equals("mitochondrial"))
 			return "mito";
 
 		else if(compartmentID.equals("vesicles_of_secretory_system"))
@@ -251,6 +251,72 @@ public class Utilities {
 			return compartmentID;
 
 		}
+	}
+	
+	
+	/**
+	 * Get the outside of the membranes
+	 * 
+	 * @param stain
+	 * @return
+	 * @throws Exception
+	 */
+	public static Set<String> getOutsideMembranes(String compartmentID) throws Exception {
+		
+		Set<String> list = new HashSet<String>();
+		
+		if(compartmentID.equalsIgnoreCase("outme")) {
+			
+			list.add("EXTR");
+			list.add("PERIP");
+			return list;
+		}
+		
+		list.add("cyto");
+		
+		if(compartmentID.equalsIgnoreCase("unkn"))
+			list.add("unknown");
+
+		if(compartmentID.equalsIgnoreCase("cytmem"))
+			list.add("EXTR");
+
+		if(compartmentID.equalsIgnoreCase("perip"))
+			list.add("EXTR");
+
+		if(compartmentID.equalsIgnoreCase("cellw") && compartmentID.equalsIgnoreCase("cellwall"))
+			list.add("EXTR");
+
+		if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas"))
+			list.add("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("golmem") || compartmentID.equalsIgnoreCase("golgmem"))
+			list.add("GOLG");
+
+		else if(compartmentID.equalsIgnoreCase("vacmem") || compartmentID.equalsIgnoreCase("vacumem"))
+			list.add("VAC");
+
+		else if(compartmentID.equalsIgnoreCase("mitmem") || compartmentID.equalsIgnoreCase("mitomem"))
+			list.add("MITO");
+
+		else if(compartmentID.equalsIgnoreCase("endeme") || compartmentID.equalsIgnoreCase("ermem"))
+			list.add("E.R.");
+
+		else if(compartmentID.equalsIgnoreCase("nucmem") || compartmentID.equalsIgnoreCase("nuclmem"))
+			list.add("NUCL");
+
+		else if(compartmentID.equalsIgnoreCase("cytmem") || compartmentID.equalsIgnoreCase("cytomem") || compartmentID.equalsIgnoreCase("cytopmem"))
+			list.add("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("csk") || compartmentID.equalsIgnoreCase("cysk"))
+			list.add("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("poxmem") || compartmentID.equalsIgnoreCase("permem"))
+			list.add("POX");
+		
+		
+		return list;
+		
+		
 	}
 
 	/**

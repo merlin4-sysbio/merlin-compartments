@@ -6,6 +6,15 @@ public class Enumerators {
 	 * @author ODias
 	 *
 	 */
+
+
+	public enum STAIN {
+
+		gram_positive,
+		gram_negative
+	}
+	
+	
 	public static enum OrganismType{
 		__(""),
 		animal ("animal"),

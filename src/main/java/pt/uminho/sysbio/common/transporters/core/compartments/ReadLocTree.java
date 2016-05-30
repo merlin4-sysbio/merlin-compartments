@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.OrganismType;
 
@@ -24,32 +23,31 @@ public class ReadLocTree implements CompartmentsInterface {
 	private LoadCompartments loadCompartments;
 	private Map<String, CompartmentResult> results;
 	private int project_id;
-	private boolean isNCBIGenome;
 	private OrganismType organismType;
 
 
+
 	/**
-	 * 
+	 * @param organismType
 	 */
-	public ReadLocTree() {
+	public ReadLocTree(OrganismType organismType) {
 
 		this.cancel = new AtomicBoolean(false);
+		this.organismType = organismType;
 	}
 
 	/**
 	 * @param conn
 	 * @param results
-	 * @param isNCBI
 	 * @param project_id
 	 * @param organismType
 	 */
-	public ReadLocTree(Connection conn, Map<String, CompartmentResult> results, boolean isNCBI, int project_id, OrganismType organismType) {
+	public ReadLocTree(Connection conn, Map<String, CompartmentResult> results, int project_id, OrganismType organismType) {
 
 		this.cancel = new AtomicBoolean(false);
 		this.loadCompartments = new LoadCompartments(conn);
 		this.results = results;
 		this.project_id = project_id;
-		this.isNCBIGenome = isNCBI;
 		this.organismType = organismType;
 	}
 
@@ -68,19 +66,6 @@ public class ReadLocTree implements CompartmentsInterface {
 		this.cancel = cancel;
 	}
 
-	/**
-	 * @return the isNcbiGenome
-	 */
-	public boolean isNCBIGenome() {
-		return isNCBIGenome;
-	}
-
-	/**
-	 * @param isNCBIGenome the isNcbiGenome to set
-	 */
-	public void setNCBIGenome(boolean isNCBIGenome) {
-		this.isNCBIGenome = isNCBIGenome;
-	}
 
 	public boolean isEukaryote() {
 
@@ -125,7 +110,7 @@ public class ReadLocTree implements CompartmentsInterface {
 				String localizationString = locT[localization];
 
 				if(!this.organismType.equals(OrganismType.plant)) {
-					
+
 					if (localizationString.equals("chloroplast") || 
 							localizationString.equals("plastid"))
 						localizationString = "mitochondrion";
@@ -142,11 +127,14 @@ public class ReadLocTree implements CompartmentsInterface {
 				}
 				else {
 
-
 					locTR = new LocTreeResult(locT[proteinID], new Double(locT[score]), localizationString, locT[geneOntologyTerms]);
-					if(expectedAccuracy>0 && annotationType>0)
+					
+					
+					if(expectedAccuracy>0 && annotationType>0) {
+
 						locTR.setAnnotationType(locT[annotationType]);
-					locTR.setExpectedAccuracy(locT[expectedAccuracy]);
+						locTR.setExpectedAccuracy(locT[expectedAccuracy]);
+					}
 				}
 
 				compartmentLists.put(locT[proteinID], locTR);
@@ -165,9 +153,6 @@ public class ReadLocTree implements CompartmentsInterface {
 
 		Map<String, CompartmentResult> compartmentResults = compartmentLists;
 
-		if(this.isNCBIGenome)
-			compartmentResults = this.getLocusTags(compartmentLists);
-
 		return compartmentResults;
 	}
 
@@ -178,29 +163,30 @@ public class ReadLocTree implements CompartmentsInterface {
 	 * @param compartmentLists
 	 * @return
 	 * @throws Exception
+
+				private Map<String, CompartmentResult> getLocusTags(Map<String, CompartmentResult> compartmentLists) throws Exception {
+
+					Map<String, CompartmentResult> compartmentResults = new HashMap<>();
+
+					if (!this.cancel.get()) {
+
+						Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(compartmentLists.keySet(), 500);
+
+						for (String id : idLocus.keySet()) {
+
+							CompartmentResult locTreeResult = compartmentLists.get(id);
+							locTreeResult.setGeneID(idLocus.get(id));
+							compartmentResults.put(idLocus.get(id), locTreeResult);
+						}
+					}
+					return compartmentResults;
+				}
 	 */
-	private Map<String, CompartmentResult> getLocusTags(Map<String, CompartmentResult> compartmentLists) throws Exception {
-
-		Map<String, CompartmentResult> compartmentResults = new HashMap<>();
-
-		if (!this.cancel.get()) {
-
-			Map<String, String> idLocus = NcbiAPI.getNCBILocusTags(compartmentLists.keySet(), 500);
-
-			for (String id : idLocus.keySet()) {
-
-				CompartmentResult locTreeResult = compartmentLists.get(id);
-				locTreeResult.setGeneID(idLocus.get(id));
-				compartmentResults.put(idLocus.get(id), locTreeResult);
-			}
-		}
-		return compartmentResults;
-	}
 
 	@Override
 	public Map<String, GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException {
 
-		return loadCompartments.getBestCompartmenForGene(threshold, ReadLocTree.normalization, this.project_id);
+		return this.loadCompartments.getBestCompartmenForGene(threshold, ReadLocTree.normalization, this.project_id);
 	}
 
 

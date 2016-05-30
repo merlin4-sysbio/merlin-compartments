@@ -58,7 +58,6 @@ public class TransportReactionsGeneration {
 	private Set<UnnannotatedTransportersContainer> unAnnotatedTransporters;
 	private int initialHomolguesSize;
 	private String fileLocation;
-	private boolean isNCBIGenome;
 	private long taxonomyID;
 
 	/**
@@ -81,10 +80,9 @@ public class TransportReactionsGeneration {
 
 	/**
 	 * @param msqlmt
-	 * @param isNCBIGenome
 	 * @param taxonomyID
 	 */
-	public TransportReactionsGeneration(MySQLMultiThread msqlmt, boolean isNCBIGenome, long taxonomyID) {
+	public TransportReactionsGeneration(MySQLMultiThread msqlmt, long taxonomyID) {
 
 		this.msqlmt = msqlmt;
 		this.originTaxonomy = null;
@@ -97,7 +95,6 @@ public class TransportReactionsGeneration {
 		this.metabolitesNotAnnotated = new ArrayList<String>(); 
 		this.metabolitesToBeVerified = new ArrayList<String>();
 		this.setUnAnnotatedTransporters(new TreeSet<UnnannotatedTransportersContainer>());
-		this.isNCBIGenome = isNCBIGenome;
 		this.taxonomyID = taxonomyID;
 	}
 
@@ -1075,17 +1072,7 @@ public class TransportReactionsGeneration {
 	 */
 	public void setOrigintaxonomy(String locus) throws Exception {
 
-		TaxonomyContainer organism_data;
-
-		if(this.isNCBIGenome) {
-
-			organism_data = UniProtAPI.setOriginOrganism(locus,0);
-		}
-		else {
-
-			//organism_data = UniProtAPI.getTaxonomyFromNCBITaxnomyID(this.taxonomyID,0);
-			organism_data = NcbiAPI.getTaxonomyFromNCBI(this.taxonomyID,0);
-		}
+		TaxonomyContainer organism_data = NcbiAPI.getTaxonomyFromNCBI(this.taxonomyID,0);
 
 		this.originOrganism = organism_data.getSpeciesName();
 		this.originTaxonomy = organism_data.getTaxonomy();
