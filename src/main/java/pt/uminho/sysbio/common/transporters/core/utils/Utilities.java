@@ -68,13 +68,13 @@ public class Utilities {
 		if(abbreviation.equals("perip"))
 			return "periplasmic";
 
-		if(abbreviation.equals("outme"))
+		if(abbreviation.equals("outme") || abbreviation.equals("outmem"))
 			return "outer_membrane";
 
 		if(abbreviation.equals("cytop"))
 			return "cytoplasmic";
 
-		if(abbreviation.equals("pla") || abbreviation.equals("plas"))
+		if(abbreviation.equals("pla") || abbreviation.equals("plas") || abbreviation.equals("plasmem"))
 			return "plasma_membrane";
 
 		else if(abbreviation.equals("gol") || abbreviation.equals("golg"))
@@ -114,7 +114,7 @@ public class Utilities {
 			return "mitochondrion membrane";
 
 		else if(abbreviation.equals("plast"))
-			return "abbreviation";
+			return "plastid";
 
 		else if(abbreviation.equals("chlo"))
 			return "chloroplast";
@@ -178,13 +178,13 @@ public class Utilities {
 			return "unkn";
 
 		if(compartmentID.equals("plasma membrane"))
-			return "pla";
+			return "plasmem";
 
 		if(compartmentID.equals("periplasmic"))
 			return "perip";
 
 		if(compartmentID.equals("outer_membrane"))
-			return "outme";
+			return "outmem";
 
 		if(compartmentID.equals("cytoplasm"))
 			return "cytop";
@@ -265,57 +265,61 @@ public class Utilities {
 		
 		Set<String> list = new HashSet<String>();
 		
-		if(compartmentID.equalsIgnoreCase("outme")) {
+		if(compartmentID.equalsIgnoreCase("outmem")) {
 			
 			list.add("EXTR");
 			list.add("PERIP");
 			return list;
 		}
 		
-		list.add("cyto");
-		
-		if(compartmentID.equalsIgnoreCase("unkn"))
-			list.add("unknown");
-
-		if(compartmentID.equalsIgnoreCase("cytmem"))
-			list.add("EXTR");
-
-		if(compartmentID.equalsIgnoreCase("perip"))
-			list.add("EXTR");
-
-		if(compartmentID.equalsIgnoreCase("cellw") && compartmentID.equalsIgnoreCase("cellwall"))
-			list.add("EXTR");
-
-		if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas"))
-			list.add("EXTR");
-
-		else if(compartmentID.equalsIgnoreCase("golmem") || compartmentID.equalsIgnoreCase("golgmem"))
-			list.add("GOLG");
-
-		else if(compartmentID.equalsIgnoreCase("vacmem") || compartmentID.equalsIgnoreCase("vacumem"))
-			list.add("VAC");
-
-		else if(compartmentID.equalsIgnoreCase("mitmem") || compartmentID.equalsIgnoreCase("mitomem"))
-			list.add("MITO");
-
-		else if(compartmentID.equalsIgnoreCase("endeme") || compartmentID.equalsIgnoreCase("ermem"))
-			list.add("E.R.");
-
-		else if(compartmentID.equalsIgnoreCase("nucmem") || compartmentID.equalsIgnoreCase("nuclmem"))
-			list.add("NUCL");
-
-		else if(compartmentID.equalsIgnoreCase("cytmem") || compartmentID.equalsIgnoreCase("cytomem") || compartmentID.equalsIgnoreCase("cytopmem"))
-			list.add("EXTR");
-
-		else if(compartmentID.equalsIgnoreCase("csk") || compartmentID.equalsIgnoreCase("cysk"))
-			list.add("EXTR");
-
-		else if(compartmentID.equalsIgnoreCase("poxmem") || compartmentID.equalsIgnoreCase("permem"))
-			list.add("POX");
-		
+		list.add("cytop");
+		list.add(Utilities.getOutsideMembrane(compartmentID));
 		
 		return list;
+	}
+	
+	/**
+	 * @param compartmentID
+	 * @return
+	 */
+	public static String getOutsideMembrane(String compartmentID) {
 		
+		if(compartmentID.equalsIgnoreCase("unkn"))
+			return ("unknown");
+		else if(compartmentID.equalsIgnoreCase("cytmem"))
+			return ("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("cellw") && compartmentID.equalsIgnoreCase("cellwall"))
+			return ("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("plasmem"))
+			return ("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("golmem") || compartmentID.equalsIgnoreCase("golgmem"))
+			return ("GOLG");
+
+		else if(compartmentID.equalsIgnoreCase("vacmem") || compartmentID.equalsIgnoreCase("vacumem"))
+			return ("VAC");
+
+		else if(compartmentID.equalsIgnoreCase("mitmem") || compartmentID.equalsIgnoreCase("mitomem"))
+			return ("MITO");
+
+		else if(compartmentID.equalsIgnoreCase("endeme") || compartmentID.equalsIgnoreCase("ermem"))
+			return ("E.R.");
+
+		else if(compartmentID.equalsIgnoreCase("nucmem") || compartmentID.equalsIgnoreCase("nuclmem"))
+			return ("NUC");
+
+		else if(compartmentID.equalsIgnoreCase("cytmem") || compartmentID.equalsIgnoreCase("cytomem") || compartmentID.equalsIgnoreCase("cytopmem"))
+			return ("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("csk") || compartmentID.equalsIgnoreCase("cysk"))
+			return ("EXTR");
+
+		else if(compartmentID.equalsIgnoreCase("poxmem") || compartmentID.equalsIgnoreCase("permem"))
+			return ("POX");
+		
+		return compartmentID;
 		
 	}
 
@@ -341,18 +345,18 @@ public class Utilities {
 				return "extr";
 
 		if(compartmentID.equalsIgnoreCase("perip"))
-			return "outme";
+			return "outmem";
 
 		if(compartmentID.equalsIgnoreCase("cellw") && compartmentID.equalsIgnoreCase("cellwall"))
 			return "extr";
 
-		if(compartmentID.equalsIgnoreCase("outme"))
+		if(compartmentID.equalsIgnoreCase("outme") || compartmentID.equalsIgnoreCase("outmem"))
 			return "extr";
 
 		if(compartmentID.equalsIgnoreCase("cytop"))
 			return "cytmem";
 
-		if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas"))
+		if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("plasmem"))
 			return "extr";
 
 		else if(compartmentID.equalsIgnoreCase("gol") || compartmentID.equalsIgnoreCase("golg"))
@@ -371,10 +375,10 @@ public class Utilities {
 			return "nucmem";
 
 		else if(compartmentID.equalsIgnoreCase("cyt") || compartmentID.equalsIgnoreCase("cyto"))
-			return "plas";
+			return "plasmem";
 
 		else if(compartmentID.equalsIgnoreCase("csk") || compartmentID.equalsIgnoreCase("cysk"))
-			return "plas";
+			return "plasmem";
 
 		else if(compartmentID.equalsIgnoreCase("pox") || compartmentID.equalsIgnoreCase("pero"))
 			return "permem";

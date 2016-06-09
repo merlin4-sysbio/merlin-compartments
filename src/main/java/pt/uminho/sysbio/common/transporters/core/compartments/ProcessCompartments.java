@@ -91,41 +91,58 @@ public class ProcessCompartments {
 	 * @return
 	 * @throws Exception 
 	 */
-	public String processCompartment(String localisation, String compartmentID) throws Exception {
+	public String processTransportCompartments(String localisation, String compartmentID) throws Exception {
 
-		if (this.isProcessCompartmentsInitiated()) {
+		try {
+			if (this.isProcessCompartmentsInitiated()) {
 
-			if(localisation.equalsIgnoreCase("out")) {
+				if (localisation.equalsIgnoreCase("out")) {
 
-				if(compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("outme") || compartmentID.equalsIgnoreCase("cellw")) {
+					if (compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("outme")
+							|| compartmentID.equalsIgnoreCase("plasmem") || compartmentID.equalsIgnoreCase("outmem") || compartmentID.equalsIgnoreCase("cellw")) {
 
-					return ("extr".toUpperCase());
-				}
-				else if(compartmentID.equalsIgnoreCase("cytmem")) {
+						return ("extr".toUpperCase());
+					}
+					else if (compartmentID.equalsIgnoreCase("cytmem")) {
 
-					if(this.stain.equals(STAIN.gram_negative))
-						return ("perip".toUpperCase());
-					else
-						return ("extr".toUpperCase()); 
-				}
+						if (this.stain.equals(STAIN.gram_negative))
+							return ("perip".toUpperCase());
+						else
+							return ("extr".toUpperCase());
+					} 
+					else {
+
+						return (interiorCompartment.toUpperCase());
+					}
+				} 
 				else {
 
-					return (interiorCompartment.toUpperCase());
+					if (compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plasmem") 
+							|| compartmentID.equalsIgnoreCase("cellw")) {
+						
+						return (interiorCompartment.toUpperCase());
+					}
+					else if (compartmentID.equalsIgnoreCase("outme") || compartmentID.equalsIgnoreCase("outmem")) {
+						
+						return ("perip".toUpperCase());
+					}
+					else if (compartmentID.contains("mem")) {
+						
+						return Utilities.getOutsideMembrane(compartmentID.toLowerCase());
+					}
+					else {
+						
+						return (compartmentID.toUpperCase());
+					}
 				}
-			}
-			else {
+			} else {
 
-				if(compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("cytmem") || compartmentID.equalsIgnoreCase("cellw"))
-					return (interiorCompartment.toUpperCase());
-				else if (compartmentID.equalsIgnoreCase("outme")) 
-					return ("perip".toUpperCase());
-				else
-					return (compartmentID.toUpperCase());
-			}
-		}
-		else {
-
-			throw new Exception("Compartments processing not initiated!");
+				throw new Exception("Compartments processing not initiated!");
+			} 
+		} catch (Exception e) {
+			
+			System.out.println(localisation+" "+compartmentID);
+			throw e;
 		}
 	}
 
@@ -236,8 +253,8 @@ public class ProcessCompartments {
 
 			for(String compartment: list) {
 
-				String abb = compartmentsAbb_ids.get(compartment);
-
+				String abb = compartmentsAbb_ids.get(compartment).toLowerCase();
+				
 				if(abb.equalsIgnoreCase("cytmem")) {
 
 					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
@@ -264,7 +281,7 @@ public class ProcessCompartments {
 				} 
 				else if (abb.contains("me")) {
 
-					for(String newAbb : Utilities.getOutsideMembranes(abb))
+					for(String newAbb : Utilities.getOutsideMembranes(abb)) 
 						compartments.add(idCompartmentAbbIdMap.get(newAbb.toLowerCase()));
 				}
 				else if(abb.equalsIgnoreCase("unkn")) {
@@ -282,7 +299,7 @@ public class ProcessCompartments {
 					ignoreCompartmentsID.add(compartment);
 				} 
 			}
-
+			
 			return compartments;
 		}
 		else {
