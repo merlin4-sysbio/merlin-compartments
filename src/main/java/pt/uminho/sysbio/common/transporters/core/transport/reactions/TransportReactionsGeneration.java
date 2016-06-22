@@ -854,11 +854,11 @@ public class TransportReactionsGeneration {
 
 					parserContainer.setTaxonomyContainer(this.taxonomyMap.get(parserContainer.getUniprot_id()));
 
-					parserContainer.setTc_number(st.nextToken().replace("\"", "").trim()); // 2nd 
+					parserContainer.setTc_number(st.nextToken().toUpperCase().replace("\"", "").trim()); // 2nd 
 					parserContainer.setTc_family(st.nextToken().replace("\"", "").trim()); // 3rd
-					parserContainer.setTransportType(st.nextToken().replace("\"", "").trim().toLowerCase()); // 4th
+					parserContainer.setTransportType(st.nextToken().toLowerCase().replace("\"", "").trim().toLowerCase()); // 4th
 					parserContainer.setMetabolites(st.nextToken().replace("\"", "").trim().toLowerCase()); // 5th
-					parserContainer.setReversibility(Boolean.valueOf(st.nextToken().replace("\"", "").trim())); // 6th
+					parserContainer.setReversibility(Boolean.valueOf(st.nextToken().toUpperCase().replace("\"", "").trim())); // 6th
 					parserContainer.setReactingMetabolites(st.nextToken().replace("\"", "").trim().toLowerCase()); // 7th
 					parserContainer.setGeneral_equation(st.nextToken().replace("\"", "").trim()); // 8th
 
