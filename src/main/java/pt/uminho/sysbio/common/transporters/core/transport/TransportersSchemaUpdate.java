@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
-import pt.uminho.sysbio.common.database.connector.datatypes.MySQLMultiThread;
+import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
+import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
 
 
 public class TransportersSchemaUpdate {
@@ -17,8 +18,8 @@ public class TransportersSchemaUpdate {
 	public void test() throws SQLException {
 		
 		
-		//MySQLMultiThread m =  new MySQLMultiThread("root", "password", "127.0.0.1", 3306, "transporters");
-		MySQLMultiThread m =  new MySQLMultiThread("odias", "#!odias#2013@silico", "192.168.1.100", 3306, "transporters");
+		//DatabaseAccess m =  new DatabaseAccess("root", "password", "127.0.0.1", 3306, "transporters");
+		DatabaseAccess m =  new MySQLDatabaseAccess("odias", "#!odias#2013@silico", "192.168.1.100", 3306, "transporters");
 	
 		
 		Connection c = new Connection(m);

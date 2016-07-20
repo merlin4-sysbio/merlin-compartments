@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.io.exceptions.ReactionAlreadyExistsException;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
-import pt.uminho.sysbio.common.database.connector.datatypes.MySQLMultiThread;
+import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
 import pt.uminho.sysbio.common.transporters.core.compartments.CompartmentsInterface;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.PopulateTransportContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportContainer;
@@ -32,7 +32,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 
 
 	/**
-	 * @param msqlmt
+	 * @param dba
 	 * @param alpha
 	 * @param minimalFrequency
 	 * @param beta
@@ -48,13 +48,13 @@ public class LaunchTransportLoad extends Observable implements Observer {
 	 * @return
 	 * @throws Exception
 	 */
-	public static TransportContainer createTransportContainer(MySQLMultiThread msqlmt, double alpha, int minimalFrequency, double beta, 
+	public static TransportContainer createTransportContainer(DatabaseAccess dba, double alpha, int minimalFrequency, double beta, 
 			double threshold, boolean validateReaction, boolean saveOnlyReactionsWithKEGGmetabolites, String outputObjectFileName,
 			String outputTextReactionsfileName, String path, int project_id, boolean verbose, Set<String> ignoreSymportMetabolites, long taxonomy) throws Exception {
 
 		long startTime = System.currentTimeMillis();
 
-		Connection conn = new Connection(msqlmt);
+		Connection conn = new Connection(dba);
 		
 		PopulateTransportContainer populateTransportContainer; 
 		
@@ -79,7 +79,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 		else {
 			
 			//if(this.taxonomy>0)				
-				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, taxonomy, project_id, ignoreSymportMetabolites);
+			populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, taxonomy, project_id, ignoreSymportMetabolites, dba.get_database_type());
 //			else				
 //				populateTransportContainer 	= new PopulateTransportContainer(conn, alpha, minimalFrequency, beta, threshold, project_id, ignoreSymportMetabolites);
 
@@ -90,7 +90,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 			
 			if(outputTextReactionsfileName!=null) {
 				
-				populateTransportContainer.creatReactionsFiles(transportContainer,path+msqlmt.get_database_name()+"__"+outputTextReactionsfileName);
+				populateTransportContainer.creatReactionsFiles(transportContainer,path+dba.get_database_name()+"__"+outputTextReactionsfileName);
 			}
 			if(outputObjectFileName!=null) {
 				

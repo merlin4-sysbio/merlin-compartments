@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
-import pt.uminho.sysbio.common.database.connector.datatypes.MySQLMultiThread;
+import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
+import pt.uminho.sysbio.common.database.connector.datatypes.Enumerators.DatabaseType;
+import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
 import pt.uminho.sysbio.common.transporters.core.compartments.CompartmentResult;
 import pt.uminho.sysbio.common.transporters.core.compartments.ReadPSort3;
 import pt.uminho.sysbio.common.transporters.core.compartments.WoLFPSORT;
@@ -24,7 +26,7 @@ public class TransportersTests {
 	
 	public void testTransportersLoading() {
 
-		MySQLMultiThread msqlmt = new MySQLMultiThread("root", "password", "127.0.0.1", "3306", "database_delete");
+		DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "database_delete");
 
 		TransportReactionsGeneration tre = new TransportReactionsGeneration(msqlmt);
 		tre.parseAndLoadTransportersDatabase(new File("D:/OD/WORK/tc_annotation_database.out_checked"),false);
@@ -32,7 +34,7 @@ public class TransportersTests {
 
 	public void testOrg() throws Exception {
 
-		MySQLMultiThread msqlmt = new MySQLMultiThread("root", "password", "127.0.0.1", "3306", "SCE_transporters");
+		DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "SCE_transporters");
 
 		TransportReactionsGeneration t = new TransportReactionsGeneration(msqlmt, -1);
 
@@ -63,7 +65,7 @@ public class TransportersTests {
 	public void test() throws Exception {
 
 
-		Connection conn = new Connection("127.0.0.1", "3306", "SCE_tranporters", "root", "password");
+		Connection conn = new Connection("127.0.0.1", "3306", "SCE_tranporters", "root", "password", DatabaseType.MYSQL);
 
 		PopulateTransportContainer p = new PopulateTransportContainer(conn);
 
@@ -132,7 +134,7 @@ public class TransportersTests {
 //		LaunchTransportLoad ltl = new LaunchTransportLoad();
 //
 //		String db_name = "test_transporters"; //transporters database name
-//		MySQLMultiThread msqlmt = new MySQLMultiThread("localhost","3306", db_name,"root","");
+//		DatabaseAccess msqlmt = new DatabaseAccess("localhost","3306", db_name,"root","");
 //
 //		double threshold = 0.2;
 //		double alpha = 0.3;
@@ -156,7 +158,7 @@ public class TransportersTests {
 //
 //		String psort_db_name = "test_transporters";			//psort dbName
 //
-//		msqlmt = new MySQLMultiThread("localhost","3306", psort_db_name,"root","");
+//		msqlmt = new DatabaseAccess("localhost","3306", psort_db_name,"root","");
 //		Connection conn = new Connection(msqlmt); // connection to psort_db_name
 //
 //		KINGDOM k;

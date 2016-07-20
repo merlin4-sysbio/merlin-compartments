@@ -24,7 +24,7 @@ import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
-import pt.uminho.sysbio.common.database.connector.datatypes.MySQLMultiThread;
+import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.AnnotateTransporters;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.UnnannotatedTransportersContainer;
@@ -48,7 +48,7 @@ public class TransportReactionsGeneration {
 
 	private Map<String, TransportMetaboliteCodes> miriamData;
 	private Map<String, TransportMetaboliteCodes> reviewedMetsNames, reviewedMetsCodes;
-	private MySQLMultiThread msqlmt;
+	private DatabaseAccess dba;
 	private List<NcbiTaxon> originTaxonomy;
 	private String originOrganism;
 	private Map<String, Integer> taxonomyScore;
@@ -61,11 +61,11 @@ public class TransportReactionsGeneration {
 	private long taxonomyID;
 
 	/**
-	 * @param msqlmt
+	 * @param dba
 	 */
-	public TransportReactionsGeneration(MySQLMultiThread msqlmt) {
+	public TransportReactionsGeneration(DatabaseAccess dba) {
 
-		this.msqlmt = msqlmt;
+		this.dba = dba;
 		this.originTaxonomy = null;
 		this.miriamData = new TreeMap<>();
 		this.reviewedMetsNames = new TreeMap<>();
@@ -79,12 +79,12 @@ public class TransportReactionsGeneration {
 	}
 
 	/**
-	 * @param msqlmt
+	 * @param dba
 	 * @param taxonomyID
 	 */
-	public TransportReactionsGeneration(MySQLMultiThread msqlmt, long taxonomyID) {
+	public TransportReactionsGeneration(DatabaseAccess dba, long taxonomyID) {
 
-		this.msqlmt = msqlmt;
+		this.dba = dba;
 		this.originTaxonomy = null;
 		this.miriamData = new TreeMap<>();
 		this.reviewedMetsNames = new TreeMap<>();
@@ -108,7 +108,7 @@ public class TransportReactionsGeneration {
 	 */
 	public List<AlignedGenesContainer> getCandidatesFromDatabase(String outPath, int project_id) throws SQLException, IOException {
 
-		Connection conn = this.msqlmt.openConnection();
+		Connection conn = this.dba.openConnection();
 		Statement stmt = conn.createStatement();
 		List<AlignedGenesContainer> data = new ArrayList<AlignedGenesContainer>();
 		Map<String, Integer> genes_map = new HashMap<String, Integer>();
@@ -181,7 +181,7 @@ public class TransportReactionsGeneration {
 	 */
 	public int createNewProject(int genome_id) throws SQLException {
 
-		Connection conn = this.msqlmt.openConnection();
+		Connection conn = this.dba.openConnection();
 		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
 		int project_id =  ltd.createNewProject(genome_id);
 		conn.close();
@@ -194,7 +194,7 @@ public class TransportReactionsGeneration {
 	 */
 	public void deleteGenesFromProject(int project_id) throws SQLException {
 
-		Connection conn = this.msqlmt.openConnection();
+		Connection conn = this.dba.openConnection();
 		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
 		ltd.deleteGenesFromProject(project_id);
 		conn.close();
@@ -208,7 +208,7 @@ public class TransportReactionsGeneration {
 	 */
 	public void deleteProject(int project_id, int version) throws SQLException {
 
-		Connection conn = this.msqlmt.openConnection();
+		Connection conn = this.dba.openConnection();
 		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
 		ltd.deleteProject(project_id, version);
 		conn.close();
@@ -223,7 +223,7 @@ public class TransportReactionsGeneration {
 	 */
 	public int getProject(int genome_id) throws SQLException {
 
-		Connection conn = this.msqlmt.openConnection();
+		Connection conn = this.dba.openConnection();
 		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
 		int project_id = ltd.getProjectID(genome_id);
 		conn.close();
@@ -238,7 +238,7 @@ public class TransportReactionsGeneration {
 	 */
 	public Set<Integer> getAllProjects(int genome_id) throws SQLException {
 
-		Connection conn = this.msqlmt.openConnection();
+		Connection conn = this.dba.openConnection();
 		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
 		conn.close();
 		return ltd.getAllProjectIDs(genome_id);
@@ -269,7 +269,7 @@ public class TransportReactionsGeneration {
 	 */
 	private void generateAnnotationFile(String outPath) throws SQLException, IOException {
 
-		Connection conn = this.msqlmt.openConnection();
+		Connection conn = this.dba.openConnection();
 		AnnotateTransporters annotate = new AnnotateTransporters(conn);
 		annotate.setIds(new ArrayList<UnnannotatedTransportersContainer>(this.unAnnotatedTransporters));
 		annotate.annotate(outPath);
@@ -285,7 +285,7 @@ public class TransportReactionsGeneration {
 
 		try {
 
-			Connection conn = this.msqlmt.openConnection();
+			Connection conn = this.dba.openConnection();
 			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
 
 			this.setOrganismsTaxonomyScore(ltd);
@@ -386,7 +386,7 @@ public class TransportReactionsGeneration {
 
 		try {
 
-			Connection conn = this.msqlmt.openConnection();
+			Connection conn = this.dba.openConnection();
 			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
 			//Set<String> uniprotSet =
 			ltd.getLoadedTransporters();
@@ -496,7 +496,7 @@ public class TransportReactionsGeneration {
 
 			conn.close();
 
-			String filePath = FileUtils.getCurrentTempDirectory(this.msqlmt.get_database_name());
+			String filePath = FileUtils.getCurrentTempDirectory(this.dba.get_database_name());
 			this.metabolitesToBeVerified.removeAll(this.metabolitesNotAnnotated);
 			File fileOut = new File(filePath+"/notAnnotated.txt");
 			fileOut.createNewFile();
@@ -946,7 +946,7 @@ public class TransportReactionsGeneration {
 
 		try {
 
-			Connection conn = this.msqlmt.openConnection();
+			Connection conn = this.dba.openConnection();
 			Statement stmt = conn.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT * FROM metabolites");
 
