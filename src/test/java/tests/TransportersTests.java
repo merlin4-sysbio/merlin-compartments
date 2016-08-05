@@ -28,8 +28,8 @@ public class TransportersTests {
 
 		DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "database_delete");
 
-		TransportReactionsGeneration tre = new TransportReactionsGeneration(msqlmt);
-		tre.parseAndLoadTransportersDatabase(new File("D:/OD/WORK/tc_annotation_database.out_checked"),false);
+		//TransportReactionsGeneration tre = new TransportReactionsGeneration(msqlmt);
+		//tre.parseAndLoadTransportersDatabase(new File("D:/OD/WORK/tc_annotation_database.out_checked"),false);
 	}
 
 	public void testOrg() throws Exception {

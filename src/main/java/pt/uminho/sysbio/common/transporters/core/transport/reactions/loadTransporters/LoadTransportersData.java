@@ -674,8 +674,6 @@ public class LoadTransportersData {
 
 		try {
 
-			//int stoichiometry=1;
-
 			ResultSet rs = this.statement.executeQuery("SELECT stoichiometry FROM transported_metabolites_directions " +
 					"WHERE metabolite_id='"+metabolites_id+"' " +
 					"AND transport_system_id='"+transport_system_id+"' " +
@@ -683,7 +681,7 @@ public class LoadTransportersData {
 
 			if(rs.next()) {
 
-				System.err.println("WRONG STOICHIOMETRIES!!!!!!!!");
+				System.err.println("WRONG STOICHIOMETRIES for transport system "+transport_system_id);
 				//System.out.println("UPDATE transported_metabolites_directions SET stoichiometry ="+metaboliteStoichiometry+" " +
 				//	"WHERE metabolites_id = '"+metabolites_id+"' AND transport_system_id='"+transport_system_id+"' AND direction_id='"+direction_id+"'");
 			}
@@ -1138,23 +1136,21 @@ public class LoadTransportersData {
 	 * @param uniprot_id
 	 * @return
 	 */
-	public String getTransportTypeID(String uniprot_id) {
+	public Set<String> getTransportTypeID(String uniprot_id) {
 
 		try {
-
-			String result=null;
+			
+			Set<String> result = new TreeSet<String>();
 
 			ResultSet rs = this.statement.executeQuery("SELECT transport_types.id FROM transport_types " +
-					"LEFT JOIN transport_systems ON transport_types.id = transport_type_id " +
-					"LEFT JOIN tc_numbers_has_transport_systems ON transport_systems.id = tc_numbers_has_transport_systems.transport_system_id " +
-					"LEFT JOIN tcdb_registries ON (tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version)" +
+					"INNER JOIN transport_systems ON transport_types.id = transport_type_id " +
+					"INNER JOIN tc_numbers_has_transport_systems ON transport_systems.id = tc_numbers_has_transport_systems.transport_system_id " +
+					"INNER JOIN tcdb_registries ON (tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version)" +
 					"WHERE uniprot_id='"+uniprot_id+"' AND latest_version");
 
-			if(rs.next()) {
-
-				result=rs.getString(1);
-			}
-
+			while(rs.next())
+				result.add(rs.getString(1));
+			
 			return result;
 		}
 		catch (SQLException e) {e.printStackTrace();}
@@ -1172,16 +1168,13 @@ public class LoadTransportersData {
 		try {
 
 			ResultSet rs = this.statement.executeQuery("SELECT metabolite_id FROM transported_metabolites_directions " +
-					"LEFT JOIN tc_numbers_has_transport_systems ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id " +
-					"LEFT JOIN tcdb_registries ON (tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version)" +
+					"INNER JOIN tc_numbers_has_transport_systems ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id " +
+					"INNER JOIN tcdb_registries ON (tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version)" +
 					"WHERE uniprot_id='"+uniprot_id+"' AND latest_version");
 
-			while(rs.next()) {
-
+			while(rs.next())
 				result.add(rs.getString(1));
-			}
-
-
+			
 			return result;
 		}
 		catch (SQLException e) {e.printStackTrace();}
@@ -1198,8 +1191,8 @@ public class LoadTransportersData {
 		{
 
 			ResultSet rs = this.statement.executeQuery("SELECT transport_type.id FROM transported_metabolites_direction " +
-					"LEFT JOIN transport_system ON transport_system_id=transport_system.id " +
-					"LEFT JOIN transport_type ON transport_type_id=transport_type.id " +
+					"INNER JOIN transport_system ON transport_system_id=transport_system.id " +
+					"INNER JOIN transport_type ON transport_type_id=transport_type.id " +
 					"WHERE metabolites_id='"+metabolites_id+"'");
 
 			while(rs.next())
@@ -1237,10 +1230,10 @@ public class LoadTransportersData {
 				int counter=0;
 
 				rs = this.statement.executeQuery("SELECT metabolites.name, direction, stoichiometry, reversible, kegg_name, chebi_name, synonyms.name FROM transported_metabolites_directions " +
-						"LEFT JOIN metabolites ON metabolites.id = transported_metabolites_directions.metabolite_id " +
-						"LEFT JOIN synonyms ON metabolites.id = synonyms.metabolite_id " +
-						"LEFT JOIN directions ON directions.id = direction_id " +
-						"LEFT JOIN transport_systems ON transport_systems.id = transport_system_id " +
+						"INNER JOIN metabolites ON metabolites.id = transported_metabolites_directions.metabolite_id " +
+						"INNER JOIN synonyms ON metabolites.id = synonyms.metabolite_id " +
+						"INNER JOIN directions ON directions.id = direction_id " +
+						"INNER JOIN transport_systems ON transport_systems.id = transport_system_id " +
 						"WHERE transport_system_id ="+transport_system_id);
 
 				while(rs.next()) {
@@ -1321,10 +1314,10 @@ public class LoadTransportersData {
 //				result.add(rs.getInt(1));
 
 			ResultSet rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems " +
-					" LEFT JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id ) " +
-					" LEFT JOIN metabolites ON metabolites.id= metabolite_id " +
-					" LEFT JOIN synonyms ON transported_metabolites_directions.metabolite_id= synonyms.metabolite_id " +
-					" LEFT JOIN directions on direction_id=directions.id " +
+					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id ) " +
+					" INNER JOIN metabolites ON metabolites.id= metabolite_id " +
+					" INNER JOIN synonyms ON transported_metabolites_directions.metabolite_id= synonyms.metabolite_id " +
+					" INNER JOIN directions on direction_id=directions.id " +
 					" WHERE (" +
 					" UPPER(metabolites.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
 					" UPPER(synonyms.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
@@ -1735,13 +1728,13 @@ public class LoadTransportersData {
 				rs = this.statement.executeQuery(
 						"SELECT genes_has_tcdb_registries.uniprot_id, tc_numbers_has_transport_systems.tc_number, metabolites.name, similarity, equation "+
 								"FROM genes "+
-								"LEFT JOIN genes_has_tcdb_registries ON gene_id = genes.id "+
-								"LEFT JOIN tcdb_registries ON genes_has_tcdb_registries.uniprot_id = tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version = tcdb_registries.version "+
-								"LEFT JOIN tc_numbers_has_transport_systems ON tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version "+
-								"LEFT JOIN tc_numbers ON tcdb_registries.tc_number = tc_numbers.tc_number AND tcdb_registries.tc_version = tc_numbers.tc_version "+
-								"LEFT JOIN general_equation ON tc_numbers.general_equation_id = general_equation.id "+
-								"LEFT JOIN transported_metabolites_directions ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id "+
-								"LEFT JOIN metabolites ON metabolite_id = metabolites.id "+
+								"INNER JOIN genes_has_tcdb_registries ON gene_id = genes.id "+
+								"INNER JOIN tcdb_registries ON genes_has_tcdb_registries.uniprot_id = tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version = tcdb_registries.version "+
+								"INNER JOIN tc_numbers_has_transport_systems ON tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version "+
+								"INNER JOIN tc_numbers ON tcdb_registries.tc_number = tc_numbers.tc_number AND tcdb_registries.tc_version = tc_numbers.tc_version "+
+								"INNER JOIN general_equation ON tc_numbers.general_equation_id = general_equation.id "+
+								"INNER JOIN transported_metabolites_directions ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id "+
+								"INNER JOIN metabolites ON metabolite_id = metabolites.id "+
 								"WHERE project_id = "+project_id+" AND locus_tag = '"+locus_tag+"';");
 
 				while(rs.next()) {

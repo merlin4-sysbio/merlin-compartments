@@ -85,28 +85,21 @@ public class TransportReaction implements Comparable<TransportReaction> {
 	 */
 	public void addMetabolite(String metaboliteID, TransportMetabolite transportMetabolite, Double stoichiometry, String direction){
 
-		List<String> directions;
+		List<String> directions = new ArrayList<String>();
+		
 		if(this.metaboliteDirection.containsKey(metaboliteID))
-		{
 			directions=this.metaboliteDirection.get(metaboliteID);
-		}
-		else
-		{
-			directions=new ArrayList<String>();
-		}
+
 		directions.add(directions.size(),direction);
+		
 		this.metaboliteDirection.put(metaboliteID, directions);
 
-
-		List<Double> stoichiometries;
+		List<Double> stoichiometries = new ArrayList<Double>();
+		
 		if(this.metaboliteStoichiometry.containsKey(metaboliteID))
-		{
 			stoichiometries=this.metaboliteStoichiometry.get(metaboliteID);
-		}
-		else
-		{
-			stoichiometries=new ArrayList<Double>();
-		}
+		
+
 		stoichiometries.add(stoichiometries.size(),stoichiometry);
 		this.metaboliteStoichiometry.put(metaboliteID, stoichiometries);
 

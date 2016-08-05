@@ -16,14 +16,17 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import biosynth.core.algorithm.graph.Dijkstra;
+import biosynth.core.components.representation.basic.graph.Graph;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.MetaboliteCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionTypeEnum;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiAPIInterface;
-import biosynth.core.algorithm.graph.Dijkstra;
-import biosynth.core.components.representation.basic.graph.Graph;
 
 /**
  * @author ODias
@@ -31,6 +34,8 @@ import biosynth.core.components.representation.basic.graph.Graph;
  */
 public class TransportContainerRunnable extends Observable implements Runnable  {
 
+
+	private static final Logger logger = LoggerFactory.getLogger(TransportContainerRunnable.class);
 	private ConcurrentLinkedDeque<String> genes;
 	private Map<String, Set<TransportReaction>> genesReactions;
 	private AtomicBoolean cancel;
@@ -179,7 +184,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 			this.addGeneCI(locus_tag);
 
-			for(TransportReaction originalTransportReaction:this.genesReactions.get(geneID)) {
+			for(TransportReaction originalTransportReaction : this.genesReactions.get(geneID)) {
 
 				//removing metabolites not transported
 				Set<String> reactionSelectedMetabolites = this.removeReactantsAndProducts(originalTransportReaction.getMetaboliteDirection(),
@@ -315,42 +320,31 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 											}
 											else if(transportReaction.getMetaboliteDirection().get(metaboliteID).get(i).equals("reactant")) {
 
-												if(reactants.containsKey(metaboliteID) && !original_bifunctional_metabolites.contains(metaboliteID)) {
-
+												if(reactants.containsKey(metaboliteID) && !original_bifunctional_metabolites.contains(metaboliteID))
 													addReaction= false;
-												}
 
-												if(products.containsKey(metaboliteID)  && !original_bifunctional_metabolites.contains(metaboliteID)) {
-
+												if(products.containsKey(metaboliteID)  && !original_bifunctional_metabolites.contains(metaboliteID))
 													addReaction= false;
-												}
 
 												reactant_compartment = "in";
 
-												if(this.addExternalReactant(originalTransportReaction.getProtein_family_IDs(), metaboliteID)) {
-
+												if(this.addExternalReactant(originalTransportReaction.getProtein_family_IDs(), metaboliteID))
 													reactant_compartment = "out";
-												}
+
 											}
 											else if(transportReaction.getMetaboliteDirection().get(metaboliteID).get(i).equals("product")) {
 
-												if(reactants.containsKey(metaboliteID) && !original_bifunctional_metabolites.contains(metaboliteID)) {
-
+												if(reactants.containsKey(metaboliteID) && !original_bifunctional_metabolites.contains(metaboliteID))
 													addReaction= false;
-												}
 
-												if(products.containsKey(metaboliteID) && !original_bifunctional_metabolites.contains(metaboliteID)) {
-
+												if(products.containsKey(metaboliteID) && !original_bifunctional_metabolites.contains(metaboliteID))
 													addReaction= false;
-												}
 
 												product_compartment = "in";
 
 												if(is5A3(originalTransportReaction.getProtein_family_IDs()) && !this.transportMetabolites.get(metaboliteID).getKeggMiriam().equals("urn:miriam:kegg.compound:C00390") && 
-														!this.transportMetabolites.get(metaboliteID).getKeggMiriam().equals("urn:miriam:kegg.compound:C00399")) {
-
+														!this.transportMetabolites.get(metaboliteID).getKeggMiriam().equals("urn:miriam:kegg.compound:C00399"))
 													product_compartment = "out";
-												}
 											}
 											else {
 
@@ -360,24 +354,57 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 											if(reactant_compartment!=null) {
 
-												StoichiometryValueCI reactant = new StoichiometryValueCI(metaboliteID, transportReaction.getMetaboliteStoichiometry().get(metaboliteID).get(i), reactant_compartment);
+												double stoichiometry = transportReaction.getMetaboliteStoichiometry().get(metaboliteID).get(i);
+												String newCompartment = reactant_compartment;
+
+												if(reactants.containsKey(metaboliteID)) {
+
+													if(reactants.get(metaboliteID).getCompartmentId().equals(reactant_compartment)) {
+
+														stoichiometry += reactants.get(metaboliteID).getStoichiometryValue();
+													}
+													else {
+
+														logger.warn("different compartments on reactants for metabolite {}", metaboliteID);
+													}
+												}
+
+												StoichiometryValueCI reactant = new StoichiometryValueCI(metaboliteID, stoichiometry, newCompartment);
 												reactants.put(metaboliteID, reactant);
 											}
 
 											if(product_compartment!=null) {
 
-												StoichiometryValueCI product = new StoichiometryValueCI(metaboliteID, transportReaction.getMetaboliteStoichiometry().get(metaboliteID).get(i), product_compartment);
+												double stoichiometry = transportReaction.getMetaboliteStoichiometry().get(metaboliteID).get(i);
+												
+												if(products.containsKey(metaboliteID)) {													
+
+													if(products.get(metaboliteID).getCompartmentId().equals(product_compartment)) {
+
+														stoichiometry += products.get(metaboliteID).getStoichiometryValue();
+													}
+													else {
+														
+														logger.debug("different compartments on products for metabolite {}", metaboliteID);
+														
+														stoichiometry += stoichiometry + products.get(metaboliteID).getStoichiometryValue();
+														
+														String newCompartment = products.get(metaboliteID).getCompartmentId();
+														
+														if(reactants.get(metaboliteID).getCompartmentId().equals(product_compartment))
+															product_compartment = newCompartment;
+													}
+												}
+
+												StoichiometryValueCI product = new StoichiometryValueCI(metaboliteID, stoichiometry, product_compartment);
 												products.put(metaboliteID, product);
 											}
 										}
 									}
 								}
 
-								if(saveOnlyReactionsWithKEGGmetabolites && !allMetabolitesHaveKEGGId) {
-
+								if(saveOnlyReactionsWithKEGGmetabolites && !allMetabolitesHaveKEGGId)
 									addReaction = false;
-								}
-
 
 								if(addReaction) {
 
@@ -496,9 +523,6 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 		if(transportReactionCI.getIsOriginalReaction_byGene()==null)
 			transportReactionCI.setIsOriginalReaction_byGene(new HashMap<String, Boolean>());
 		{
-			if(locus_tag.equalsIgnoreCase("KLLA0B00264g"))
-				System.out.println("Before transportReaction "+transportReaction.getReactionID()+"\t original? "+transportReaction.getOriginalReaction()+
-						"\rtransportReactionCI "+transportReactionCI.getId()+"\t original? "+transportReactionCI.getIsOriginalReaction_byGene());
 
 			if(transportReactionCI.getIsOriginalReaction_byGene().containsKey(locus_tag)) {
 
@@ -510,9 +534,6 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				transportReactionCI.getIsOriginalReaction_byGene().put(locus_tag,transportReaction.getOriginalReaction().get(locus_tag));
 			}
 		}
-		if(locus_tag.equalsIgnoreCase("KLLA0B00264g"))
-			System.out.println("After transportReaction "+transportReaction.getReactionID()+"\t original? "+transportReaction.getOriginalReaction()+
-					"\rtransportReactionCI "+transportReactionCI.getId()+"\t original? "+transportReactionCI.getIsOriginalReaction_byGene()+"\r");
 
 		if(transportReactionCI.getChebi_ontology_byGene()==null)
 			transportReactionCI.setChebi_ontology_byGene(new HashMap<String, Map<String, MetabolitesOntology>>());
@@ -556,8 +577,8 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				|| (fourB && !this.transportMetabolites.get(metaboliteID).getChEBIMiriam().equals("urn:miriam:obo.chebi:CHEBI:15422")) 
 				|| (fourC && !this.transportMetabolites.get(metaboliteID).getChEBIMiriam().equals("urn:miriam:obo.chebi:CHEBI:15422") && 
 						!this.transportMetabolites.get(metaboliteID).getChEBIMiriam().equals("urn:miriam:obo.chebi:CHEBI:15346")) 
-						|| (fiveAthree && !this.transportMetabolites.get(metaboliteID).getKeggMiriam().equals("urn:miriam:kegg.compound:C00390") && 
-								!this.transportMetabolites.get(metaboliteID).getKeggMiriam().equals("urn:miriam:kegg.compound:C00399"))
+				|| (fiveAthree && !this.transportMetabolites.get(metaboliteID).getKeggMiriam().equals("urn:miriam:kegg.compound:C00390") && 
+						!this.transportMetabolites.get(metaboliteID).getKeggMiriam().equals("urn:miriam:kegg.compound:C00399"))
 				) {
 
 			return true;
@@ -763,13 +784,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 					String reactionID = this.existsReaction(transportReaction);
 
-					if(locus_tag.equalsIgnoreCase("KLLA0B00264g"))
-						System.out.println(transportReaction.getReactionID()+"\t"+reactionID+"\t"+transportReaction.getOriginalReaction());
-
 					if(reactionID!=null) {
-
-						if(locus_tag.equalsIgnoreCase("KLLA0B00264g"))
-							System.out.println(reactionID+"\t"+this.transportReactionsList.get(reactionID).getOriginalReaction());
 
 						transportReactionSetResult.remove(transportReaction);
 
@@ -804,9 +819,6 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 							}
 							transportReactionSetResult.add(this.transportReactionsList.get(reactionID));
 						}
-
-						if(locus_tag.equalsIgnoreCase("KLLA0B00264g"))
-							System.out.println(reactionID+"\t"+this.transportReactionsList.get(reactionID).getOriginalReaction());
 					}
 				}
 
@@ -1059,14 +1071,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 								for(String direction:direction1) {
 
-									if(direction.equalsIgnoreCase("in")) {
-
+									if(direction.equalsIgnoreCase("in"))
 										newDirections.add("out");
-									}
-									else if(direction.equalsIgnoreCase("out")) {
-
+									else if(direction.equalsIgnoreCase("out"))
 										newDirections.add("in");
-									}
 								}
 
 								inverse_directions=this.compareLists(newDirections, direction2);
@@ -1156,8 +1164,8 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 						||(fourB && !this.transportMetabolites.get(key).getChEBIMiriam().equals("urn:miriam:obo.chebi:CHEBI:15422"))
 						|| (fourC && !this.transportMetabolites.get(key).getChEBIMiriam().equals("urn:miriam:obo.chebi:CHEBI:15422") && 
 								!this.transportMetabolites.get(key).getChEBIMiriam().equals("urn:miriam:obo.chebi:CHEBI:15346"))
-								||(fiveAthree && !this.transportMetabolites.get(key).getKeggMiriam().equals("urn:miriam:kegg.compound:C00390") && 
-										!this.transportMetabolites.get(key).getKeggMiriam().equals("urn:miriam:kegg.compound:C00399"))) {
+						||(fiveAthree && !this.transportMetabolites.get(key).getKeggMiriam().equals("urn:miriam:kegg.compound:C00390") && 
+								!this.transportMetabolites.get(key).getKeggMiriam().equals("urn:miriam:kegg.compound:C00399"))) {
 
 					reactantsAndProducts.add(key);
 				}

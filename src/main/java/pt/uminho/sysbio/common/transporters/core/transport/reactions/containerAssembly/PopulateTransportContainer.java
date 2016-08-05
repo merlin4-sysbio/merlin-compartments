@@ -10,11 +10,8 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -27,6 +24,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.rpc.ServiceException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import biosynth.core.components.representation.basic.graph.DefaultBinaryEdge;
 import biosynth.core.components.representation.basic.graph.Graph;
@@ -46,6 +46,7 @@ import pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransp
  */
 public class PopulateTransportContainer extends Observable implements Observer {
 
+	private static final Logger logger = LoggerFactory.getLogger(PopulateTransportContainer.class);
 	private Statement stmt;
 	private Map<String, Set<String>> selectedGenesMetabolites;
 	private Map<String, Set<TransportReaction>> genesReactions;
@@ -117,6 +118,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	 * @param taxonomy_id
 	 * @param project_id
 	 * @param ignoreSymportMetabolites
+	 * @param databaseType
 	 * @throws Exception
 	 */
 	public PopulateTransportContainer(Connection conn, double alpha, int minimalFrequency, double beta, double threshold, long taxonomy_id, int project_id, Set<String> ignoreSymportMetabolites, DatabaseType databaseType) throws Exception {
@@ -143,7 +145,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		this.kegg_miriam = new ConcurrentHashMap<String, String>();
 		this.chebi_miriam = new ConcurrentHashMap<String, String>();
 		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
-		
+
 		this.dbType = databaseType;
 	}
 
@@ -206,7 +208,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		ResultSet rs = stmt.executeQuery("SELECT metabolites_ontology.id, metabolite_id, child_id, kegg_miriam as child_kegg_miriam, chebi_miriam as child_chebi_miriam " +
 				"FROM metabolites_ontology " +
-				"LEFT JOIN metabolites ON (child_id = metabolites.id)");
+				"INNER JOIN metabolites ON (child_id = metabolites.id)");
 
 		while(rs.next()) {
 
@@ -262,15 +264,13 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 			String metabolite = metaboliteTaxonomyScoresMap.get(i).getMetabolite();
 			String gene = metaboliteTaxonomyScoresMap.get(i).getGene();
-
+			
 			if(metaboliteTaxonomyScoresMap.get(i).getScore()>=this.threshold) {
 
 				Set<String> metabolitesList = new TreeSet<String>();
 
-				if(this.selectedGenesMetabolites.containsKey(gene)) {
-
+				if(this.selectedGenesMetabolites.containsKey(gene))
 					metabolitesList=this.selectedGenesMetabolites.get(gene);
-				}
 
 				metabolitesList.add(metabolite);
 
@@ -281,7 +281,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 					data = this.getOntologyMetabolites(metabolite, data);
 					this.metabolites_ontology.put(metabolite, data);
 				}
-
+				
 				this.selectedGenesMetabolites.put(gene, metabolitesList);
 			}
 			else {
@@ -300,30 +300,34 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		Map<Integer, MetaboliteTaxonomyScores> temp = new HashMap<Integer, MetaboliteTaxonomyScores>();
 		int counter = 0;
-		
+
+		//logger.debug("getMetabolitesGeneScore project id {}", this.project_id);
+
 		if (this.dbType.equals(DatabaseType.MYSQL)){
-	//		System.out.println("CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
+			//		System.out.println("CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
 			ResultSet rs = this.stmt.executeQuery("CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
-	
+
 			while(rs.next()) {
-	
+
 				MetaboliteTaxonomyScores data = new MetaboliteTaxonomyScores(rs.getString(2), rs.getString(1), rs.getDouble(3));
 				counter ++;
 				temp.put(counter, data);
 			}
 		}
-		
-		else{
-			Map<ArrayList<String>, Double> procedure_data = procedure_getMetabolitesGeneScore();
-			
-			for (Map.Entry<ArrayList<String>, Double> entry : procedure_data.entrySet()) {
-				String geneID = entry.getKey().get(1);
-				String metaboliteID = entry.getKey().get(2);
-				double score=entry.getValue();
-				
-				MetaboliteTaxonomyScores data = new MetaboliteTaxonomyScores(geneID, metaboliteID, score);
-				counter ++;
-				temp.put(counter, data);
+		else {
+
+			Map<String, Map<String, Double>> procedure_data = procedure_getMetabolitesGeneScore(this.project_id);
+
+			for (String geneID : procedure_data.keySet()) {
+
+				for (String metaboliteID : procedure_data.get(geneID).keySet()) {	
+
+					double score =  procedure_data.get(geneID).get(metaboliteID);
+
+					MetaboliteTaxonomyScores data = new MetaboliteTaxonomyScores(geneID, metaboliteID, score);
+					counter ++;
+					temp.put(counter, data);
+				}
 			}
 		}
 		return temp;
@@ -374,7 +378,8 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			return this.child_IDs_Map.get(id);
 
 		Set<String> child_ids_results = new TreeSet<String>();
-		ResultSet rs = stmt.executeQuery("SELECT child_id, name, kegg_miriam, kegg_name, chebi_miriam, chebi_name, datatype, metabolites_ontology.id FROM metabolites_ontology LEFT JOIN metabolites ON metabolites.id= child_id WHERE metabolite_id='"+id+"'");
+		ResultSet rs = stmt.executeQuery("SELECT child_id, name, kegg_miriam, kegg_name, chebi_miriam, chebi_name, datatype, metabolites_ontology.id FROM metabolites_ontology"
+				+ " INNER JOIN metabolites ON metabolites.id= child_id WHERE metabolite_id='"+id+"'");
 
 		while(rs.next()) {
 
@@ -418,8 +423,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	private void getTransportTypeTaxonomyScore() throws SQLException {
 
 		this.genesMetabolitesTransportTypeMap = new TreeMap<String, GenesMetabolitesTransportType>();
-		
+
 		if (this.dbType.equals(DatabaseType.MYSQL)){
+
 			ResultSet rs = stmt.executeQuery("CALL getTransportTypeTaxonomyScore("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
 
 			while(rs.next()) {
@@ -445,30 +451,34 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				this.genesMetabolitesTransportTypeMap.put(geneID,genesMetabolitesTransportType);
 			}
 		}
-			
-		else{
-			Map<ArrayList<String>, Double> procedure_data = procedure_getTransportTypeTaxonomyScore();
-			
-			for (Map.Entry<ArrayList<String>, Double> entry : procedure_data.entrySet()) {
-				String geneID = entry.getKey().get(2);
-				String metaboliteID = entry.getKey().get(3);
-				String transportType = entry.getKey().get(1);
-				double score=entry.getValue();
-				
-				GenesMetabolitesTransportType genesMetabolitesTransportType;
-	
-				if(this.genesMetabolitesTransportTypeMap.containsKey(geneID)) {
-	
-					genesMetabolitesTransportType= this.genesMetabolitesTransportTypeMap.get(geneID);
+		else {
+
+			Map<String, Map<String, Map<String, Double>>> procedure_data = procedure_getTransportTypeTaxonomyScore(this.project_id);
+
+			for (String geneID : procedure_data.keySet()) {
+
+				for (String metaboliteID : procedure_data.get(geneID).keySet()) {	
+
+					for (String transportType : procedure_data.get(geneID).get(metaboliteID).keySet()) {	
+
+						double score =  procedure_data.get(geneID).get(metaboliteID).get(transportType) ;
+
+						GenesMetabolitesTransportType genesMetabolitesTransportType;
+
+						if(this.genesMetabolitesTransportTypeMap.containsKey(geneID)) {
+
+							genesMetabolitesTransportType= this.genesMetabolitesTransportTypeMap.get(geneID);
+						}
+						else {
+
+							genesMetabolitesTransportType= new GenesMetabolitesTransportType(geneID);
+						}
+
+						transportType = this.transport_type_list.get(transportType);
+						genesMetabolitesTransportType.addMetaboliteTransportType(metaboliteID, transportType, score);
+						this.genesMetabolitesTransportTypeMap.put(geneID,genesMetabolitesTransportType);
+					}
 				}
-				else {
-	
-					genesMetabolitesTransportType= new GenesMetabolitesTransportType(geneID);
-				}
-	
-				transportType = this.transport_type_list.get(transportType);
-				genesMetabolitesTransportType.addMetaboliteTransportType(metaboliteID, transportType, score);
-				this.genesMetabolitesTransportTypeMap.put(geneID,genesMetabolitesTransportType);
 			}
 		}
 	}
@@ -505,8 +515,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				);
 
 		while(rs.next()) {
-
+			
 			String geneID=rs.getString(1);
+			
 			String reactionID = "T"+ idConverter(rs.getString(4).trim()), metaboliteID=rs.getString(5), direction=rs.getString(7);
 			double stoichiometry=rs.getDouble(6);
 			this.genesLocusTag.put(geneID, rs.getString(2));
@@ -527,14 +538,10 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 			Set<TransportReaction> transportReactionSet;
-			if(this.genesReactions.containsKey(geneID)) {
-
+			if(this.genesReactions.containsKey(geneID))
 				transportReactionSet = this.genesReactions.get(geneID);
-			}
-			else {
-
+			else
 				transportReactionSet = new TreeSet<TransportReaction>();
-			}
 
 			boolean isNew=true;
 			boolean existsReactionInCurrentSet = false;
@@ -584,11 +591,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			transportReaction.addGeneral_equation(rs.getString(2), rs.getString(12), tc_numbers_equations.get(rs.getString(12)));
 			transportReaction.addProteinFamilyID(rs.getString(3));
 			this.genesReactions.put(geneID,transportReactionSet);
-
-			//			if(geneID.equalsIgnoreCase("1598")) {
-			//				
-			//				System.out.println(this.genesReactions.get(geneID));
-			//			}
+			
 			previousUniprotEntry=rs.getString(17);
 		}
 		rs.close();
@@ -606,7 +609,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		transportContainer.setKeggMetabolitesReactions(saveOnlyReactionsWithKEGGmetabolites);
 		transportContainer.addCompartments("out", "outside","");
 		transportContainer.addCompartments("in", "inside","");
-
+		
 		this.genesProteins.keySet().retainAll(this.selectedGenesMetabolites.keySet());
 		this.genesLocusTag.keySet().retainAll(this.selectedGenesMetabolites.keySet());
 		this.genesReactions.keySet().retainAll(this.selectedGenesMetabolites.keySet());
@@ -614,7 +617,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		this.querySize.set(new Integer(this.genesReactions.keySet().size()));
 		setChanged();
 		notifyObservers();
-
+		
 		LoadTransportContainer ltc = new LoadTransportContainer(this.genesReactions, this.cancel, this.genesLocusTag, this.genesMetabolitesTransportTypeMap, 
 				this.selectedGenesMetabolites, this.genesProteins, this.transportMetabolites, this.metabolites_ontology, 
 				this.metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.geneProcessingCounter, this.graph, this.kegg_miriam, this.chebi_miriam, this.ignoreSymportMetabolites);
@@ -661,24 +664,14 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		for(String reaction:transportContainer.getReactions().keySet()) {
 
 			boolean has_kegg_id=true;
-			for(String key :transportContainer.getReactions().get(reaction).getReactants().keySet()) {
-
-				if(transportContainer.getKeggMiriam().get(key).equals("null")) {
-
+			for(String key :transportContainer.getReactions().get(reaction).getReactants().keySet())
+				if(transportContainer.getKeggMiriam().get(key).equals("null"))
 					has_kegg_id=false;
-				}
-			}
 
-			if(has_kegg_id) {
-
-				for(String key :transportContainer.getReactions().get(reaction).getReactants().keySet()) {
-
-					if(transportContainer.getKeggMiriam().get(key).equals("null")) {
-
+			if(has_kegg_id)
+				for(String key :transportContainer.getReactions().get(reaction).getReactants().keySet())
+					if(transportContainer.getKeggMiriam().get(key).equals("null"))
 						has_kegg_id=false;
-					}
-				}
-			}
 
 			if(has_kegg_id) {
 
@@ -693,20 +686,17 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 					concat=concat.concat(reactants.get(key).getStoichiometryValue()+" "+transportContainer.getMetabolites().get(reactants.get(key).getMetaboliteId()).getName()+" ("+reactants.get(key).getCompartmentId())+") + ";
 				}
+				
 				concat=concat.substring(0, concat.lastIndexOf("+")-1);
-				if(transportContainer.getReactions().get(reaction).getReversible()) {
-
+				
+				if(transportContainer.getReactions().get(reaction).getReversible())
 					concat=concat.concat(" <=> ");
-				}
-				else {
-
+				else
 					concat=concat.concat(" => ");
-				}
 
-				for(String key :products.keySet()) {
-
+				for(String key :products.keySet())
 					concat=concat.concat(products.get(key).getStoichiometryValue()+" "+transportContainer.getMetabolites().get(products.get(key).getMetaboliteId()).getName()+" ("+products.get(key).getCompartmentId())+") + ";
-				}
+
 				concat=concat.substring(0, concat.lastIndexOf("+")-1);
 				out.write(concat+"\n\n");
 				reactionsCounter++;
@@ -730,22 +720,17 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		Map<String,String> keggIDs = new HashMap<String, String>();
 
-		for(String compound:transportContainer.getKeggMiriam().keySet()) {
-
-			if(!transportContainer.getKeggMiriam().get(compound).equals("null")) {
-
+		for(String compound:transportContainer.getKeggMiriam().keySet())
+			if(!transportContainer.getKeggMiriam().get(compound).equals("null"))
 				keggIDs.put(compound, ExternalRefSource.KEGG_CPD.getSourceId(transportContainer.getKeggMiriam().get(compound)));
-			}
-		}
 
 		BalanceValidator balanceValidator = new BalanceValidator(transportContainer);
 
 		boolean formulasFromContainer = balanceValidator.setFormulasFromContainer();
 
-		if(verbose) {
-
+		if(verbose)
 			System.out.println("Setting formula from container\t"+formulasFromContainer);
-		}
+		
 		Set<String> balancedReactions = balanceValidator.getAllBalancedReactions(null);
 
 		for(String reactionID : new HashSet<String> (transportContainer.getReactions().keySet())) {
@@ -759,7 +744,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				transportContainer.getReactions().remove(reactionID);
 			}
 		}
-		//TransportContainer newTransportContainer = new TransportContainer();
+
 		return transportContainer;
 	}
 
@@ -905,10 +890,8 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 				if(i==other_array.length) {
 
-					if(this.origin_array[origin_array.length-1].equals(rs.getString(1))) {
-
+					if(this.origin_array[origin_array.length-1].equals(rs.getString(1)))
 						counter++;
-					}
 
 					i=this.origin_array.length;
 				}
@@ -1030,84 +1013,137 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		setChanged();
 		notifyObservers();
 	}
-	
-	
+
+
 	private int func_getFrequency(int frequency){
-//		-- CREATE FUNCTION getFrequency(frequency INT, minimal_hits INT)
-//		--   RETURNS INT
-//		--   BEGIN
-//		--     DECLARE result INT(11);
-//
-//		--     IF frequency > minimal_hits THEN SET result = minimal_hits;
-//		--     ELSE SET result = frequency;
-//		--     END IF;
-//
-//		--     RETURN result;
-//		--   END
-		if (frequency > this.minimalFrequency){
+		//		-- CREATE FUNCTION getFrequency(frequency INT, minimal_hits INT)
+		//		--   RETURNS INT
+		//		--   BEGIN
+		//		--     DECLARE result INT(11);
+		//
+		//		--     IF frequency > minimal_hits THEN SET result = minimal_hits;
+		//		--     ELSE SET result = frequency;
+		//		--     END IF;
+		//
+		//		--     RETURN result;
+		//		--   END
+		if (frequency > this.minimalFrequency)
 			return this.minimalFrequency;
-		}
-		else {
+		else
 			return frequency;
-		}
 	}
-	
-	private Map<ArrayList<String>, Double> procedure_getMetabolitesGeneScore() throws SQLException {
-//		-- CREATE PROCEDURE getMetaboliteTaxonomyScores (IN originTaxonomy BIGINT UNSIGNED, IN minimal_hits BIGINT UNSIGNED, IN alpha FLOAT UNSIGNED, IN beta_penalty FLOAT UNSIGNED, IN idproject BIGINT UNSIGNED)
-//		-- BEGIN
-//		--    SELECT metabolite_id, gene_id, similarity_score_sum/(
-//		--        SELECT SUM(similarity)
-//		--        FROM genes_has_tcdb_registries
-//		--        INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id
-//		--        INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version)
-//		--        WHERE project_id = idproject AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites.gene_id)
-//		--    *alpha+(1-alpha)*
-//		--    (taxonomy_score_sum*(1-(minimal_hits-getFrequency(frequency,minimal_hits))*beta_penalty)/(originTaxonomy*frequency)) as final_score
-//		--    FROM genes_has_metabolites;
-//		--   /*WHERE genes_id = geneid;*/
-//		-- END 
-		Map<ArrayList<String>, Double> procedure_data = new HashMap<ArrayList<String>, Double>();
-		
-		ResultSet query1=this.stmt.executeQuery( "SELECT SUM(similarity) FROM genes_has_tcdb_registries INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version) WHERE project_id = idproject AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites.gene_id)");
-		ResultSet query2=this.stmt.executeQuery( "SELECT metabolite_id, gene_id, similarity_score_sum, taxonomy_score_sum, frequency FROM genes_has_metabolites ");
-		
+
+	private Map<String, Map<String, Double>> procedure_getMetabolitesGeneScore(int projectID) throws SQLException {
+		//		-- CREATE PROCEDURE getMetaboliteTaxonomyScores (IN originTaxonomy BIGINT UNSIGNED, IN minimal_hits BIGINT UNSIGNED, IN alpha FLOAT UNSIGNED, IN beta_penalty FLOAT UNSIGNED, IN idproject BIGINT UNSIGNED)
+		//		-- BEGIN
+		//		--    SELECT metabolite_id, gene_id, similarity_score_sum/(
+		//		--        SELECT SUM(similarity)
+		//		--        FROM genes_has_tcdb_registries
+		//		--        INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id
+		//		--        INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version)
+		//		--        WHERE project_id = idproject AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites.gene_id)
+		//		--    *alpha+(1-alpha)*
+		//		--    (taxonomy_score_sum*(1-(minimal_hits-getFrequency(frequency,minimal_hits))*beta_penalty)/(originTaxonomy*frequency)) as final_score
+		//		--    FROM genes_has_metabolites;
+		//		-- END 
+		Map<String, Map<String, Double>> procedure_data = new HashMap<>();
+
+		//		ResultSet query1 = this.stmt.executeQuery( "SELECT genes.id, SUM(similarity) FROM genes_has_tcdb_registries "
+		//				+ " INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id "
+		//				+ " INNER JOIN genes_has_metabolites ON genes.id = genes_has_metabolites.gene_id "
+		//				+ " INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version)"
+		//				+ " WHERE (project_id = "+projectID+" AND latest_version)"
+		//				+ " GROUP BY genes.id, metabolite_id");
+
+		ResultSet query1 = this.stmt.executeQuery("SELECT gene_id, SUM(similarity_score_sum) FROM genes_has_metabolites GROUP BY gene_id;");
+
+		Map<String, Integer> similarities = new HashMap<>();
 		while(query1.next()) {
-			query2.next();
-			List<String> tempList = Arrays.asList(query2.getString(2), query2.getString(1));
-			Double final_score = query2.getDouble(3)/(query1.getDouble(1)*this.alpha+(1-this.alpha)*(query2.getDouble(4)*(1-(this.minimalFrequency-func_getFrequency(query2.getInt(5)))*this.beta)/(this.originTaxonomy*query2.getInt(5))));
-			procedure_data.put((ArrayList<String>) tempList, final_score);
+
+			similarities.put(query1.getString(1), query1.getInt(2));
+			logger.trace("gene id {}\t sum {}", query1.getString(1), query1.getString(2));
 		}
+
+		ResultSet query2 = this.stmt.executeQuery( "SELECT metabolite_id, gene_id, similarity_score_sum, taxonomy_score_sum, frequency FROM genes_has_metabolites;");
+
+		while(query2.next()) {
+
+			Double final_score = query2.getDouble(3)/(similarities.get(query2.getString(2))*this.alpha+(1-this.alpha)*(query2.getDouble(4)*(1-(this.minimalFrequency-func_getFrequency(query2.getInt(5)))*this.beta)/(this.originTaxonomy*query2.getInt(5))));
+
+			Map<String, Double> metaboliteScore = new HashMap<>();
+			if(procedure_data.containsKey(query2.getString(1)))
+				metaboliteScore = procedure_data.get(query2.getString(1)); 
+
+			metaboliteScore.put(query2.getString(1), final_score);
+			procedure_data.put(query2.getString(2), metaboliteScore);
+		}
+		
+		//logger.debug("Procedure procedure_getMetabolitesGeneScore {} ", procedure_data.keySet().toString());
+
 		return procedure_data;
 	}
-	
-	private Map<ArrayList<String>, Double> procedure_getTransportTypeTaxonomyScore() throws SQLException {
-//		-- CREATE PROCEDURE getTransportTypeTaxonomyScore (IN originTaxonomy BIGINT UNSIGNED, IN minimal_hits BIGINT UNSIGNED, IN alpha FLOAT UNSIGNED, IN beta_penalty FLOAT UNSIGNED, IN idproject BIGINT UNSIGNED)
-//		-- BEGIN
-//		--    SELECT transport_type_id, metabolite_id, gene_id, transport_type_score_sum/(
-//		--        SELECT SUM(similarity)
-//		--        FROM genes_has_tcdb_registries
-//		--        INNER JOIN genes_has_metabolites ON genes_has_tcdb_registries.gene_id=genes_has_metabolites.gene_id
-//		-- 	   INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id
-//		--        INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version)
-//		--        WHERE project_id = idproject AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites_has_type.gene_id
-//		--        AND genes_has_metabolites.metabolite_id=genes_has_metabolites_has_type.metabolite_id)
-//		-- 	   *alpha+(1-alpha)*
-//		-- 	  (genes_has_metabolites_has_type.taxonomy_score_sum*(1-(minimal_hits-getFrequency(genes_has_metabolites_has_type.frequency,minimal_hits))*beta_penalty)/(originTaxonomy*genes_has_metabolites_has_type.frequency)) as final_score
-//		--    FROM genes_has_metabolites_has_type
-//		--    ORDER BY gene_id , metabolite_id , transport_type_id;
-//		-- /*   WHERE metabolites_id=metabolitesid;*/
-//		--   END
-		Map<ArrayList<String>, Double> procedure_data = new HashMap<ArrayList<String>, Double>();
-		
-		ResultSet query1=this.stmt.executeQuery( "SELECT SUM(similarity) FROM genes_has_tcdb_registries INNER JOIN genes_has_metabolites ON genes_has_tcdb_registries.gene_id=genes_has_metabolites.gene_id INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version) WHERE project_id = idproject AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites_has_type.gene_id AND genes_has_metabolites.metabolite_id=genes_has_metabolites_has_type.metabolite_id)");
-		ResultSet query2=this.stmt.executeQuery( "SELECT transport_type_id, metabolite_id, gene_id, transport_type_score_sum, taxonomy_score_sum, frequency FROM genes_has_metabolites_has_type ORDER BY gene_id, metabolite_id , transport_type_id");
-		
+
+	private Map<String, Map<String, Map<String, Double>>> procedure_getTransportTypeTaxonomyScore(int projectID) throws SQLException {
+		//		-- CREATE PROCEDURE getTransportTypeTaxonomyScore (IN originTaxonomy BIGINT UNSIGNED, IN minimal_hits BIGINT UNSIGNED, IN alpha FLOAT UNSIGNED, IN beta_penalty FLOAT UNSIGNED, IN idproject BIGINT UNSIGNED)
+		//		-- BEGIN
+		//		--    SELECT transport_type_id, metabolite_id, gene_id, transport_type_score_sum/(
+		//		--        SELECT SUM(similarity)
+		//		--        FROM genes_has_tcdb_registries
+		//		--        INNER JOIN genes_has_metabolites ON genes_has_tcdb_registries.gene_id=genes_has_metabolites.gene_id
+		//		-- 	   	INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id
+		//		--        INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version)
+		//		--        WHERE project_id = idproject AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites_has_type.gene_id
+		//		--        AND genes_has_metabolites.metabolite_id=genes_has_metabolites_has_type.metabolite_id)
+		//		-- 	   *alpha+(1-alpha)*
+		//		-- 	  (genes_has_metabolites_has_type.taxonomy_score_sum*(1-(minimal_hits-getFrequency(genes_has_metabolites_has_type.frequency,minimal_hits))*beta_penalty)/(originTaxonomy*genes_has_metabolites_has_type.frequency)) as final_score
+		//		--    FROM genes_has_metabolites_has_type
+		//		--    ORDER BY gene_id , metabolite_id , transport_type_id;
+		//		--   END
+		Map<String, Map<String, Map<String, Double>>> procedure_data = new HashMap<>();
+		//		ResultSet query1=this.stmt.executeQuery( "SELECT genes.id, SUM(similarity) FROM genes_has_tcdb_registries "
+		//				+ "INNER JOIN genes_has_metabolites ON genes_has_tcdb_registries.gene_id=genes_has_metabolites.gene_id "
+		//				+ "INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id "
+		//				+ "INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version) "
+		//				+ "WHERE (project_id = "+projectID+" AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites_has_type.gene_id AND genes_has_metabolites.metabolite_id=genes_has_metabolites_has_type.metabolite_id)");
+
+		ResultSet query1=this.stmt.executeQuery( "SELECT gene_id, metabolite_id, SUM(transport_type_score_sum) FROM genes_has_metabolites_has_type GROUP BY gene_id, metabolite_id;");
+
+		Map<String, Map<String, Integer>> transportType = new HashMap<>();
+
 		while(query1.next()) {
-			query2.next();
-			List<String> tempList = Arrays.asList(query2.getString(1), query2.getString(3), query2.getString(2));
-			Double final_score = query2.getDouble(4)/(query1.getDouble(1)*this.alpha+(1-this.alpha)*(query2.getDouble(5)*(1-(this.minimalFrequency-func_getFrequency(query2.getInt(6)))*this.beta)/(this.originTaxonomy*query2.getInt(6))));
-			procedure_data.put((ArrayList<String>) tempList, final_score);
+			
+			Map<String, Integer>  similarities = new HashMap<>();
+
+			if(transportType.containsKey(query1.getString(1)))
+				similarities = transportType.get(query1.getString(1));
+
+			similarities.put(query1.getString(2), query1.getInt(3));
+			transportType.put(query1.getString(1), similarities);
 		}
+
+		ResultSet query2=this.stmt.executeQuery( "SELECT transport_type_id, metabolite_id, gene_id, transport_type_score_sum, taxonomy_score_sum, frequency FROM genes_has_metabolites_has_type ORDER BY gene_id, metabolite_id , transport_type_id");
+
+		while(query2.next()) {
+
+			Double final_score = query2.getDouble(4)/(transportType.get(query2.getString(3)).get(query2.getString(2))*this.alpha+(1-this.alpha)*(query2.getDouble(5)*(1-(this.minimalFrequency-func_getFrequency(query2.getInt(6)))*this.beta)/(this.originTaxonomy*query2.getInt(6))));
+
+			Map<String, Map<String, Double>> metaboliteScores = new HashMap<>();
+			if(procedure_data.containsKey(query2.getString(3)))
+				metaboliteScores = procedure_data.get(query2.getString(3));
+
+			Map<String, Double> tranportTypeScores = new HashMap<>();
+			if(metaboliteScores.containsKey(query2.getString(2)))
+				tranportTypeScores = metaboliteScores.get(query2.getString(2));
+
+			tranportTypeScores.put(query2.getString(1), final_score);
+
+
+			metaboliteScores.put(query2.getString(2), tranportTypeScores);
+			procedure_data.put(query2.getString(3), metaboliteScores);
+		}
+		
+		//logger.debug("Procedure procedure_getTransportTypeTaxonomyScore {} ", procedure_data.keySet().toString());
+		
 		return procedure_data;
 	}
 }

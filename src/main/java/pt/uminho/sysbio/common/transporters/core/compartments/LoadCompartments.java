@@ -91,8 +91,8 @@ public class LoadCompartments {
 
 			stmt = this.conn.createStatement();
 			rs = stmt.executeQuery("SELECT psort_report_id, locus_tag, score, abbreviation, name FROM psort_reports_has_compartments " +
-					"LEFT JOIN psort_reports ON psort_reports.id=psort_report_id " +
-					"LEFT JOIN compartments ON compartments.id=compartment_id " +
+					"INNER JOIN psort_reports ON psort_reports.id=psort_report_id " +
+					"INNER JOIN compartments ON compartments.id=compartment_id " +
 					"WHERE project_id = "+project_id+" "+
 					"ORDER BY psort_report_id ASC, score DESC;"
 					);

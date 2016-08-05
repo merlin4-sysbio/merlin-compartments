@@ -76,7 +76,9 @@ public class LoadTransportContainer extends Observable implements Observer {
 			Map<String, String> kegg_miriam, Map<String, String> chebi_miriam, Set<String> ignoreSymportMetabolites) {
 		
 		this.setGenesReactions(genesReactions);
+		
 		this.setGenes(new ConcurrentLinkedDeque<String>(this.getGenesReactions().keySet()));
+
 		this.setCancel(cancel);
 		this.setGenesLocusTag(genesLocusTag);	
 		this.setSelectedGenesMetabolites(selectedGenesMetabolites);
@@ -91,7 +93,6 @@ public class LoadTransportContainer extends Observable implements Observer {
 		this.setReactionsContainer(new ConcurrentHashMap<String, TransportReactionCI>());
 		this.setMetabolitesContainer(new ConcurrentHashMap<String, MetaboliteCI>());
 		this.setGenesProteinsContainer(new ConcurrentHashMap<String, ProteinFamiliesSet>());
-		
 		this.setReactionsToBeReplaced(new ConcurrentHashMap<String, String>());
 		this.setTransportReactionsList(new ConcurrentHashMap<String,TransportReaction>());
 		this.setOntologyReactions(new ConcurrentHashMap<String,Set<TransportReaction>>());
@@ -116,13 +117,9 @@ public class LoadTransportContainer extends Observable implements Observer {
 		
 		int numberOfCores = Runtime.getRuntime().availableProcessors()*2;
 		List<Thread> threads = new ArrayList<Thread>();
-
-		if(this.getGenes().size()<numberOfCores) {
-
-			numberOfCores=this.getGenes().size();
-		}
 		
-		//numberOfCores = 1;
+		if(this.getGenes().size()<numberOfCores)
+			numberOfCores=this.getGenes().size();
 		
 		System.out.println("number Of threads: "+numberOfCores);
 		

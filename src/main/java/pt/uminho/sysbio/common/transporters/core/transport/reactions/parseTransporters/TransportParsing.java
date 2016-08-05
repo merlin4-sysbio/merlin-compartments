@@ -159,7 +159,7 @@ public class TransportParsing {
 	/**
 	 * @param reacting_metabolites
 	 */
-	public void parse_reacting_metabolites(String reacting_metabolites) {
+	public void parseReactingMetabolites(String reacting_metabolites) {
 
 		List<List<TransportMetaboliteDirectionStoichiometryContainer>> metabolites_temp = this.copyListofLists(this.transportMetaboliteDirectionStoichiometryContainerLists);
 
@@ -208,6 +208,7 @@ public class TransportParsing {
 
 				}
 			}
+			
 			this.transportMetaboliteDirectionStoichiometryContainerLists.addAll(metabolites_temp_clone);
 		}
 	}

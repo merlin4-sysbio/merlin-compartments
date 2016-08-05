@@ -20,6 +20,9 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
@@ -46,6 +49,7 @@ import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
  */
 public class TransportReactionsGeneration {
 
+	private static final Logger logger = LoggerFactory.getLogger(TransportReactionsGeneration.class);
 	private Map<String, TransportMetaboliteCodes> miriamData;
 	private Map<String, TransportMetaboliteCodes> reviewedMetsNames, reviewedMetsCodes;
 	private DatabaseAccess dba;
@@ -114,12 +118,13 @@ public class TransportReactionsGeneration {
 		Map<String, Integer> genes_map = new HashMap<String, Integer>();
 
 		ResultSet rs = stmt.executeQuery("SELECT sw_reports.id, locus_tag, similarity, acc, tcdb_id FROM sw_reports " +
-				"INNER JOIN sw_similarities ON sw_reports.id=sw_similarities.sw_report_id " +
-				"INNER JOIN sw_hits ON sw_hits.id=sw_similarities.sw_hit_id " +
+				" INNER JOIN sw_similarities ON sw_reports.id=sw_similarities.sw_report_id " +
+				" INNER JOIN sw_hits ON sw_hits.id=sw_similarities.sw_hit_id " +
 				" WHERE project_id = "+ project_id +
 				" ORDER BY sw_reports.locus_tag, similarity DESC");
 
 		int counter = 0;
+
 		while(rs.next()) {
 
 			AlignedGenesContainer alignedGenesContainer;
@@ -136,6 +141,8 @@ public class TransportReactionsGeneration {
 				data.add(counter, alignedGenesContainer);
 				counter ++;
 			}
+
+			logger.trace("Genes {} ",alignedGenesContainer.toString());
 
 			AlignmentResult alignmentResult = new AlignmentResult(rs.getString(4).toUpperCase(), rs.getDouble(3));
 			alignedGenesContainer.addAlignmentResult(alignmentResult);
@@ -160,7 +167,7 @@ public class TransportReactionsGeneration {
 
 				if(this.unAnnotatedTransporters.contains(transporter)) {
 
-					System.out.println("OLD version for UniProtID "+transporter.getUniprot_id()+", removing from unnanotated registries.");
+					logger.warn("OLD version for UniProtID {}, removing from unnanotated registries.",transporter.getUniprot_id());
 					this.unAnnotatedTransporters.remove(transporter);
 				}
 			}
@@ -292,16 +299,12 @@ public class TransportReactionsGeneration {
 
 			Set<String> geneSet = ltd.getLoadedGenes();
 
-			//List<CandidatesAssignments> genome = new ArrayList<CandidatesAssignments>();
-
 			for(AlignedGenesContainer alignedGenes: alignedGenesContainer) {
 
 				if(!geneSet.contains(alignedGenes.getLocusTag())) {
 
-					if(this.originTaxonomy==null) {
-
+					if(this.originTaxonomy==null)
 						this.setOrigintaxonomy(alignedGenes.getLocusTag());
-					}
 
 					String gene_id = ltd.loadGene(alignedGenes.getLocusTag(), project_id);
 					//CandidatesAssignments candidateAssignments= new CandidatesAssignments(alignedGenes.getLocusTag());
@@ -343,15 +346,16 @@ public class TransportReactionsGeneration {
 
 						for(AlignmentResult alignedResult : alignedGenes.getAlignmentResult()) {
 
-							String transport_type_id = ltd.getTransportTypeID(alignedResult.getUniprot_id()) ;
+							for(String transport_type_id : ltd.getTransportTypeID(alignedResult.getUniprot_id())) {
 
-							for(String metabolites_id:ltd.getMetabolitesID(alignedResult.getUniprot_id())) {
+								for(String metabolites_id:ltd.getMetabolitesID(alignedResult.getUniprot_id())) {
 
-								double similarity_score= new Double(alignedResult.getSimilarity()), taxonomy_score = this.getTaxonomyScore(alignedResult.getUniprot_id());
+									double similarity_score= new Double(alignedResult.getSimilarity()), taxonomy_score = this.getTaxonomyScore(alignedResult.getUniprot_id());
 
-								ltd.load_genes_has_metabolites(gene_id, metabolites_id, similarity_score, taxonomy_score);
+									ltd.load_genes_has_metabolites(gene_id, metabolites_id, similarity_score, taxonomy_score);
 
-								ltd.load_genes_has_metabolites_has_type(gene_id, metabolites_id, transport_type_id, similarity_score, taxonomy_score);
+									ltd.load_genes_has_metabolites_has_type(gene_id, metabolites_id, transport_type_id, similarity_score, taxonomy_score);
+								}
 							}
 						}
 						//genome.add(candidateAssignments);
@@ -410,7 +414,7 @@ public class TransportReactionsGeneration {
 					transportParsing.parseMetabolites(parserContainer.getMetabolites(), parserContainer.getTransportType());
 
 				if(parserContainer.getReactingMetabolites()!= null && !parserContainer.getReactingMetabolites().equals("--"))
-					transportParsing.parse_reacting_metabolites(parserContainer.getReactingMetabolites());
+					transportParsing.parseReactingMetabolites(parserContainer.getReactingMetabolites());
 
 				Set<Integer> transportSystemIds = new TreeSet<Integer>();
 				// parse all lists of metabolites, each list of lists being a transport reaction
@@ -435,32 +439,19 @@ public class TransportReactionsGeneration {
 							TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
 
 							if(list_of_metabolites.contains(metaboliteContainer.getName())) {
+								//System.out.println(metabolite);
 
-								if(list_of_direction.contains("in") && metaboliteContainer.getDirection().equalsIgnoreCase("out") && j==tmdsList.size()-1 && list_of_metabolites.size()==1) {
-
-									//System.out.println(metabolite);
+								if(list_of_direction.contains("in") && metaboliteContainer.getDirection().equalsIgnoreCase("out") && j==tmdsList.size()-1 && list_of_metabolites.size()==1)
 									go=false;
-								}
 
-								if(list_of_direction.contains("out") && metaboliteContainer.getDirection().equalsIgnoreCase("in") && j==tmdsList.size()-1 && list_of_metabolites.size()==1) {
-
-									//System.out.println(metabolite);
+								if(list_of_direction.contains("out") && metaboliteContainer.getDirection().equalsIgnoreCase("in") && j==tmdsList.size()-1 && list_of_metabolites.size()==1)
 									go=false;
-								}
 							}
 							else {
 
 								list_of_metabolites.add(metaboliteContainer.getName());
 								list_of_direction.add(metaboliteContainer.getDirection());
 							}
-
-//							if(!go) {
-//
-//								System.out.println(parserContainer.getUniprot_id());
-//								System.out.println(metaboliteContainer.getName());
-//								System.out.println();
-//							}
-
 						}
 
 						if(go) {
@@ -551,14 +542,6 @@ public class TransportReactionsGeneration {
 			TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
 			metaboliteContainer = this.getMiriamCodes(metaboliteContainer, verbose);
 			metaboliteContainer = this.getMiriamNames(metaboliteContainer, verbose);
-
-			//			System.out.println(metaboliteContainer.getName());
-			//			System.out.println(metaboliteContainer.getKegg_miriam());
-			//			System.out.println(metaboliteContainer.getKegg_name());
-			//			System.out.println(metaboliteContainer.getChebi_miriam());
-			//			System.out.println(metaboliteContainer.getChebi_name());
-			//			System.out.println();
-
 			ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
 
 			tmdsList.set(j, metaboliteContainer);
@@ -831,42 +814,42 @@ public class TransportReactionsGeneration {
 			reader = new BufferedReader(new FileReader(file));
 			String text = null;
 			boolean go = false;
-			
+
 			while ((text = reader.readLine()) != null) {
-				
+
 				if (!go)
 					go = text.trim().length()>0 && !text.contains("homologue ID") && !text.contains("UniProt ID") && !text.contains("TCDB description");
 
-				if(go) {
+					if(go) {
 
-					StringTokenizer st = new StringTokenizer(text,"\t");
+						StringTokenizer st = new StringTokenizer(text,"\t");
 
-					ParserContainer parserContainer = new ParserContainer();
+						ParserContainer parserContainer = new ParserContainer();
 
-					parserContainer.setUniprot_id(st.nextToken().replace("\"", "").trim().toUpperCase()); // 1st
+						parserContainer.setUniprot_id(st.nextToken().replace("\"", "").trim().toUpperCase()); // 1st
 
-					if(!this.taxonomyMap.containsKey(parserContainer.getUniprot_id())) {
+						if(!this.taxonomyMap.containsKey(parserContainer.getUniprot_id())) {
 
-						TaxonomyContainer organism_data= UniProtAPI.get_uniprot_entry_organism(parserContainer.getUniprot_id());
+							TaxonomyContainer organism_data= UniProtAPI.get_uniprot_entry_organism(parserContainer.getUniprot_id());
 
-						this.taxonomyMap.put(parserContainer.getUniprot_id(), organism_data);
+							this.taxonomyMap.put(parserContainer.getUniprot_id(), organism_data);
+						}
+
+						parserContainer.setTaxonomyContainer(this.taxonomyMap.get(parserContainer.getUniprot_id()));
+
+						parserContainer.setTc_number(st.nextToken().toUpperCase().replace("\"", "").trim()); // 2nd 
+						parserContainer.setTc_family(st.nextToken().replace("\"", "").trim()); // 3rd
+						parserContainer.setTransportType(st.nextToken().toLowerCase().replace("\"", "").trim().toLowerCase()); // 4th
+						parserContainer.setMetabolites(st.nextToken().replace("\"", "").trim().toLowerCase()); // 5th
+						parserContainer.setReversibility(Boolean.valueOf(st.nextToken().toUpperCase().replace("\"", "").trim())); // 6th
+						parserContainer.setReactingMetabolites(st.nextToken().replace("\"", "").trim().toLowerCase()); // 7th
+						parserContainer.setGeneral_equation(st.nextToken().replace("\"", "").trim()); // 8th
+
+						parserContainer.setAffinity(null);
+						parserContainer.setTc_location(null);
+
+						data.add(parserContainer);
 					}
-
-					parserContainer.setTaxonomyContainer(this.taxonomyMap.get(parserContainer.getUniprot_id()));
-
-					parserContainer.setTc_number(st.nextToken().toUpperCase().replace("\"", "").trim()); // 2nd 
-					parserContainer.setTc_family(st.nextToken().replace("\"", "").trim()); // 3rd
-					parserContainer.setTransportType(st.nextToken().toLowerCase().replace("\"", "").trim().toLowerCase()); // 4th
-					parserContainer.setMetabolites(st.nextToken().replace("\"", "").trim().toLowerCase()); // 5th
-					parserContainer.setReversibility(Boolean.valueOf(st.nextToken().toUpperCase().replace("\"", "").trim())); // 6th
-					parserContainer.setReactingMetabolites(st.nextToken().replace("\"", "").trim().toLowerCase()); // 7th
-					parserContainer.setGeneral_equation(st.nextToken().replace("\"", "").trim()); // 8th
-
-					parserContainer.setAffinity(null);
-					parserContainer.setTc_location(null);
-
-					data.add(parserContainer);
-				}
 			}
 			reader.close();
 		} 
@@ -1002,7 +985,7 @@ public class TransportReactionsGeneration {
 
 		if(tc_direction_data.equals("in:in"))
 			return "symport";
-		
+
 		if(tc_direction_data.equals("out:out"))
 			return "symport_out";
 
