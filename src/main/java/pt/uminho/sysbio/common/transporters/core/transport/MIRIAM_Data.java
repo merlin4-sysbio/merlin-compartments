@@ -12,8 +12,8 @@ import java.util.TreeSet;
 import javax.xml.ws.WebServiceException;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
-import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiAPIInterface;
-import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiER;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiAPIInterface;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiER;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.KeggAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.sbml_semantics.SemanticSbmlAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.sbml_semantics.SemanticSbmlSearchQueryResult;

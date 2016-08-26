@@ -1,6 +1,6 @@
 package pt.uminho.sysbio.common.transporters.core.transport.reactions.parseTransporters;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.TaxonomyContainer;
 
 /**
  * @author ODias

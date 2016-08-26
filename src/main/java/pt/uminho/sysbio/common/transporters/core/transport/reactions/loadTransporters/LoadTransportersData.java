@@ -19,13 +19,13 @@ import java.util.TreeSet;
 import javax.xml.ws.WebServiceException;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
-import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiAPIInterface;
-import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiER;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiAPIInterface;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiER;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.MyNcbiTaxon;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.TaxonomyContainer;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.KeggAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.datastructures.KeggCompoundER;
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.MyNcbiTaxon;
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportMetaboliteDirectionStoichiometryContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;

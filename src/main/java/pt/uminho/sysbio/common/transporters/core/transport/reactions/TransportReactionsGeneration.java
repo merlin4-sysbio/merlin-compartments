@@ -24,9 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.TaxonomyContainer;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.TaxonomyContainer;
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.AnnotateTransporters;

@@ -26,7 +26,7 @@ import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.Metabolit
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionTypeEnum;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
-import pt.uminho.sysbio.common.bioapis.externalAPI.chebi.ChebiAPIInterface;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiAPIInterface;
 
 /**
  * @author ODias

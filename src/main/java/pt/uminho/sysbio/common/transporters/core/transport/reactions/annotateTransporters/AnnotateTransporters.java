@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.uniprot.UniProtAPI;
+import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
 
 /**
  * 
