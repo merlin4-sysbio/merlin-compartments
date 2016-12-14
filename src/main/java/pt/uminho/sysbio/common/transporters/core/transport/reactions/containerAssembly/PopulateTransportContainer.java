@@ -206,25 +206,22 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	 */
 	private void populateGraph() throws SQLException {
 
-		ResultSet rs = stmt.executeQuery("SELECT metabolites_ontology.id, metabolite_id, child_id, kegg_miriam as child_kegg_miriam, chebi_miriam as child_chebi_miriam " +
-				"FROM metabolites_ontology " +
-				"INNER JOIN metabolites ON (child_id = metabolites.id)");
+		ResultSet rs = stmt.executeQuery("SELECT metabolites_ontology.id, metabolite_id, child_id " + //, kegg_miriam as child_kegg_miriam, chebi_miriam as child_chebi_miriam " +
+				" FROM metabolites_ontology " +
+				" INNER JOIN metabolites ON (child_id = metabolites.id)");
 
-		while(rs.next()) {
-
+		while(rs.next())
 			this.graph.addEdge(new DefaultBinaryEdge<String, String>(rs.getString(1), rs.getString(2), rs.getString(3)));
-		}
+		
 		rs.close();
 
 		rs = stmt.executeQuery("SELECT id, kegg_miriam, chebi_miriam " +
-				"FROM metabolites");
+				" FROM metabolites");
 
 		while(rs.next()) {
 
-			if(rs.getString(3)!=null  && !rs.getString(3).equalsIgnoreCase("null")) {
-
+			if(rs.getString(3)!=null  && !rs.getString(3).equalsIgnoreCase("null"))
 				this.chebi_miriam.put(rs.getString(1), rs.getString(3));
-			}
 
 			//if(rs.getString(2)!=null  && !rs.getString(2).equalsIgnoreCase("null")) {
 
@@ -242,10 +239,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		Map<String, String> transport_type_list = new TreeMap<>();
 		ResultSet rs = stmt.executeQuery("SELECT * FROM transport_types");
-		while(rs.next()) {
-
+		
+		while(rs.next())
 			transport_type_list.put(rs.getString(1),rs.getString(2));
-		}
 
 		return transport_type_list;
 	}
@@ -437,14 +433,10 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				double score=rs.getDouble(4);
 				GenesMetabolitesTransportType genesMetabolitesTransportType;
 
-				if(this.genesMetabolitesTransportTypeMap.containsKey(geneID)) {
-
+				if(this.genesMetabolitesTransportTypeMap.containsKey(geneID))
 					genesMetabolitesTransportType= this.genesMetabolitesTransportTypeMap.get(geneID);
-				}
-				else {
-
+				else
 					genesMetabolitesTransportType= new GenesMetabolitesTransportType(geneID);
-				}
 
 				transportType = this.transport_type_list.get(transportType);
 				genesMetabolitesTransportType.addMetaboliteTransportType(metaboliteID, transportType, score);
@@ -465,14 +457,10 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 						GenesMetabolitesTransportType genesMetabolitesTransportType;
 
-						if(this.genesMetabolitesTransportTypeMap.containsKey(geneID)) {
-
+						if(this.genesMetabolitesTransportTypeMap.containsKey(geneID))
 							genesMetabolitesTransportType= this.genesMetabolitesTransportTypeMap.get(geneID);
-						}
-						else {
-
+						else
 							genesMetabolitesTransportType= new GenesMetabolitesTransportType(geneID);
-						}
 
 						transportType = this.transport_type_list.get(transportType);
 						genesMetabolitesTransportType.addMetaboliteTransportType(metaboliteID, transportType, score);
@@ -498,13 +486,13 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		boolean openReaction=true;
 		Map<String, String> tc_numbers_equations = new HashMap<String, String>();
 
-		ResultSet rs = stmt.executeQuery("SELECT tc_number, equation FROM general_equation " +
-				"INNER JOIN tc_numbers ON (general_equation.id = general_equation_id) ");
+		ResultSet rs = stmt.executeQuery("SELECT tc_number, equation " +
+				" FROM general_equation " +
+				" INNER JOIN tc_numbers ON (general_equation.id = general_equation_id) ");
 
-		while(rs.next()) {
-
+		while(rs.next())
 			tc_numbers_equations.put(rs.getString(1), rs.getString(2));
-		}
+
 		rs.close();
 
 		rs = stmt.executeQuery("SELECT gene_id, locus_tag, tc_family, transport_reaction_id, metabolite_id, " +
@@ -518,7 +506,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			
 			String geneID=rs.getString(1);
 			
-			String reactionID = "T"+ idConverter(rs.getString(4).trim()), metaboliteID=rs.getString(5), direction=rs.getString(7);
+			String reactionID = "T"+ idConverter(rs.getString(4).trim());
+			String metaboliteID = rs.getString(5);
+			String direction = rs.getString(7);
 			double stoichiometry=rs.getDouble(6);
 			this.genesLocusTag.put(geneID, rs.getString(2));
 			ProteinFamiliesSet proteins;
@@ -577,13 +567,15 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			TransportMetabolite transportMetabolite;
 			if(this.transportMetabolites.containsKey(metaboliteID)) {
 
-				transportMetabolite= this.transportMetabolites.get(metaboliteID);
+				transportMetabolite = this.transportMetabolites.get(metaboliteID);
 			}
 			else {
 
-				String metaboliteName=rs.getString(11);
-				if(metaboliteName.equals("null")){metaboliteName=rs.getString(8);}
-				transportMetabolite=new TransportMetabolite(metaboliteID,metaboliteName,rs.getString(9),rs.getString(10));
+				String metaboliteName = rs.getString(11);
+				if(metaboliteName.equals("null"))
+					metaboliteName=rs.getString(8);
+				
+				transportMetabolite = new TransportMetabolite(metaboliteID, metaboliteName, rs.getString(9), rs.getString(10));
 				this.transportMetabolites.put(metaboliteID,transportMetabolite);
 			}
 
@@ -857,17 +849,14 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	private boolean setMetaboltitesFormulas() throws SQLException{
 
 		ResultSet rs = this.stmt.executeQuery("SELECT id, kegg_formula, chebi_formula FROM metabolites;");
-		while(rs.next())
-		{
+		
+		while(rs.next()) {
+			
 			String id = rs.getString(1);
-			if(!rs.getString(2).equalsIgnoreCase("") && !rs.getString(2).equalsIgnoreCase("null") 
-					&& rs.getString(2)!=null){
+			if(!rs.getString(2).equalsIgnoreCase("") && !rs.getString(2).equalsIgnoreCase("null") && rs.getString(2)!=null)
 				this.metabolitesFormula.put(id, rs.getString(2));
-			}
-			else if(!metabolitesFormula.containsKey(id) && !rs.getString(3).equalsIgnoreCase("") 
-					&& !rs.getString(3).equalsIgnoreCase("null") && rs.getString(3)!=null){
+			else if(!metabolitesFormula.containsKey(id) && !rs.getString(3).equalsIgnoreCase("") && !rs.getString(3).equalsIgnoreCase("null") && rs.getString(3)!=null)
 				this.metabolitesFormula.put(id, rs.getString(3));
-			}
 		}
 		return true;
 	}

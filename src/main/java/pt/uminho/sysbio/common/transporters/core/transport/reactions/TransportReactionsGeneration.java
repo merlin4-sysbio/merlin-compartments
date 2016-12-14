@@ -288,7 +288,7 @@ public class TransportReactionsGeneration {
 	 * @param project_id
 	 * @return
 	 */	
-	public boolean parse_and_load_candidates(List<AlignedGenesContainer> alignedGenesContainer, int project_id) {
+	public boolean parseAndLoadCandidates(List<AlignedGenesContainer> alignedGenesContainer, int project_id) {
 
 		try {
 
@@ -426,7 +426,7 @@ public class TransportReactionsGeneration {
 
 					boolean go = true;
 
-					int transport_system_id = this.get_transporter_id_if_exists(tmdsList, ltd, parserContainer.getReversibility(), false, directions, type_id);
+					int transport_system_id = this.getTransporterID_ifExists(tmdsList, ltd, parserContainer.getReversibility(), false, directions, type_id);
 
 					if(transport_system_id<0) {
 
@@ -722,7 +722,7 @@ public class TransportReactionsGeneration {
 	 * @param type_id
 	 * @return
 	 */
-	private int get_transporter_id_if_exists(List<TransportMetaboliteDirectionStoichiometryContainer> metabolitesContainerList, LoadTransportersData ltd, boolean reversibility, boolean invertDirections, String transport_type, int type_id) {
+	private int getTransporterID_ifExists(List<TransportMetaboliteDirectionStoichiometryContainer> metabolitesContainerList, LoadTransportersData ltd, boolean reversibility, boolean invertDirections, String transport_type, int type_id) {
 
 		if(metabolitesContainerList.size()>0) {
 
@@ -793,7 +793,7 @@ public class TransportReactionsGeneration {
 
 			//Reversing directions on reversible reactions to check reaction.
 			if((transport_type.equalsIgnoreCase("influx") || transport_type.equalsIgnoreCase("efflux")) && reversibility && !invertDirections)
-				return this.get_transporter_id_if_exists(metabolitesContainerList, ltd, reversibility, true, transport_type, type_id);
+				return this.getTransporterID_ifExists(metabolitesContainerList, ltd, reversibility, true, transport_type, type_id);
 		}		
 		return -1;
 	}
