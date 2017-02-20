@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
-import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.OrganismType;
 
 /**
  * @author Oscar Dias
@@ -23,17 +22,17 @@ public class ReadLocTree implements CompartmentsInterface {
 	private LoadCompartments loadCompartments;
 	private Map<String, CompartmentResult> results;
 	private int project_id;
-	private OrganismType organismType;
+	private boolean typePlant;
 
 
 
 	/**
 	 * @param organismType
 	 */
-	public ReadLocTree(OrganismType organismType) {
+	public ReadLocTree(boolean typePlant) {
 
 		this.cancel = new AtomicBoolean(false);
-		this.organismType = organismType;
+		this.typePlant = typePlant;
 	}
 
 	/**
@@ -42,13 +41,13 @@ public class ReadLocTree implements CompartmentsInterface {
 	 * @param project_id
 	 * @param organismType
 	 */
-	public ReadLocTree(Connection conn, Map<String, CompartmentResult> results, int project_id, OrganismType organismType) {
+	public ReadLocTree(Connection conn, Map<String, CompartmentResult> results, int project_id, boolean typePlant) {
 
 		this.cancel = new AtomicBoolean(false);
 		this.loadCompartments = new LoadCompartments(conn);
 		this.results = results;
 		this.project_id = project_id;
-		this.organismType = organismType;
+		this.typePlant = typePlant;
 	}
 
 
@@ -109,7 +108,7 @@ public class ReadLocTree implements CompartmentsInterface {
 
 				String localizationString = locT[localization];
 
-				if(!this.organismType.equals(OrganismType.plant)) {
+				if(!typePlant) {
 
 					if (localizationString.equals("chloroplast") || 
 							localizationString.equals("plastid"))
