@@ -22,17 +22,17 @@ public class ReadLocTree implements CompartmentsInterface {
 	private LoadCompartments loadCompartments;
 	private Map<String, CompartmentResult> results;
 	private int project_id;
-	private boolean organismType;
+	private boolean typePlant;
 
 
 
 	/**
 	 * @param organismType
 	 */
-	public ReadLocTree(boolean organismType) {
+	public ReadLocTree(boolean typePlant) {
 
 		this.cancel = new AtomicBoolean(false);
-		this.organismType = organismType;
+		this.typePlant = typePlant;
 	}
 
 	/**
@@ -41,13 +41,13 @@ public class ReadLocTree implements CompartmentsInterface {
 	 * @param project_id
 	 * @param organismType
 	 */
-	public ReadLocTree(Connection conn, Map<String, CompartmentResult> results, int project_id, boolean organismType) {
+	public ReadLocTree(Connection conn, Map<String, CompartmentResult> results, int project_id, boolean typePlant) {
 
 		this.cancel = new AtomicBoolean(false);
 		this.loadCompartments = new LoadCompartments(conn);
 		this.results = results;
 		this.project_id = project_id;
-		this.organismType = organismType;
+		this.typePlant = typePlant;
 	}
 
 
@@ -108,7 +108,7 @@ public class ReadLocTree implements CompartmentsInterface {
 
 				String localizationString = locT[localization];
 
-				if(this.organismType) {
+				if(!typePlant) {
 
 					if (localizationString.equals("chloroplast") || 
 							localizationString.equals("plastid"))
