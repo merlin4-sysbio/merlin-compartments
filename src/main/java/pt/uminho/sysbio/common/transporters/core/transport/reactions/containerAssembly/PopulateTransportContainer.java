@@ -4,7 +4,6 @@
 package pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -646,10 +645,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	 */
 	public void	creatReactionsFiles(TransportContainer transportContainer, String path) throws IOException {
 
-		new File(path+"_transport_reactions.log");
+		//new File(path+"_transport_reactions.log");
 		FileWriter fstream = new FileWriter(path+"_transport_reactions_unvalidated.log");  
 		BufferedWriter out = new BufferedWriter(fstream);
-
 
 		int reactionsCounter=0;
 
@@ -674,11 +672,10 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				Map<String, StoichiometryValueCI> reactants = transportContainer.getReactions().get(reaction).getReactants();
 				Map<String, StoichiometryValueCI> products = transportContainer.getReactions().get(reaction).getProducts();
 				String concat  = "";
-				for(String key :reactants.keySet()) {
 
+				for(String key :reactants.keySet())
 					concat=concat.concat(reactants.get(key).getStoichiometryValue()+" "+transportContainer.getMetabolites().get(reactants.get(key).getMetaboliteId()).getName()+" ("+reactants.get(key).getCompartmentId())+") + ";
-				}
-				
+
 				concat=concat.substring(0, concat.lastIndexOf("+")-1);
 				
 				if(transportContainer.getReactions().get(reaction).getReversible())
