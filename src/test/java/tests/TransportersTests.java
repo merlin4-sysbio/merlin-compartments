@@ -40,7 +40,7 @@ public class TransportersTests {
 
 		Connection conn = new Connection(msqlmt);
 
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), msqlmt.get_database_type());
 
 		t.setOrganismsTaxonomyScore(ltd);
 		t.setOrigintaxonomy("ATP6V0A1");

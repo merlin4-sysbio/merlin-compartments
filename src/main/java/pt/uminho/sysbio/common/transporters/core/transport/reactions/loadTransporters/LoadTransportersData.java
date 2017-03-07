@@ -26,6 +26,8 @@ import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.TaxonomyContainer
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.KeggAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.datastructures.KeggCompoundER;
+import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseUtilities;
+import pt.uminho.sysbio.common.database.connector.datatypes.Enumerators.DatabaseType;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportMetaboliteDirectionStoichiometryContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;
@@ -53,14 +55,16 @@ public class LoadTransportersData {
 	private Map<String, Integer> uniprot_latest_version;
 	private Map<String, Integer> metabolites_id_map;
 	private Set<String> synonyms;
+	private DatabaseType databaseType;
 
 
 	/**
 	 * @param statement
 	 */
-	public LoadTransportersData(Statement statement) {
+	public LoadTransportersData(Statement statement, DatabaseType databaseType) {
 
 		this.statement=statement;
+		this.databaseType = databaseType;
 		this.directionMap=new HashMap<String, String>();
 		this.transportDirectionsMap=new HashMap<String, Integer>();
 		this.organism_id=new HashMap<String, Integer>();
@@ -229,7 +233,7 @@ public class LoadTransportersData {
 
 			if(tc_version<0) {
 
-				int taxonomy_data_id = this.getOrganismID(parserContainer.getTaxonomyContainer().getSpeciesName(), taxonomyString.replace("'", "\\'"));
+				int taxonomy_data_id = this.getOrganismID(parserContainer.getTaxonomyContainer().getSpeciesName(), DatabaseUtilities.databaseStrConverter(taxonomyString,this.databaseType));
 				int general_equation_id = this.load_general_equation(parserContainer.getGeneral_equation());
 				tc_version = this.addTC_number(parserContainer, taxonomy_data_id, general_equation_id);
 				//update = false;
@@ -475,7 +479,7 @@ public class LoadTransportersData {
 	 */
 	public int getOrganismID(String organism, String taxonomy){
 
-		organism=organism.replace("'", "\\'");
+		organism = DatabaseUtilities.databaseStrConverter(organism,this.databaseType);
 
 		int result=-1;
 
@@ -800,10 +804,9 @@ public class LoadTransportersData {
 
 		if(this.metabolites_id_map.containsKey(name)) {
 
-			if(datatype.equals(DATATYPE.MANUAL)) {
+			if(datatype.equals(DATATYPE.MANUAL))
+				this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
 
-				this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name='"+name.replace("'", "\\'")+"';");
-			}
 			return this.metabolites_id_map.get(name);
 		}
 
@@ -815,9 +818,9 @@ public class LoadTransportersData {
 
 				if(chebi_name!=null) {
 
-					this.statement.execute("UPDATE metabolites SET chebi_name = '"+chebi_name.replace("'", "\\'")+"' , chebi_miriam = '"+chebi+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
+					this.statement.execute("UPDATE metabolites SET chebi_name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"' , chebi_miriam = '"+chebi+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
 				}
-				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(kegg_name)+",'"+name.replace("'", "\\'")+"','"+datatype+"')");
+				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(kegg_name)+",'"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"','"+datatype+"')");
 				this.synonyms.add(name);
 				this.metabolites_id_map.put(name, this.metabolites_id_map.get(kegg_name));
 			}
@@ -830,11 +833,10 @@ public class LoadTransportersData {
 
 			if(!this.synonyms.contains(name)) {
 
-				if(kegg_name!=null) {
+				if(kegg_name!=null)
+					this.statement.execute("UPDATE metabolites SET kegg_name = '"+DatabaseUtilities.databaseStrConverter(kegg_name,this.databaseType)+"' , kegg_miriam = '"+kegg+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
 
-					this.statement.execute("UPDATE metabolites SET kegg_name = '"+kegg_name.replace("'", "\\'")+"' , kegg_miriam = '"+kegg+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
-				}
-				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(chebi_name)+",'"+name.replace("'", "\\'")+"','"+datatype+"')");
+				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(chebi_name)+",'"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"','"+datatype+"')");
 				this.synonyms.add(name);
 				this.metabolites_id_map.put(name, this.metabolites_id_map.get(chebi_name));
 			}
@@ -856,7 +858,7 @@ public class LoadTransportersData {
 		}
 
 		int result=-1;
-		ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name='"+name.replace("'", "\\'")+"';");
+		ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
 
 		if(rs.next()) {
 
@@ -866,7 +868,7 @@ public class LoadTransportersData {
 
 				if(datatype.equals(DATATYPE.MANUAL)) {
 
-					this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name='"+name.replace("'", "\\'")+"';");
+					this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
 				}
 			}
 			rs.close();
@@ -945,7 +947,10 @@ public class LoadTransportersData {
 		}
 
 		this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
-				"VALUES('"+name.replace("'", "\\'").toLowerCase()+"','"+kegg+"','"+chebi+"','"+kegg_name+"','"+chebi_name+"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
+				"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg+"','"+chebi+"','"+
+				DatabaseUtilities.databaseStrConverter(kegg_name,this.databaseType)+"','"+
+				DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
+				"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
 		rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
 		rs.next();
 		result =  rs.getInt(1);
@@ -1084,14 +1089,13 @@ public class LoadTransportersData {
 
 		if(metabolite_id > 0) {
 
-			ResultSet rs = this.statement.executeQuery("SELECT * FROM synonyms WHERE metabolite_id="+metabolite_id+" AND name='"+metabolite.getName().replace("'", "\\'").toLowerCase()+"';");
+			ResultSet rs = this.statement.executeQuery("SELECT * FROM synonyms WHERE metabolite_id="+metabolite_id+" AND name='"+DatabaseUtilities.databaseStrConverter(metabolite.getName(),this.databaseType).toLowerCase()+"';");
 
 			if(!rs.next()) {
 
-				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+metabolite_id+",'"+metabolite.getName().replace("'", "\\'").toLowerCase()+"','"+datatype+"')");
+				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+metabolite_id+",'"+DatabaseUtilities.databaseStrConverter(metabolite.getName(),this.databaseType).toLowerCase()+"','"+datatype+"')");
 				rs.close();
 			}
-
 
 			if(datatype.equals(DATATYPE.MANUAL)) {
 
@@ -1112,7 +1116,7 @@ public class LoadTransportersData {
 
 			int result = -1;
 
-			ResultSet rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE name='"+metabolite.replace("'", "\\'")+"';");
+			ResultSet rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE name='"+DatabaseUtilities.databaseStrConverter(metabolite,this.databaseType)+"';");
 
 			if(rs.next()) {
 
@@ -1120,7 +1124,7 @@ public class LoadTransportersData {
 			}
 			else {
 
-				rs = this.statement.executeQuery("SELECT metabolite_id FROM synonyms WHERE name='"+metabolite.replace("'", "\\'")+"';");
+				rs = this.statement.executeQuery("SELECT metabolite_id FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(metabolite,this.databaseType)+"';");
 				rs.next();
 				result=rs.getInt(1);
 			}
@@ -1313,16 +1317,18 @@ public class LoadTransportersData {
 //			while(rs.next())
 //				result.add(rs.getInt(1));
 
+			metabolites_name = DatabaseUtilities.databaseStrConverter(metabolites_name,this.databaseType);
+			
 			ResultSet rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems " +
 					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id ) " +
-					" INNER JOIN metabolites ON metabolites.id= metabolite_id " +
+					" INNER JOIN metabolites ON metabolites.id= transported_metabolites_directions.metabolite_id " +
 					" INNER JOIN synonyms ON transported_metabolites_directions.metabolite_id= synonyms.metabolite_id " +
-					" INNER JOIN directions on direction_id=directions.id " +
+					" INNER JOIN directions on transported_metabolites_directions.direction_id=directions.id " +
 					" WHERE (" +
-					" UPPER(metabolites.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
-					" UPPER(synonyms.name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
-					" UPPER(kegg_name) = UPPER('"+metabolites_name.replace("'", "\\'")+"') OR " +
-					" UPPER(chebi_name) = UPPER('"+metabolites_name.replace("'", "\\'")+"')" +
+					" UPPER(metabolites.name) = UPPER('"+metabolites_name+"') OR " +
+					" UPPER(synonyms.name) = UPPER('"+metabolites_name+"') OR " +
+					" UPPER(kegg_name) = UPPER('"+metabolites_name+"') OR " +
+					" UPPER(chebi_name) = UPPER('"+metabolites_name+"')" +
 					")" +
 					" AND direction <> 'reactant' " +
 					" AND direction <> 'product' " +
@@ -1545,7 +1551,7 @@ public class LoadTransportersData {
 
 			int result;
 
-			ResultSet rs = this.statement.executeQuery("SELECT id FROM general_equation WHERE equation='"+equation.replace("'", "\\'")+"'");
+			ResultSet rs = this.statement.executeQuery("SELECT id FROM general_equation WHERE equation='"+DatabaseUtilities.databaseStrConverter(equation,this.databaseType)+"'");
 
 			if(rs.next()) {
 
@@ -1553,7 +1559,7 @@ public class LoadTransportersData {
 			}
 			else {
 
-				this.statement.execute("INSERT INTO general_equation (equation) VALUES('"+equation.replace("'", "\\'")+"')");
+				this.statement.execute("INSERT INTO general_equation (equation) VALUES('"+DatabaseUtilities.databaseStrConverter(equation,this.databaseType)+"')");
 				rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
 				rs.next();
 				result=rs.getInt(1);
@@ -1725,8 +1731,7 @@ public class LoadTransportersData {
 			ResultSet rs;
 			try {
 
-				rs = this.statement.executeQuery(
-						"SELECT genes_has_tcdb_registries.uniprot_id, tc_numbers_has_transport_systems.tc_number, metabolites.name, similarity, equation "+
+				String query = "SELECT genes_has_tcdb_registries.uniprot_id, tc_numbers_has_transport_systems.tc_number, metabolites.name, similarity, equation "+
 								"FROM genes "+
 								"INNER JOIN genes_has_tcdb_registries ON gene_id = genes.id "+
 								"INNER JOIN tcdb_registries ON genes_has_tcdb_registries.uniprot_id = tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version = tcdb_registries.version "+
@@ -1735,8 +1740,13 @@ public class LoadTransportersData {
 								"INNER JOIN general_equation ON tc_numbers.general_equation_id = general_equation.id "+
 								"INNER JOIN transported_metabolites_directions ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id "+
 								"INNER JOIN metabolites ON metabolite_id = metabolites.id "+
-								"WHERE project_id = "+project_id+" AND locus_tag = '"+locus_tag+"';");
+								"WHERE project_id = "+project_id+" AND locus_tag = '"+locus_tag+"';";
+				
+				
+				rs = this.statement.executeQuery(query);
 
+				System.out.println(query);
+				
 				while(rs.next()) {
 
 					Map<String, Double> proteins = new HashMap<String, Double>();
@@ -1786,7 +1796,6 @@ public class LoadTransportersData {
 				geneProteinAnnotation.setTc_number(protein_tcnumber.get(uniprot_id)[0]);
 				geneProteinAnnotation.setEquation(protein_tcnumber.get(uniprot_id)[1]);
 			}
-
 			tracebackAnnotations.addGeneProteinAnnotation(geneProteinAnnotation);
 		}
 

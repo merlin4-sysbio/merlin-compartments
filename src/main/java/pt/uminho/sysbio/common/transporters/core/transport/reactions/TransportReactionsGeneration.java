@@ -189,7 +189,7 @@ public class TransportReactionsGeneration {
 	public int createNewProject(int genome_id) throws SQLException {
 
 		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
 		int project_id =  ltd.createNewProject(genome_id);
 		conn.close();
 		return project_id;
@@ -202,7 +202,7 @@ public class TransportReactionsGeneration {
 	public void deleteGenesFromProject(int project_id) throws SQLException {
 
 		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
 		ltd.deleteGenesFromProject(project_id);
 		conn.close();
 
@@ -216,7 +216,7 @@ public class TransportReactionsGeneration {
 	public void deleteProject(int project_id, int version) throws SQLException {
 
 		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
 		ltd.deleteProject(project_id, version);
 		conn.close();
 	}
@@ -231,7 +231,7 @@ public class TransportReactionsGeneration {
 	public int getProject(int genome_id) throws SQLException {
 
 		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
 		int project_id = ltd.getProjectID(genome_id);
 		conn.close();
 
@@ -246,7 +246,7 @@ public class TransportReactionsGeneration {
 	public Set<Integer> getAllProjects(int genome_id) throws SQLException {
 
 		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
 		conn.close();
 		return ltd.getAllProjectIDs(genome_id);
 	}
@@ -293,7 +293,7 @@ public class TransportReactionsGeneration {
 		try {
 
 			Connection conn = this.dba.openConnection();
-			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
 
 			this.setOrganismsTaxonomyScore(ltd);
 
@@ -391,7 +391,7 @@ public class TransportReactionsGeneration {
 		try {
 
 			Connection conn = this.dba.openConnection();
-			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement());
+			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
 			//Set<String> uniprotSet =
 			ltd.getLoadedTransporters();
 			this.setOrganismsTaxonomyScore(ltd);
@@ -808,11 +808,12 @@ public class TransportReactionsGeneration {
 		List<ParserContainer> data = new ArrayList<ParserContainer>();
 
 		BufferedReader reader = null;
-
+		String text = null;
+		
 		try {
 
 			reader = new BufferedReader(new FileReader(file));
-			String text = null;
+			
 			boolean go = false;
 
 			while ((text = reader.readLine()) != null) {
@@ -853,8 +854,16 @@ public class TransportReactionsGeneration {
 			}
 			reader.close();
 		} 
-		catch (FileNotFoundException e) {e.printStackTrace();}
-		catch (IOException e) {e.printStackTrace();}
+		catch (FileNotFoundException e) {
+			
+			logger.error("Error on string {}", text);
+			e.printStackTrace();
+		}
+		catch (IOException e) {
+		
+			logger.error("Error on string {}", text);
+			e.printStackTrace();
+		}
 		return data;
 	}
 

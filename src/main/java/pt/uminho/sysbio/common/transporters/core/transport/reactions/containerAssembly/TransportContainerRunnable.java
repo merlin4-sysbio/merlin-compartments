@@ -36,6 +36,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 
 	private static final Logger logger = LoggerFactory.getLogger(TransportContainerRunnable.class);
+	private static final boolean verbose = false;
 	private ConcurrentLinkedDeque<String> genes;
 	private Map<String, Set<TransportReaction>> genesReactions;
 	private AtomicBoolean cancel;
@@ -186,14 +187,26 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 			for(TransportReaction originalTransportReaction : this.genesReactions.get(geneID)) {
 
+				if(verbose)
+					logger.info("reaction {}\toriginal metabolites {}", originalTransportReaction.getReactionID(), originalTransportReaction.getMetabolites());
+				
 				//removing metabolites not transported
 				Set<String> reactionSelectedMetabolites = this.removeReactantsAndProducts(originalTransportReaction.getMetaboliteDirection(), this.selectedGenesMetabolites.get(geneID), originalTransportReaction.getProtein_family_IDs());
+				
+				if(verbose)
+					logger.info("reaction {}\tselected metabolites {}", originalTransportReaction.getReactionID(), reactionSelectedMetabolites);
 
 				if(originalTransportReaction.getTransportType().equalsIgnoreCase("symport") && this.ignoreSymportMetabolites!=null && !this.ignoreSymportMetabolites.isEmpty())
 					reactionSelectedMetabolites = this.processIgnoreSymportMetabolites(ignoreSymportMetabolites, reactionSelectedMetabolites);
+				
+				if(verbose)
+					logger.info("reaction {}\tselected metabolites removing ignored {}", originalTransportReaction.getReactionID(), reactionSelectedMetabolites);
 
 				//at least one selected metabolite is on reaction
 				if(this.hasAtLeastOne(originalTransportReaction.getMetaboliteStoichiometry().keySet(), reactionSelectedMetabolites)) {
+					
+					if(verbose)
+						logger.info("reaction {}\tmets {} has at least one selected metabolite from {}", originalTransportReaction.getReactionID(), originalTransportReaction.getMetaboliteStoichiometry(), reactionSelectedMetabolites);
 
 					// transport type classification
 					boolean go=false;
@@ -202,6 +215,9 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 						if(reactionSelectedMetabolites.contains(metaboliteID) && this.genesMetabolitesTransportTypeMap.get(geneID).isHigherScoreTransportTypeID(metaboliteID,originalTransportReaction.getTransportType()))
 							go=true;
 
+					if(verbose)
+						logger.info("reaction {}\tusing max score transport type {}", originalTransportReaction.getReactionID(), go);
+					
 					//if using max score transport type
 					if(go) {
 
@@ -209,17 +225,23 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 						//get transport reactions from metabolites ontology
 						String originalReactionID = originalTransportReaction.getReactionID();
-
+						
 						Set<TransportReaction> transportReactionsFromOntology = this.getTransportReactionFromOntology(originalTransportReaction, locus_tag);
 
+						if(verbose)
+							logger.info("reaction {}\tget transport reactions from metabolites ontology {}", originalTransportReaction.getReactionID(), transportReactionsFromOntology);
+						
+						//////////////////////////////////////////////depois daqui confirmar as reações ontologia, marcar sempre a original
+						
 						List<String> originalBifunctionalMetabolites = this.getOriginalBifunctionalMetabolitesList(originalTransportReaction);
 
 						for(TransportReaction transportReaction : transportReactionsFromOntology) {
-
+							
 							if(saveOnlyReactionsWithKEGGmetabolites)
-								if(TransportContainerRunnable.areAllMetabolitesKEGG(transportReaction))
-									go = false;
-
+								go = TransportContainerRunnable.areAllMetabolitesKEGG(transportReaction);
+							
+							logger.debug("reaction {}\t are all from KEGG {}", transportReaction.getReactionID(), go);
+							
 							if(go) {
 
 								boolean addReaction=true;
@@ -467,10 +489,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 	 */
 	private static boolean areAllMetabolitesKEGG(TransportReaction transportReaction) {
 
-		for(String metaboliteID : transportReaction.getMetaboliteStoichiometry().keySet())
-			if(transportReaction.getMetabolites().get(metaboliteID).getKeggMiriam()==null || transportReaction.getMetabolites().get(metaboliteID).getKeggMiriam().equals("null"))
+		for(TransportMetabolite metabolite : transportReaction.getMetabolites().values())
+			if(metabolite.getKeggMiriam()==null || metabolite.getKeggMiriam().equalsIgnoreCase("null"))
 				return false;
-
+		
 		return true;
 	}
 
@@ -958,9 +980,11 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 								boolean deleteReaction=true;
 
 								for(String previousMetabolites:transportReaction.getMetabolites().keySet()) {
+									
+									String  metabolite = transportReaction.getMetabolites().get(previousMetabolites).getChEBIMiriam();
 
 									if(!ExternalRefSource.CHEBI.getSourceId("urn:miriam:obo.chebi:CHEBI:15346").equals(ExternalRefSource.CHEBI.getSourceId(transportReaction.getMetabolites().get(previousMetabolites).getChEBIMiriam()))
-											&& metaboliteFunctionalParent.contains(ExternalRefSource.CHEBI.getSourceId(transportReaction.getMetabolites().get(previousMetabolites).getChEBIMiriam()))) {
+											&& metabolite!= null && !metabolite.equalsIgnoreCase("null") &&  metaboliteFunctionalParent.contains(ExternalRefSource.CHEBI.getSourceId(metabolite))) {
 
 										transportReactionClone.addMetabolite(metaboliteID, this.transportMetabolites.get(metaboliteID), stoichiometry.get(i), direction.get(i));
 										transportReactionsResultSet.add(transportReactionClone);
@@ -1285,8 +1309,8 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			if(metabolitesContainer.containsKey(met))
 				transportReactions.addAll(metabolitesContainer.get(met).getReactionsId());
 			transportReactions.remove(id);
-
-			if(keggMiriam.containsKey(met))
+			
+			if(keggMiriam.containsKey(met) && keggMiriam.get(met)!= null && !keggMiriam.get(met).equalsIgnoreCase("null"))
 				if(!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00080") &&
 						!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00002") &&
 						!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00008") &&
