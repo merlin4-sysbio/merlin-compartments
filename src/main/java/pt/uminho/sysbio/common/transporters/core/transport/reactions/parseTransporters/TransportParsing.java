@@ -71,8 +71,8 @@ public class TransportParsing {
 	 */
 	private void parseMetabolitesToken(String dataToParse, List<List<TransportMetaboliteDirectionStoichiometryContainer>> transportMetaboliteDirectionStoichiometryContainerLists, int direction){
 
-		while(dataToParse.contains(":")||dataToParse.contains("//"))
-		{	
+		while(dataToParse.contains(":")||dataToParse.contains("//")) {
+			
 			String transportdirection = appearsFirst(dataToParse,":","//");
 			//System.out.println(dataToParse);
 			String data=dataToParse.substring(0, dataToParse.indexOf(transportdirection)).trim();
