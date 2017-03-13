@@ -192,18 +192,17 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				
 				//removing metabolites not transported
 				Set<String> reactionSelectedMetabolites = this.removeReactantsAndProducts(originalTransportReaction.getMetaboliteDirection(), this.selectedGenesMetabolites.get(geneID), originalTransportReaction.getProtein_family_IDs());
-				
 				if(verbose)
 					logger.info("reaction {}\tselected metabolites {}", originalTransportReaction.getReactionID(), reactionSelectedMetabolites);
 
+				//Ignore symport metabolites
 				if(originalTransportReaction.getTransportType().equalsIgnoreCase("symport") && this.ignoreSymportMetabolites!=null && !this.ignoreSymportMetabolites.isEmpty())
 					reactionSelectedMetabolites = this.processIgnoreSymportMetabolites(ignoreSymportMetabolites, reactionSelectedMetabolites);
-				
 				if(verbose)
 					logger.info("reaction {}\tselected metabolites removing ignored {}", originalTransportReaction.getReactionID(), reactionSelectedMetabolites);
 
 				//at least one selected metabolite is on reaction
-				if(this.hasAtLeastOne(originalTransportReaction.getMetaboliteStoichiometry().keySet(), reactionSelectedMetabolites)) {
+				if(reactionSelectedMetabolites.size()>0 && this.hasAtLeastOne(originalTransportReaction.getMetaboliteStoichiometry().keySet(), reactionSelectedMetabolites)) {
 					
 					if(verbose)
 						logger.info("reaction {}\tmets {} has at least one selected metabolite from {}", originalTransportReaction.getReactionID(), originalTransportReaction.getMetaboliteStoichiometry(), reactionSelectedMetabolites);
@@ -469,10 +468,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 						}
 					}
 				}
-				else {
-
-					System.out.println("Though metabolites "+reactionSelectedMetabolites+" were selected from "+originalTransportReaction+" they are not present in reaction???");
-				}
+//				else {
+//
+//					either there are no selected metabolites or the selected metabolites for this gene are not available in this reaction, after filtering for removing symport metabolites.
+//				}
 
 			}
 		}
