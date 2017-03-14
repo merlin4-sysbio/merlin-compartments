@@ -974,7 +974,7 @@ public class LoadTransportersData {
 
 				if(chebi_entity!=null) {
 
-					this.load_metabolites_ontology(metaboliteChebiID, result, chebi_entity,0);
+					this.loadMetabolitesOntology(metaboliteChebiID, result, chebi_entity,0);
 				}
 			}
 		}
@@ -1351,7 +1351,7 @@ public class LoadTransportersData {
 	 * @param metabolite_id
 	 * @param chebi_entity_map
 	 */
-	public void load_metabolites_ontology(String metabolite_chebi_id, int metabolite_id, Map<String, ChebiER> chebi_entity_map, int counter) {
+	public void loadMetabolitesOntology(String metabolite_chebi_id, int metabolite_id, Map<String, ChebiER> chebi_entity_map, int counter) {
 
 		try {
 
@@ -1367,7 +1367,7 @@ public class LoadTransportersData {
 
 					if(!this.local_database_id.containsKey(key)) {
 
-						int id = get_metabolite_id(key, this.statement);
+						int id = getMetaboliteID(key, this.statement);
 						if(id>0) {
 
 							this.local_database_id.put(key, id);
@@ -1378,7 +1378,7 @@ public class LoadTransportersData {
 
 						if(!this.local_database_id.containsKey(child)) {
 
-							int id = get_metabolite_id(child, this.statement);
+							int id = getMetaboliteID(child, this.statement);
 							if(id>0) {
 
 								this.local_database_id.put(child, id);
@@ -1416,7 +1416,7 @@ public class LoadTransportersData {
 
 			if(counter<30){
 
-				this.load_metabolites_ontology(metabolite_chebi_id, metabolite_id, chebi_entity_map, counter);
+				this.loadMetabolitesOntology(metabolite_chebi_id, metabolite_id, chebi_entity_map, counter);
 			}
 			else {
 
@@ -1432,7 +1432,7 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException 
 	 */
-	private int get_metabolite_id(String metabolite_external_id, Statement statement) throws SQLException{
+	private int getMetaboliteID(String metabolite_external_id, Statement statement) throws SQLException{
 
 		ResultSet rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE chebi_miriam='"+ExternalRefSource.CHEBI.getMiriamCode(metabolite_external_id)+"'");
 
