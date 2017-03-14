@@ -16,7 +16,7 @@ public class GeneCompartments implements Serializable{
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -5935372133844353935L;
+	private static final long serialVersionUID = -1;
 	private String geneID, gene;
 	private boolean dualLocalisation;
 	private String primary_location, primary_location_abb;
