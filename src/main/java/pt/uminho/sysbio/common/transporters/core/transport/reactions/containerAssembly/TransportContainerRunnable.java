@@ -27,13 +27,13 @@ import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionT
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiAPIInterface;
+import pt.uminho.sysbio.common.transporters.core.utils.TransportersUtilities;
 
 /**
  * @author ODias
  *
  */
 public class TransportContainerRunnable extends Observable implements Runnable  {
-
 
 	private static final Logger logger = LoggerFactory.getLogger(TransportContainerRunnable.class);
 	private static final boolean verbose = false;
@@ -162,6 +162,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				}
 
 				this.counter.incrementAndGet();
+				logger.debug("Counter on transport container runnable {}", this.counter.get());
 				setChanged();
 				notifyObservers();
 			}
@@ -237,7 +238,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 						for(TransportReaction transportReaction : transportReactionsFromOntology) {
 							
 							if(saveOnlyReactionsWithKEGGmetabolites)
-								go = TransportContainerRunnable.areAllMetabolitesKEGG(transportReaction);
+								go = TransportersUtilities.areAllMetabolitesKEGG(transportReaction);
 							
 							logger.debug("reaction {}\t are all from KEGG {}", transportReaction.getReactionID(), go);
 							
@@ -478,21 +479,6 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 		if(this.genesContainer.containsKey(locus_tag) && this.genesContainer.get(locus_tag).getReactionIds().isEmpty())
 			this.genesContainer.remove(locus_tag);
-	}
-
-	/**
-	 * Check if all metabolites have KEGG identifiers.
-	 * 
-	 * @param transportReaction
-	 * @return
-	 */
-	private static boolean areAllMetabolitesKEGG(TransportReaction transportReaction) {
-
-		for(TransportMetabolite metabolite : transportReaction.getMetabolites().values())
-			if(metabolite.getKeggMiriam()==null || metabolite.getKeggMiriam().equalsIgnoreCase("null"))
-				return false;
-		
-		return true;
 	}
 
 	/**

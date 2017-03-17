@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import pt.uminho.sysbio.common.transporters.core.utils.Utilities;
+import pt.uminho.sysbio.common.transporters.core.utils.TransportersUtilities;
 import pt.uminho.sysbio.merlin.utilities.Pair;
 
 /**
@@ -68,7 +68,7 @@ public class LocTreeResult implements Serializable, CompartmentResult {
 	@Override
 	public void addCompartment(String compartmentID, double score) {
 		
-		String abb = Utilities.getAbbreviation(compartmentID);
+		String abb = TransportersUtilities.getAbbreviation(compartmentID);
 		
 		Pair<String, Double> out = new Pair<String,Double>(abb, this.getScore());
 		this.compartments.add(out);

@@ -5,11 +5,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.transporters.core.compartments.GeneCompartments;
+import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportContainer;
+import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportMetabolite;
+import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportReaction;
+import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;
 import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.STAIN;
 
-public class Utilities {
-
+public class TransportersUtilities {
+	
+	//separar compartimentos e nais tarde separar compartimentos para outro projeto
+	
 	static public Map<String, Set<String>> compartmentGenes(Map<String,GeneCompartments> geneComparments){
 
 		Map<String, Set<String>> compartmentGenes = new HashMap<String, Set<String>>();
@@ -36,6 +43,48 @@ public class Utilities {
 		}
 
 		return compartmentGenes;
+	}
+	
+	/**
+	 * Check if all metabolites have KEGG identifiers.
+	 * 
+	 * @param transportReaction
+	 * @return
+	 */
+	public static boolean areAllMetabolitesKEGG(String reaction, TransportContainer container) {
+
+		TransportReactionCI trci = container.getReaction(reaction).clone();
+
+		for(String key : new HashSet<>(trci.getReactants().keySet())) {
+
+			String kegg = ExternalRefSource.KEGG_CPD.getSourceId(container.getKeggMiriam().get(key));
+			if(kegg==null || kegg=="null")
+				return false;
+		}
+
+		for(String key : new HashSet<>(trci.getProducts().keySet())) {
+			
+			String kegg = ExternalRefSource.KEGG_CPD.getSourceId(container.getKeggMiriam().get(key));
+			if(kegg==null || kegg=="null")
+				return false;
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Check if all metabolites have KEGG identifiers.
+	 * 
+	 * @param transportReaction
+	 * @return
+	 */
+	public static boolean areAllMetabolitesKEGG(TransportReaction transportReaction) {
+
+		for(TransportMetabolite metabolite : transportReaction.getMetabolites().values())
+			if(metabolite.getKeggMiriam()==null || metabolite.getKeggMiriam().equalsIgnoreCase("null"))
+				return false;
+		
+		return true;
 	}
 
 	/**
@@ -273,7 +322,7 @@ public class Utilities {
 		}
 		
 		list.add("cytop");
-		list.add(Utilities.getOutsideMembrane(compartmentID));
+		list.add(TransportersUtilities.getOutsideMembrane(compartmentID));
 		
 		return list;
 	}

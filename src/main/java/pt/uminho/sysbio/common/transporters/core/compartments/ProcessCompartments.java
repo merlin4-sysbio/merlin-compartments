@@ -11,7 +11,7 @@ import java.util.Set;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.STAIN;
-import pt.uminho.sysbio.common.transporters.core.utils.Utilities;
+import pt.uminho.sysbio.common.transporters.core.utils.TransportersUtilities;
 
 /**
  * @author ODias
@@ -128,7 +128,7 @@ public class ProcessCompartments {
 					}
 					else if (compartmentID.contains("mem")) {
 						
-						return Utilities.getOutsideMembrane(compartmentID.toLowerCase());
+						return TransportersUtilities.getOutsideMembrane(compartmentID.toLowerCase());
 					}
 					else {
 						
@@ -281,7 +281,7 @@ public class ProcessCompartments {
 				} 
 				else if (abb.contains("me")) {
 
-					for(String newAbb : Utilities.getOutsideMembranes(abb)) 
+					for(String newAbb : TransportersUtilities.getOutsideMembranes(abb)) 
 						compartments.add(idCompartmentAbbIdMap.get(newAbb.toLowerCase()));
 				}
 				else if(abb.equalsIgnoreCase("unkn")) {
@@ -316,7 +316,7 @@ public class ProcessCompartments {
 	public String getOutside(String compartmentID) throws Exception {
 
 		if(this.isProcessCompartmentsInitiated())
-			return Utilities.getOutside(this.stain, compartmentID);
+			return TransportersUtilities.getOutside(this.stain, compartmentID);
 		else
 			throw new Exception("Compartments processing not initiated!");
 	}

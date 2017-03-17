@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
-import pt.uminho.sysbio.common.transporters.core.utils.Utilities;
+import pt.uminho.sysbio.common.transporters.core.utils.TransportersUtilities;
 import pt.uminho.sysbio.merlin.utilities.Pair;
 
 public class LoadCompartments {
@@ -57,7 +57,7 @@ public class LoadCompartments {
 
 					if(!rs.next()) {
 
-						stmt.execute("INSERT INTO compartments (name,abbreviation) VALUES('"+Utilities.parseAbbreviation(compartment.getA())+"', '"+compartment.getA().toUpperCase()+"')");
+						stmt.execute("INSERT INTO compartments (name,abbreviation) VALUES('"+TransportersUtilities.parseAbbreviation(compartment.getA())+"', '"+compartment.getA().toUpperCase()+"')");
 						rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
 						rs.next();
 					}

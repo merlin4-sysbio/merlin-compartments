@@ -995,6 +995,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	@Override
 	public void update(Observable arg0, Object arg1) {
 
+		logger.debug("Counter on {}: {}", this.getClass(), this.geneProcessingCounter.get());
 		setChanged();
 		notifyObservers();
 	}

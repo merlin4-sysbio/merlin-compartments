@@ -14,6 +14,9 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.MetaboliteCI;
 import biosynth.core.components.representation.basic.graph.Graph;
@@ -24,6 +27,7 @@ import biosynth.core.components.representation.basic.graph.Graph;
  */
 public class LoadTransportContainer extends Observable implements Observer {
 
+	private static final Logger logger = LoggerFactory.getLogger(LoadTransportContainer.class);
 	private ConcurrentHashMap<String, GeneCI> geneContainer;
 	private ConcurrentHashMap<String, TransportReactionCI> reactionsContainer;
 	private ConcurrentHashMap<String, MetaboliteCI> metabolitesContainer;
@@ -245,6 +249,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 	@Override
 	public void update(Observable arg0, Object arg1) {
 
+		logger.debug("Counter on {}: {}", this.getClass(), this.geneProcessingCounter.get());
 		setChanged();
 		notifyObservers();
 	}
