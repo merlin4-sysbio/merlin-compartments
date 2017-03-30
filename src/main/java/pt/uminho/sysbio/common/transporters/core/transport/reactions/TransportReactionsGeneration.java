@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -15,10 +14,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +29,7 @@ import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.TaxonomyContainer;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
-import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
+import pt.uminho.sysbio.common.database.connector.datatypes.Enumerators.DatabaseType;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.AnnotateTransporters;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.UnnannotatedTransportersContainer;
@@ -47,36 +49,34 @@ import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
  * @author ODias
  *
  */
-public class TransportReactionsGeneration {
+public class TransportReactionsGeneration extends Observable {
 
 	private static final Logger logger = LoggerFactory.getLogger(TransportReactionsGeneration.class);
-	private Map<String, TransportMetaboliteCodes> miriamData;
 	private Map<String, TransportMetaboliteCodes> reviewedMetsNames, reviewedMetsCodes;
-	private DatabaseAccess dba;
 	private List<NcbiTaxon> originTaxonomy;
 	private String originOrganism;
 	private Map<String, Integer> taxonomyScore;
-	private int counter;
+	private int trialCounter;
 	private Map<String, TaxonomyContainer> taxonomyMap;
 	private List<String> metabolitesNotAnnotated, metabolitesToBeVerified;
 	private Set<UnnannotatedTransportersContainer> unAnnotatedTransporters;
 	private int initialHomolguesSize;
 	private String fileLocation;
 	private long taxonomyID;
+	private AtomicInteger querySize;
+	private AtomicBoolean cancel;
+	private AtomicInteger counter;
 
 	/**
 	 * @param dba
 	 */
-	public TransportReactionsGeneration(DatabaseAccess dba) {
+	public TransportReactionsGeneration() {
 
-		this.dba = dba;
 		this.originTaxonomy = null;
-		this.miriamData = new TreeMap<>();
 		this.reviewedMetsNames = new TreeMap<>();
 		this.reviewedMetsCodes = new TreeMap<>();
-		this.getExistingMetabolites();
 		this.taxonomyScore= new TreeMap<String, Integer>();
-		this.counter=0;
+		this.trialCounter=0;
 		this.metabolitesNotAnnotated = new ArrayList<String>(); 
 		this.metabolitesToBeVerified = new ArrayList<String>();
 		this.setUnAnnotatedTransporters(new TreeSet<UnnannotatedTransportersContainer>());
@@ -86,16 +86,13 @@ public class TransportReactionsGeneration {
 	 * @param dba
 	 * @param taxonomyID
 	 */
-	public TransportReactionsGeneration(DatabaseAccess dba, long taxonomyID) {
+	public TransportReactionsGeneration(long taxonomyID) {
 
-		this.dba = dba;
 		this.originTaxonomy = null;
-		this.miriamData = new TreeMap<>();
 		this.reviewedMetsNames = new TreeMap<>();
 		this.reviewedMetsCodes = new TreeMap<>();
-		this.getExistingMetabolites();
 		this.taxonomyScore= new TreeMap<String, Integer>();
-		this.counter=0;
+		this.trialCounter=0;
 		this.metabolitesNotAnnotated = new ArrayList<String>(); 
 		this.metabolitesToBeVerified = new ArrayList<String>();
 		this.setUnAnnotatedTransporters(new TreeSet<UnnannotatedTransportersContainer>());
@@ -110,14 +107,12 @@ public class TransportReactionsGeneration {
 	 * @throws SQLException 
 	 * @throws IOException 
 	 */
-	public List<AlignedGenesContainer> getCandidatesFromDatabase(String outPath, int project_id) throws SQLException, IOException {
+	public List<AlignedGenesContainer> getCandidatesFromDatabase(String outPath, int project_id, Statement statement) throws SQLException, IOException {
 
-		Connection conn = this.dba.openConnection();
-		Statement stmt = conn.createStatement();
 		List<AlignedGenesContainer> data = new ArrayList<AlignedGenesContainer>();
 		Map<String, Integer> genes_map = new HashMap<String, Integer>();
 
-		ResultSet rs = stmt.executeQuery("SELECT sw_reports.id, locus_tag, similarity, acc, tcdb_id FROM sw_reports " +
+		ResultSet rs = statement.executeQuery("SELECT sw_reports.id, locus_tag, similarity, acc, tcdb_id FROM sw_reports " +
 				" INNER JOIN sw_similarities ON sw_reports.id=sw_similarities.sw_report_id " +
 				" INNER JOIN sw_hits ON sw_hits.id=sw_similarities.sw_hit_id " +
 				" WHERE project_id = "+ project_id +
@@ -153,7 +148,7 @@ public class TransportReactionsGeneration {
 
 		this.setInitialHomolguesSize(this.unAnnotatedTransporters.size());
 
-		rs = stmt.executeQuery("SELECT uniprot_id, tc_number, latest_version FROM tcdb_registries;");
+		rs = statement.executeQuery("SELECT uniprot_id, tc_number, latest_version FROM tcdb_registries;");
 
 		while(rs.next()) {
 
@@ -174,80 +169,77 @@ public class TransportReactionsGeneration {
 		}
 
 		if(outPath!=null && this.unAnnotatedTransporters.size()>0)
-			this.generateAnnotationFile(outPath);
+			this.generateAnnotationFile(outPath, statement);
 
-		stmt.close();
-		conn.close();
 		return data;
 	}
 
 	/**
-	 * @param genomeID
+	 * @param genome_id
+	 * @param statement
+	 * @param databaseType
 	 * @return
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
-	public int createNewProject(int genome_id) throws SQLException {
+	public static int createNewProject(int genome_id, Statement statement, DatabaseType databaseType) throws SQLException {
 
-		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
+		LoadTransportersData ltd = new LoadTransportersData(statement, databaseType);
 		int project_id =  ltd.createNewProject(genome_id);
-		conn.close();
 		return project_id;
 	}
 
 	/**
 	 * @param project_id
-	 * @throws SQLException 
+	 * @param statement
+	 * @param databaseType
+	 * @throws SQLException
 	 */
-	public void deleteGenesFromProject(int project_id) throws SQLException {
+	public void deleteGenesFromProject(int project_id, Statement statement, DatabaseType databaseType) throws SQLException {
 
-		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
+		LoadTransportersData ltd = new LoadTransportersData(statement, databaseType);
 		ltd.deleteGenesFromProject(project_id);
-		conn.close();
-
 	}
 
 	/**
 	 * @param project_id
 	 * @param version
-	 * @throws SQLException 
+	 * @param statement
+	 * @param databaseType
+	 * @throws SQLException
 	 */
-	public void deleteProject(int project_id, int version) throws SQLException {
+	public static void deleteProject(int project_id, int version, Statement statement, DatabaseType databaseType) throws SQLException {
 
-		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
+		LoadTransportersData ltd = new LoadTransportersData(statement, databaseType);
 		ltd.deleteProject(project_id, version);
-		conn.close();
 	}
 
 
 
 	/**
 	 * @param genome_id
+	 * @param statement
+	 * @param databaseType
 	 * @return
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
-	public int getProject(int genome_id) throws SQLException {
+	public static int getProject(int genome_id, Statement statement, DatabaseType databaseType) throws SQLException {
 
-		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
+		LoadTransportersData ltd = new LoadTransportersData(statement, databaseType);
 		int project_id = ltd.getProjectID(genome_id);
-		conn.close();
 
 		return project_id;
 	}
 
 	/**
 	 * @param genome_id
+	 * @param statement
+	 * @param databaseType
 	 * @return
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
-	public Set<Integer> getAllProjects(int genome_id) throws SQLException {
+	public Set<Integer> getAllProjects(int genome_id, Statement statement, DatabaseType databaseType) throws SQLException {
 
-		Connection conn = this.dba.openConnection();
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
-		conn.close();
+		LoadTransportersData ltd = new LoadTransportersData(statement, databaseType);
 		return ltd.getAllProjectIDs(genome_id);
 	}
 
@@ -271,29 +263,27 @@ public class TransportReactionsGeneration {
 
 	/**
 	 * @param outPath
-	 * @throws SQLException 
-	 * @throws IOException 
+	 * @param statement
+	 * @throws SQLException
+	 * @throws IOException
 	 */
-	private void generateAnnotationFile(String outPath) throws SQLException, IOException {
+	private void generateAnnotationFile(String outPath, Statement statement) throws SQLException, IOException {
 
-		Connection conn = this.dba.openConnection();
-		AnnotateTransporters annotate = new AnnotateTransporters(conn);
-		annotate.setIds(new ArrayList<UnnannotatedTransportersContainer>(this.unAnnotatedTransporters));
-		annotate.annotate(outPath);
-		conn.close();
+		AnnotateTransporters.annotate(outPath, new ArrayList<UnnannotatedTransportersContainer>(this.unAnnotatedTransporters), statement);
 	}
 
 	/**
 	 * @param alignedGenesContainer
 	 * @param project_id
+	 * @param statement
+	 * @param databaseType
 	 * @return
-	 */	
-	public boolean parseAndLoadCandidates(List<AlignedGenesContainer> alignedGenesContainer, int project_id) {
+	 */
+	public boolean parseAndLoadCandidates(List<AlignedGenesContainer> alignedGenesContainer, int project_id, Statement statement, DatabaseType databaseType) {
 
 		try {
 
-			Connection conn = this.dba.openConnection();
-			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
+			LoadTransportersData ltd = new LoadTransportersData(statement, databaseType);
 
 			this.setOrganismsTaxonomyScore(ltd);
 
@@ -363,7 +353,6 @@ public class TransportReactionsGeneration {
 					}
 				}
 			}
-			conn.close();
 			return true;
 
 		} catch (Exception e) {
@@ -374,120 +363,135 @@ public class TransportReactionsGeneration {
 	}
 
 	/**
+	 * @param databaseName
 	 * @param path
+	 * @param verbose
+	 * @param statement
+	 * @param databaseType
 	 * @throws SQLException
 	 */
-	public void parseAndLoadTransportersDatabase(String path, boolean verbose) throws SQLException {
+	public void parseAndLoadTransportersDatabase(String databaseName, String path, boolean verbose, Statement statement, DatabaseType databaseType) throws SQLException {
 
-		this.parseAndLoadTransportersDatabase(new File(path),  verbose);
+		this.parseAndLoadTransportersDatabase(databaseName, new File(path),  verbose, statement, databaseType);
 	}
 
 	/**
+	 * @param databaseName
 	 * @param file
-	 * @throws SQLException
+	 * @param verbose
+	 * @param statement
+	 * @param databaseType
+	 * @return
 	 */
-	public boolean parseAndLoadTransportersDatabase(File file, boolean verbose) {
+	public boolean parseAndLoadTransportersDatabase(String databaseName, File file, boolean verbose, Statement statement, DatabaseType databaseType) {
 
 		try {
 
-			Connection conn = this.dba.openConnection();
-			LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), this.dba.get_database_type());
+			LoadTransportersData ltd = new LoadTransportersData(statement, databaseType);
+			Map<String, TransportMetaboliteCodes> miriamData = TransportReactionsGeneration.getExistingMetabolites(statement);
 			//Set<String> uniprotSet =
 			ltd.getLoadedTransporters();
 			this.setOrganismsTaxonomyScore(ltd);
 
 			List<ParserContainer> tc_data = this.readTCAnnotation_databases(file);
 
+			this.querySize.set(tc_data.size());
+
 			////////////////////////////////////////////////////////////////////////////////////////////////////////
 			for(ParserContainer parserContainer : tc_data) {
 
-				////////////////////////////////////////////////////////////////////////////////////////////////////////
-				String directions = TransportReactionsGeneration.selectDirection(parserContainer.getTransportType());	//transport directions
+				if(!this.cancel.get()) {
 
-				int type_id = ltd.loadTransportType(TransportType.valueOf(directions).toString(), parserContainer.getTransportType());	//load type id
-				////////////////////////////////////////////////////////////////////////////////////////////////////////
+					////////////////////////////////////////////////////////////////////////////////////////////////////////
+					String directions = TransportReactionsGeneration.selectDirection(parserContainer.getTransportType());	//transport directions
 
-				////////////////////////////////////////////////////////////////////////////////////////////////////////
-				TransportParsing transportParsing = new TransportParsing();	//parsing data
+					int type_id = ltd.loadTransportType(TransportType.valueOf(directions).toString(), parserContainer.getTransportType());	//load type id
+					////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-				if(!parserContainer.getMetabolites().equals("--") && !parserContainer.getMetabolites().equals("unkown"))
-					transportParsing.parseMetabolites(parserContainer.getMetabolites(), parserContainer.getTransportType());
+					////////////////////////////////////////////////////////////////////////////////////////////////////////
+					TransportParsing transportParsing = new TransportParsing();	//parsing data
 
-				if(parserContainer.getReactingMetabolites()!= null && !parserContainer.getReactingMetabolites().equals("--"))
-					transportParsing.parseReactingMetabolites(parserContainer.getReactingMetabolites());
+					if(!parserContainer.getMetabolites().equals("--") && !parserContainer.getMetabolites().equals("unkown"))
+						transportParsing.parseMetabolites(parserContainer.getMetabolites(), parserContainer.getTransportType());
 
-				Set<Integer> transportSystemIds = new TreeSet<Integer>();
-				// parse all lists of metabolites, each list of lists being a transport reaction
-				for(int i=0;i<transportParsing.getTransportMetaboliteDirectionStoichiometryContainerLists().size();i++) {
+					if(parserContainer.getReactingMetabolites()!= null && !parserContainer.getReactingMetabolites().equals("--"))
+						transportParsing.parseReactingMetabolites(parserContainer.getReactingMetabolites());
 
-					List<TransportMetaboliteDirectionStoichiometryContainer> tmdsList = transportParsing.getTransportMetaboliteDirectionStoichiometryContainerLists().get(i);
+					Set<Integer> transportSystemIds = new TreeSet<Integer>();
+					// parse all lists of metabolites, each list of lists being a transport reaction
+					for(int i=0;i<transportParsing.getTransportMetaboliteDirectionStoichiometryContainerLists().size();i++) {
 
-					tmdsList = this.loadMetabolites(tmdsList, ltd, verbose);
+						List<TransportMetaboliteDirectionStoichiometryContainer> tmdsList = transportParsing.getTransportMetaboliteDirectionStoichiometryContainerLists().get(i);
 
-					boolean go = true;
+						tmdsList = this.loadMetabolites(tmdsList, ltd, verbose, miriamData);
 
-					int transport_system_id = this.getTransporterID_ifExists(tmdsList, ltd, parserContainer.getReversibility(), false, directions, type_id);
+						boolean go = true;
 
-					if(transport_system_id<0) {
+						int transport_system_id = this.getTransporterID_ifExists(tmdsList, ltd, parserContainer.getReversibility(), false, directions, type_id);
 
-						//ignore antiporters that anti port same metabolite
-						List<String> list_of_metabolites = new ArrayList<String>();
-						List<String> list_of_direction = new ArrayList<String>();
+						if(transport_system_id<0) {
 
-						for(int j=0; j<tmdsList.size(); j++) {
-
-							TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
-
-							if(list_of_metabolites.contains(metaboliteContainer.getName())) {
-								//System.out.println(metabolite);
-
-								if(list_of_direction.contains("in") && metaboliteContainer.getDirection().equalsIgnoreCase("out") && j==tmdsList.size()-1 && list_of_metabolites.size()==1)
-									go=false;
-
-								if(list_of_direction.contains("out") && metaboliteContainer.getDirection().equalsIgnoreCase("in") && j==tmdsList.size()-1 && list_of_metabolites.size()==1)
-									go=false;
-							}
-							else {
-
-								list_of_metabolites.add(metaboliteContainer.getName());
-								list_of_direction.add(metaboliteContainer.getDirection());
-							}
-						}
-
-						if(go) {
-
-							transport_system_id = ltd.load_transport_system(type_id, parserContainer.getReversibility());	//load transport system
+							//ignore antiporters that anti port same metabolite
+							List<String> list_of_metabolites = new ArrayList<String>();
+							List<String> list_of_direction = new ArrayList<String>();
 
 							for(int j=0; j<tmdsList.size(); j++) {
 
 								TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
 
-								int metabolites_id = ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
+								if(list_of_metabolites.contains(metaboliteContainer.getName())) {
+									//System.out.println(metabolite);
 
-								String direction_id=ltd.loadDirection(metaboliteContainer.getDirection());
-								ltd.load_transported_metabolites_direction(metabolites_id, direction_id, transport_system_id, metaboliteContainer.getStoichiometry());
+									if(list_of_direction.contains("in") && metaboliteContainer.getDirection().equalsIgnoreCase("out") && j==tmdsList.size()-1 && list_of_metabolites.size()==1)
+										go=false;
+
+									if(list_of_direction.contains("out") && metaboliteContainer.getDirection().equalsIgnoreCase("in") && j==tmdsList.size()-1 && list_of_metabolites.size()==1)
+										go=false;
+								}
+								else {
+
+									list_of_metabolites.add(metaboliteContainer.getName());
+									list_of_direction.add(metaboliteContainer.getDirection());
+								}
+							}
+
+							if(go) {
+
+								transport_system_id = ltd.load_transport_system(type_id, parserContainer.getReversibility());	//load transport system
+
+								for(int j=0; j<tmdsList.size(); j++) {
+
+									TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
+
+									int metabolites_id = ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
+
+									String direction_id=ltd.loadDirection(metaboliteContainer.getDirection());
+									ltd.load_transported_metabolites_direction(metabolites_id, direction_id, transport_system_id, metaboliteContainer.getStoichiometry());
+								}
+							}
+							else {
+
+								System.out.println("Jumping "+tmdsList.get(0).getName()+" symport/antiport, for transporter "+parserContainer.getUniprot_id());
 							}
 						}
-						else {
 
-							System.out.println("Jumping "+tmdsList.get(0).getName()+" symport/antiport, for transporter "+parserContainer.getUniprot_id());
-						}
+						if(go)
+							transportSystemIds.add(transport_system_id);
 					}
 
-					if(go)
-						transportSystemIds.add(transport_system_id);
+					ltd.loadTCnumber(parserContainer, transportSystemIds);
+
+					//ltd.load_tc_number_has_transport_system(parserContainer.getTc_number(), transport_system_id, tc_version);
+
+					ltd.setTCnumberLoaded(parserContainer.getUniprot_id());
 				}
-
-				ltd.loadTCnumber(parserContainer, transportSystemIds);
-
-				//ltd.load_tc_number_has_transport_system(parserContainer.getTc_number(), transport_system_id, tc_version);
-
-				ltd.setTCnumberLoaded(parserContainer.getUniprot_id());
+				
+				this.counter.incrementAndGet();
+				setChanged();
+				notifyObservers();
 			}
 
-			conn.close();
-
-			String filePath = FileUtils.getCurrentTempDirectory(this.dba.get_database_name());
+			String filePath = FileUtils.getCurrentTempDirectory(databaseName);
 			this.metabolitesToBeVerified.removeAll(this.metabolitesNotAnnotated);
 			File fileOut = new File(filePath+"/notAnnotated.txt");
 			fileOut.createNewFile();
@@ -511,7 +515,6 @@ public class TransportReactionsGeneration {
 			}
 			out.close();
 			fstream.close();
-			conn.close();
 			return true;
 		}
 		catch (SQLException e) {
@@ -533,15 +536,17 @@ public class TransportReactionsGeneration {
 	 * @param tmdsList
 	 * @param ltd
 	 * @param verbose
+	 * @param miriamData
+	 * @return
 	 * @throws SQLException
 	 */
-	private List<TransportMetaboliteDirectionStoichiometryContainer> loadMetabolites(List<TransportMetaboliteDirectionStoichiometryContainer> tmdsList, LoadTransportersData ltd, boolean verbose) throws SQLException {
+	private List<TransportMetaboliteDirectionStoichiometryContainer> loadMetabolites(List<TransportMetaboliteDirectionStoichiometryContainer> tmdsList, LoadTransportersData ltd, boolean verbose, Map<String, TransportMetaboliteCodes> miriamData) throws SQLException {
 
 		for(int j=0; j<tmdsList.size(); j++) {
 
 			TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
-			metaboliteContainer = this.getMiriamCodes(metaboliteContainer, verbose);
-			metaboliteContainer = this.getMiriamNames(metaboliteContainer, verbose);
+			metaboliteContainer = this.getMiriamCodes(metaboliteContainer, verbose, miriamData);
+			metaboliteContainer = this.getMiriamNames(metaboliteContainer, verbose, miriamData);
 			ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
 
 			tmdsList.set(j, metaboliteContainer);
@@ -552,10 +557,11 @@ public class TransportReactionsGeneration {
 
 	/**
 	 * @param metabolite
-	 * @param result
+	 * @param verbose
+	 * @param miriamData
 	 * @return
 	 */
-	private TransportMetaboliteDirectionStoichiometryContainer getMiriamNames(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose) {
+	private TransportMetaboliteDirectionStoichiometryContainer getMiriamNames(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose, Map<String, TransportMetaboliteCodes> miriamData) {
 
 		try {
 
@@ -566,9 +572,9 @@ public class TransportReactionsGeneration {
 			}
 			else {
 
-				if(this.miriamData.containsKey(metabolite.getName()) && this.miriamData.get(metabolite.getName()).getKegg_name()!=null && this.miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
+				if(miriamData.containsKey(metabolite.getName()) && miriamData.get(metabolite.getName()).getKegg_name()!=null && miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
-					TransportMetaboliteCodes transportMetaboliteCodes = this.miriamData.get(metabolite.getName()); 
+					TransportMetaboliteCodes transportMetaboliteCodes = miriamData.get(metabolite.getName()); 
 					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
 
 					this.reviewedMetsNames.put(metabolite.getName(), transportMetaboliteCodes);
@@ -591,16 +597,16 @@ public class TransportReactionsGeneration {
 					this.reviewedMetsNames.put(metabolite.getName(), transportMetaboliteCodes);
 				}
 
-				this.counter=0;
+				this.trialCounter=0;
 				return metabolite;
 			}
 		}			
 		catch(Exception u) {
 
-			if(this.counter<10) {
+			if(this.trialCounter<10) {
 
-				metabolite = getMiriamNames(metabolite, verbose);
-				this.counter++;
+				metabolite = getMiriamNames(metabolite, verbose, miriamData);
+				this.trialCounter++;
 			}
 			else {
 
@@ -622,7 +628,7 @@ public class TransportReactionsGeneration {
 	 * @param metabolite
 	 * @return
 	 */
-	private TransportMetaboliteDirectionStoichiometryContainer getMiriamCodes(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose) {
+	private TransportMetaboliteDirectionStoichiometryContainer getMiriamCodes(TransportMetaboliteDirectionStoichiometryContainer metabolite, boolean verbose, Map<String, TransportMetaboliteCodes> miriamData) {
 
 		String[] result = new String[2];
 
@@ -636,9 +642,9 @@ public class TransportReactionsGeneration {
 			}
 			else {
 
-				if(this.miriamData.containsKey(metabolite.getName()) && this.miriamData.get(metabolite.getName()).getKegg_miriam()!=null && this.miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
+				if(miriamData.containsKey(metabolite.getName()) && miriamData.get(metabolite.getName()).getKegg_miriam()!=null && miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
-					TransportMetaboliteCodes transportMetaboliteCodes = this.miriamData.get(metabolite.getName()); 
+					TransportMetaboliteCodes transportMetaboliteCodes = miriamData.get(metabolite.getName()); 
 					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
 
 					this.reviewedMetsCodes.put(metabolite.getName(), transportMetaboliteCodes);
@@ -662,16 +668,16 @@ public class TransportReactionsGeneration {
 					this.reviewedMetsCodes.put(metabolite.getName(), transportMetaboliteCodes);
 				}
 			}
-			this.counter=0;
+			this.trialCounter=0;
 
 			return metabolite;
 		}			
 		catch(Exception u) {
 
-			if(this.counter<10) {
+			if(this.trialCounter<10) {
 
-				metabolite = getMiriamCodes(metabolite, verbose);
-				this.counter++;
+				metabolite = getMiriamCodes(metabolite, verbose, miriamData);
+				this.trialCounter++;
 			}
 			else {
 
@@ -809,11 +815,11 @@ public class TransportReactionsGeneration {
 
 		BufferedReader reader = null;
 		String text = null;
-		
+
 		try {
 
 			reader = new BufferedReader(new FileReader(file));
-			
+
 			boolean go = false;
 
 			while ((text = reader.readLine()) != null) {
@@ -855,12 +861,12 @@ public class TransportReactionsGeneration {
 			reader.close();
 		} 
 		catch (FileNotFoundException e) {
-			
+
 			logger.error("Error on string {}", text);
 			e.printStackTrace();
 		}
 		catch (IOException e) {
-		
+
 			logger.error("Error on string {}", text);
 			e.printStackTrace();
 		}
@@ -932,15 +938,15 @@ public class TransportReactionsGeneration {
 	}
 
 	/**
-	 * 
+	 * @param statement
 	 */
-	public void getExistingMetabolites() {
+	public static  Map<String, TransportMetaboliteCodes> getExistingMetabolites(Statement statement) {
 
 		try {
 
-			Connection conn = this.dba.openConnection();
-			Statement stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM metabolites");
+			Map<String, TransportMetaboliteCodes> miriamData = new TreeMap<>();
+
+			ResultSet rs = statement.executeQuery("SELECT * FROM metabolites");
 
 			while(rs.next()) {
 
@@ -958,10 +964,10 @@ public class TransportReactionsGeneration {
 				if(rs.getString(6)!=null && !rs.getString(6).equalsIgnoreCase("null"))
 					tMet.setChebi_name(rs.getString(6));
 
-				this.miriamData.put(rs.getString(2), tMet);
+				miriamData.put(rs.getString(2), tMet);
 			}
 
-			rs = stmt.executeQuery("SELECT * FROM synonyms JOIN metabolites ON (metabolite_id=metabolites.id);");
+			rs = statement.executeQuery("SELECT * FROM synonyms JOIN metabolites ON (metabolite_id=metabolites.id);");
 
 			while(rs.next()) {
 
@@ -978,12 +984,16 @@ public class TransportReactionsGeneration {
 				if(rs.getString(9)!=null && !rs.getString(9).equalsIgnoreCase("null"))
 					tMet.setChebi_name(rs.getString(9));
 
-				this.miriamData.put(rs.getString(2), tMet);
+				miriamData.put(rs.getString(2), tMet);
 			}
-			stmt.close();
-			conn.close();
+			return miriamData;
 		}
-		catch (SQLException e) {e.printStackTrace();}
+		catch (SQLException e) {
+
+			e.printStackTrace();
+		}
+		return null;
+
 	}
 
 	/**
@@ -1068,6 +1078,26 @@ public class TransportReactionsGeneration {
 
 		this.originOrganism = organism_data.getSpeciesName();
 		this.originTaxonomy = organism_data.getTaxonomy();
+	}
+
+	public void setCounter(AtomicInteger counter) {
+
+		this.counter = counter;
+	}
+
+	/**
+	 * @param querySize the querySize to set
+	 */
+	public void setQuerySize(AtomicInteger querySize) {
+
+		this.querySize = querySize;
+	}
+
+	/**
+	 * @param cancel the cancel to set
+	 */
+	public void setCancel(AtomicBoolean cancel) {
+		this.cancel = cancel;
 	}
 
 }

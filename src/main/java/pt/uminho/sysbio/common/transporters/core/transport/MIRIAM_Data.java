@@ -15,6 +15,7 @@ import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiAPIInterface;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiER;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.KeggAPI;
+import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.datastructures.KeggCompoundER;
 import pt.uminho.sysbio.common.bioapis.externalAPI.sbml_semantics.SemanticSbmlAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.sbml_semantics.SemanticSbmlSearchQueryResult;
 import uk.ac.ebi.chebi.webapps.chebiWS.model.ChebiWebServiceFault_Exception;
@@ -34,7 +35,7 @@ public class MIRIAM_Data {
 	 */
 	public static String[] getMIRIAM_codes(String metabolite, List<String> metabolitesToBeVerified, boolean verbose) {
 
-		metabolite = metabolite.replace(" -", "-");
+		metabolite = metabolite.replace(" -", "-").replace("- ", "-");
 
 		String[] xRefs = new String[2];
 
@@ -46,12 +47,10 @@ public class MIRIAM_Data {
 
 			xRefs = MIRIAM_Data.getKEGGData(results, metabolite, kegg_compounds_collection, xRefs, 0);
 
-			if(xRefs[0]!= null && xRefs[1]!= null) {
-
+			if(xRefs[0]!= null && xRefs[1]!= null)
 				return xRefs;
-			}
 		}
-
+		
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// only reaches here if kegg_id is null or kegg_id is not null but chebi_id s null 
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,10 +80,8 @@ public class MIRIAM_Data {
 
 			xRefs = MIRIAM_Data.getKEGGData(results, metabolite, kegg_compounds_collection, xRefs, 0);
 
-			if(xRefs[0]!= null && xRefs[1]!= null) {
-
+			if(xRefs[0]!= null && xRefs[1]!= null)
 				return xRefs;
-			}
 		}
 
 		return xRefs; 
@@ -131,18 +128,19 @@ public class MIRIAM_Data {
 		xRefs[1]=null;
 
 		for (int i = 0; i < results.length; i++) {
-
+			
 			String kegg_miriam_from_kegg_api = ExternalRefSource.KEGG_CPD.getMiriamCode(results[i].replace("cpd:", ""));
-
+			
 			try {
 
-				List<String> list_of_compound_id = KeggAPI.getCompoundByKeggId(results[i].replace("cpd:", "")).getNames();
+				KeggCompoundER keggCompoundER = KeggAPI.getCompoundByKeggId(results[i].replace("cpd:", ""));
+				List<String> list_of_compound_id = keggCompoundER.getNames();
 
 				//for(int l=0;l<list_of_compound_id.size();l++) {
 				for(String syn:list_of_compound_id) {
 
 					//String syn = KEGGAPI.get_compound_by_keggId(results[i].replace("cpd:", "")).getNames().get(l);
-
+					
 					if(syn.replace(";", "").trim().equalsIgnoreCase(metabolite.trim())) {
 
 						xRefs[0]=kegg_miriam_from_kegg_api;
@@ -152,10 +150,12 @@ public class MIRIAM_Data {
 					}
 				}
 
-				if(xRefs[0]==null) {
-
-					kegg_compounds_collection.add(kegg_miriam_from_kegg_api);	
-				}
+				if(xRefs[0]==null)
+					kegg_compounds_collection.add(kegg_miriam_from_kegg_api);
+				else 					
+					if(keggCompoundER.getChebiXref()!= null)
+						xRefs[1] = "urn:miriam:obo.chebi:"+keggCompoundER.getChebiXref();
+					
 			}
 			catch (Exception e) {
 

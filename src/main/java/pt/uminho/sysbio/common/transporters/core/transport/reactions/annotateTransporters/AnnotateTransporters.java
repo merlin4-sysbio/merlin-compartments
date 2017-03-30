@@ -3,7 +3,6 @@ package pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTr
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -25,17 +24,10 @@ import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
  */
 public class AnnotateTransporters {
 
-	private Map<String,String> transportDirection;
-	private List<UnnannotatedTransportersContainer> ids=null;
-	private Connection conn;
+	private static Map<String,String> transportDirection;
 
+	static {
 
-	/**
-	 * @param database
-	 */
-	public AnnotateTransporters(Connection conn) {
-
-		this.conn = conn;
 		transportDirection=new TreeMap<String, String>();
 		transportDirection.put("transporter","in");
 		transportDirection.put("uptake","in");
@@ -68,11 +60,11 @@ public class AnnotateTransporters {
 	/**
 	 * @param tmhmmPath
 	 * @param output
+	 * @param unannotatedTransportersIds 
 	 * @throws SQLException 
 	 * @throws IOException 
 	 */
-	public void annotate(String output) throws SQLException, IOException {
-
+	public static void annotate(String output, List<UnnannotatedTransportersContainer> unannotatedTransportersIds, Statement statement) throws SQLException, IOException {
 
 		Map<String,String[]> entry =new TreeMap<String, String[]>();
 		Map<String,String[]> recordEntries =new TreeMap<String, String[]>();
@@ -106,9 +98,9 @@ public class AnnotateTransporters {
 						"\tequation" + //22
 				"\n");
 
-		out.write(this.getExampleAnnotation());
+		out.write(AnnotateTransporters.getExampleAnnotation());
 		
-		for(UnnannotatedTransportersContainer id : this.ids) {
+		for(UnnannotatedTransportersContainer id : unannotatedTransportersIds) {
 			
 			String uniprotID = id.getUniprot_id();
 
@@ -290,7 +282,7 @@ public class AnnotateTransporters {
 				transporterAnnotation.setReacting_metabolites("");
 				transporterAnnotation.setEquation("");
 
-				transporterAnnotation = this.getExistingAnnotation(uniprotID, transporterAnnotation);
+				transporterAnnotation = AnnotateTransporters.getExistingAnnotation(uniprotID, transporterAnnotation, statement);
 
 				out.write(transporterAnnotation.toString());
 			}
@@ -329,27 +321,12 @@ public class AnnotateTransporters {
 	//		return accessionNumber;
 	//	}
 
-	/**
-	 * @return the ids
-	 */
-	public List<UnnannotatedTransportersContainer> getIds() {
-
-		return ids;
-	}
-
-	/**
-	 * @param ids the ids to set
-	 */
-	public void setIds(List<UnnannotatedTransportersContainer> ids) {
-		this.ids = ids;
-	}
-
 
 	/**
 	 * @param accessionNumber
 	 * @return
 	 */
-	private String retrieveLocusTagIfScerevisiae(String accessionNumber) {
+	private static String retrieveLocusTagIfScerevisiae(String accessionNumber) {
 	
 		return UniProtAPI.retrieveLocusTagIfOrganism(accessionNumber, "Saccharomyces cerevisiae");
 	}
@@ -357,7 +334,7 @@ public class AnnotateTransporters {
 	/**
 	 * @return
 	 */
-	private String getExampleAnnotation() {
+	private static String getExampleAnnotation() {
 
 		String out = null;
 
@@ -417,11 +394,9 @@ public class AnnotateTransporters {
 	 * @return
 	 * @throws SQLException
 	 */
-	private TransporterAnnotation getExistingAnnotation(String uniprot_id, TransporterAnnotation transporterAnnotation) throws SQLException {
+	private static TransporterAnnotation getExistingAnnotation(String uniprot_id, TransporterAnnotation transporterAnnotation, Statement statement) throws SQLException {
 
-		Statement stmt = this.conn.createStatement();
-
-		ResultSet rs = stmt.executeQuery("SELECT directions, equation, transport_systems.reversible, direction, metabolites.name  FROM tcdb_registries " +
+		ResultSet rs = statement.executeQuery("SELECT directions, equation, transport_systems.reversible, direction, metabolites.name  FROM tcdb_registries " +
 				" INNER JOIN tc_numbers ON (tc_numbers.tc_number = tcdb_registries.tc_number AND tc_numbers.tc_version = tcdb_registries.tc_version )" +
 				" INNER JOIN general_equation ON (tc_numbers.general_equation_id = general_equation.id ) " +
 				" INNER JOIN tc_numbers_has_transport_systems ON (tc_numbers_has_transport_systems.tc_number = tc_numbers.tc_number AND tc_numbers_has_transport_systems.tc_version = tc_numbers.tc_version)" +

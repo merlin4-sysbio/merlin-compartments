@@ -1,22 +1,22 @@
 package tests;
 
 import java.io.File;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
-import pt.uminho.sysbio.common.database.connector.datatypes.Enumerators.DatabaseType;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
 import pt.uminho.sysbio.common.transporters.core.compartments.CompartmentResult;
 import pt.uminho.sysbio.common.transporters.core.compartments.ReadPSort3;
 import pt.uminho.sysbio.common.transporters.core.compartments.WoLFPSORT;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.TransportReactionsGeneration;
-import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.PopulateTransportContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.loadTransporters.LoadTransportersData;
 
 
@@ -26,8 +26,7 @@ public class TransportersTests {
 	
 	public void testTransportersLoading() {
 
-		DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "database_delete");
-
+		//DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "database_delete");
 		//TransportReactionsGeneration tre = new TransportReactionsGeneration(msqlmt);
 		//tre.parseAndLoadTransportersDatabase(new File("D:/OD/WORK/tc_annotation_database.out_checked"),false);
 	}
@@ -35,18 +34,16 @@ public class TransportersTests {
 	public void testOrg() throws Exception {
 
 		DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "SCE_transporters");
-
-		TransportReactionsGeneration t = new TransportReactionsGeneration(msqlmt, -1);
-
-		Connection conn = new Connection(msqlmt);
-
-		LoadTransportersData ltd = new LoadTransportersData(conn.createStatement(), msqlmt.get_database_type());
+		Connection connection = new Connection(msqlmt);
+		Statement statment = connection.createStatement();
+		TransportReactionsGeneration t = new TransportReactionsGeneration(-1);
+		LoadTransportersData ltd = new LoadTransportersData(statment, msqlmt.get_database_type());
 
 		t.setOrganismsTaxonomyScore(ltd);
 		t.setOrigintaxonomy("ATP6V0A1");
 
+		connection.closeConnection();
 		System.out.println("ts "+t.getTaxonomyScore("Q93050")+"\tot");
-
 	}
 
 	public void runPSort() throws Exception {
@@ -62,31 +59,12 @@ public class TransportersTests {
 	}
 
 
+	@Test
 	public void test() throws Exception {
 
+		//String n = "h+";
+		String n = "L-Lysine";
 
-		Connection conn = new Connection("127.0.0.1", "3306", "SCE_tranporters", "root", "password", DatabaseType.MYSQL);
-
-		PopulateTransportContainer p = new PopulateTransportContainer(conn);
-
-		System.out.println(p.getOriginTaxonomy(4932,1));
-
-
-		String n = "h+";
-
-		//List<String> cNames = new ArrayList<String>();
-		//		BufferedReader in = new BufferedReader(new FileReader("compounds.txt"));
-		//		String str;
-		//
-		//		while ((str = in.readLine()) != null) {
-		//
-		//			if(!str.trim().isEmpty()) {
-		//
-		//				cNames.add(str.trim().replace("__"," ").replace("_","-"));
-		//			}
-		//		}
-		//		in.close();
-		//for(String n:cNames) 
 		{
 			System.out.print(n+"\t");
 			String[] codes = MIRIAM_Data.getMIRIAM_codes(n,new ArrayList<String>(), true);
@@ -106,10 +84,7 @@ public class TransportersTests {
 			System.out.print("\t");
 			System.out.print(names[1]);
 			System.out.println();
-
-			//System.out.println(MIRIAM_Data.get_chebi_miriam_child_metabolites(codes[1].replace("urn:miriam:obo.chebi:CHEBI:","")));
 		}
-		//System.out.println(get_chebi_miriam_child_metabolites(ExternalRefSource.CHEBI.getSourceId(codes[1]),0,new HashMap<String,ChebiER>()).keySet());
 	}
 
 	/**
@@ -122,8 +97,9 @@ public class TransportersTests {
 		String out = "C:/Users/ODias/Desktop/out.out";
 		try {
 			WoLFPSORT.getCompartments("fungi","C:/Users/Oscar/Desktop/CP004143.faa", out);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+		}
+		catch (Exception e) {
+
 			e.printStackTrace();
 		}
 	}
