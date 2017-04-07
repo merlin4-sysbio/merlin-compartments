@@ -254,9 +254,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		this.selectedGenesMetabolites = new TreeMap<String, Set<String>>();
 		Map<Integer, MetaboliteTaxonomyScores> metaboliteTaxonomyScoresMap = this.getMetabolitesGeneScore();
-
+		
 		for(int i: metaboliteTaxonomyScoresMap.keySet()) {
-
+			
 			String metabolite = metaboliteTaxonomyScoresMap.get(i).getMetabolite();
 			String gene = metaboliteTaxonomyScoresMap.get(i).getGene();
 			
@@ -281,7 +281,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			}
 			else {
 
-				//System.out.println(gene+"\t"+rs.getString(1));
+				//System.out.println(gene+"\t"+metabolite);
 			}
 		}
 	}
@@ -312,7 +312,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		else {
 
 			Map<String, Map<String, Double>> procedure_data = procedure_getMetabolitesGeneScore(this.project_id);
-
+			
 			for (String geneID : procedure_data.keySet()) {
 
 				for (String metaboliteID : procedure_data.get(geneID).keySet()) {	
@@ -321,6 +321,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 					MetaboliteTaxonomyScores data = new MetaboliteTaxonomyScores(geneID, metaboliteID, score);
 					counter ++;
+					
 					temp.put(counter, data);
 				}
 			}
@@ -1041,27 +1042,31 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		//				+ " WHERE (project_id = "+projectID+" AND latest_version)"
 		//				+ " GROUP BY genes.id, metabolite_id");
 
-		ResultSet query1 = this.stmt.executeQuery("SELECT gene_id, SUM(similarity_score_sum) FROM genes_has_metabolites GROUP BY gene_id;");
+		ResultSet genesTotalScore = this.stmt.executeQuery("SELECT gene_id, SUM(similarity_score_sum) FROM genes_has_metabolites GROUP BY gene_id;");
 
 		Map<String, Integer> similarities = new HashMap<>();
-		while(query1.next()) {
+		while(genesTotalScore.next()) {
 
-			similarities.put(query1.getString(1), query1.getInt(2));
-			logger.trace("gene id {}\t sum {}", query1.getString(1), query1.getString(2));
+			similarities.put(genesTotalScore.getString(1), genesTotalScore.getInt(2));
+			logger.trace("gene id {}\t sum {}", genesTotalScore.getString(1), genesTotalScore.getString(2));
 		}
 
-		ResultSet query2 = this.stmt.executeQuery( "SELECT metabolite_id, gene_id, similarity_score_sum, taxonomy_score_sum, frequency FROM genes_has_metabolites;");
+		ResultSet metabolitesScores = this.stmt.executeQuery("SELECT metabolite_id, gene_id, similarity_score_sum, taxonomy_score_sum, frequency FROM genes_has_metabolites;");
 
-		while(query2.next()) {
-
-			Double final_score = query2.getDouble(3)/(similarities.get(query2.getString(2))*this.alpha+(1-this.alpha)*(query2.getDouble(4)*(1-(this.minimalFrequency-func_getFrequency(query2.getInt(5)))*this.beta)/(this.originTaxonomy*query2.getInt(5))));
-
+		while(metabolitesScores.next()) {
+			
+			String metaboliteID = metabolitesScores.getString(1), geneID = metabolitesScores.getString(2);
+			double similarity_score_sum = metabolitesScores.getDouble(3), taxonomy_score_sum = metabolitesScores.getDouble(4);
+			int frequency = metabolitesScores.getInt(5);
+			
+			double final_score = similarity_score_sum/(similarities.get(geneID)*this.alpha+(1-this.alpha)*(taxonomy_score_sum*(1-(this.minimalFrequency-func_getFrequency(frequency))*this.beta)/(this.originTaxonomy*frequency)));
+			
 			Map<String, Double> metaboliteScore = new HashMap<>();
-			if(procedure_data.containsKey(query2.getString(1)))
-				metaboliteScore = procedure_data.get(query2.getString(1)); 
+			if(procedure_data.containsKey(geneID))
+				metaboliteScore = procedure_data.get(geneID); 
 
-			metaboliteScore.put(query2.getString(1), final_score);
-			procedure_data.put(query2.getString(2), metaboliteScore);
+			metaboliteScore.put(metaboliteID, final_score);
+			procedure_data.put(geneID, metaboliteScore);
 		}
 		
 		//logger.debug("Procedure procedure_getMetabolitesGeneScore {} ", procedure_data.keySet().toString());

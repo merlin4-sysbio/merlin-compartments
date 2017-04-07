@@ -142,10 +142,8 @@ public class LoadTransportContainer extends Observable implements Observer {
 			thread.start();
 		}
 
-		for(Thread thread :threads) {
-
+		for(Thread thread :threads)
 			thread.join();
-		}
 	}
 
 	/**
