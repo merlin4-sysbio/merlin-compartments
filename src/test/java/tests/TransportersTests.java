@@ -3,6 +3,7 @@ package tests;
 import java.io.File;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -62,10 +63,32 @@ public class TransportersTests {
 	@Test
 	public void test() throws Exception {
 
-		//String n = "h+";
-		String n = "L-Lysine";
+		List<String> mets = new ArrayList<>();
+		mets.add("h+");
+		mets.add("proton");
+		mets.add("Zn2+");
+		mets.add("zinc");
+		mets.add("zinc ion");
+		mets.add("acetan");
+		mets.add("ferric ion");
+		mets.add("ferric iron");
+		mets.add("Fe2+");
+		mets.add("hop");
+		mets.add("sterol");
+		mets.add("steroids");
+		mets.add("calcium");
+		mets.add("HCO3-");
+		mets.add("bicarbonate");
+		mets.add("ca2+");
+		mets.add("small molecules");
+		mets.add("small molecule");
+		mets.add("3-hydroxy kynurenine");
+		mets.add("3-hydroxykynurenine");
+		mets.add("Ni2+");
+		mets.add("nickel");
 
-		{
+		for(String n : mets) {
+			
 			System.out.print(n+"\t");
 			String[] codes = MIRIAM_Data.getMIRIAM_codes(n,new ArrayList<String>(), true);
 			String[] names = MIRIAM_Data.getMIRIAM_Names(codes[0],codes[1], 0 ,true);
