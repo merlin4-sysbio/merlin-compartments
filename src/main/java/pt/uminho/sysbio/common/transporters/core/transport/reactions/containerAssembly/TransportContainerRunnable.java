@@ -36,7 +36,7 @@ import pt.uminho.sysbio.common.transporters.core.utils.TransportersUtilities;
 public class TransportContainerRunnable extends Observable implements Runnable  {
 
 	private static final Logger logger = LoggerFactory.getLogger(TransportContainerRunnable.class);
-	private static final boolean verbose = false;
+	private static boolean verbose = false;
 	private ConcurrentLinkedDeque<String> genes;
 	private Map<String, Set<TransportReaction>> genesReactions;
 	private AtomicBoolean cancel;
@@ -114,7 +114,6 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 		this.genesMetabolitesTransportTypeMap = genesMetabolitesTransportTypeMap;
 		this.transportReactionsList = transportReactionsList;
 		this.reactionsToBeReplaced = reactionsToBeReplaced;
-		this.transportReactionsList = transportReactionsList;
 		this.transportMetabolites = transportMetabolites;
 		this.metaboliteFunctionalParent_map = metaboliteFunctionalParent_map;
 		this.ontologyReactions = ontologyReactions;
@@ -187,10 +186,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			this.addGeneCI(locus_tag);
 
 			for(TransportReaction originalTransportReaction : this.genesReactions.get(geneID)) {
-
+				
 				if(verbose)
 					logger.info("reaction {}\toriginal metabolites {}", originalTransportReaction.getReactionID(), originalTransportReaction.getMetabolites());
-				
+
 				//removing metabolites not transported
 				Set<String> reactionSelectedMetabolites = this.removeReactantsAndProducts(originalTransportReaction.getMetaboliteDirection(), this.selectedGenesMetabolites.get(geneID), originalTransportReaction.getProtein_family_IDs());
 				if(verbose)
@@ -204,7 +203,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 				//at least one selected metabolite is on reaction
 				if(reactionSelectedMetabolites.size()>0 && this.hasAtLeastOne(originalTransportReaction.getMetaboliteStoichiometry().keySet(), reactionSelectedMetabolites)) {
-					
+
 					if(verbose)
 						logger.info("reaction {}\tmets {} has at least one selected metabolite from {}", originalTransportReaction.getReactionID(), originalTransportReaction.getMetaboliteStoichiometry(), reactionSelectedMetabolites);
 
@@ -217,7 +216,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 					if(verbose)
 						logger.info("reaction {}\tusing max score transport type {}", originalTransportReaction.getReactionID(), go);
-					
+
 					//if using max score transport type
 					if(go) {
 
@@ -225,23 +224,24 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 						//get transport reactions from metabolites ontology
 						String originalReactionID = originalTransportReaction.getReactionID();
-						
+
 						Set<TransportReaction> transportReactionsFromOntology = this.getTransportReactionFromOntology(originalTransportReaction, locus_tag);
 
 						if(verbose)
 							logger.info("reaction {}\tget transport reactions from metabolites ontology {}", originalTransportReaction.getReactionID(), transportReactionsFromOntology);
-						
+
 						//////////////////////////////////////////////depois daqui confirmar as reações ontologia, marcar sempre a original
-						
+
 						List<String> originalBifunctionalMetabolites = this.getOriginalBifunctionalMetabolitesList(originalTransportReaction);
 
 						for(TransportReaction transportReaction : transportReactionsFromOntology) {
 							
 							if(saveOnlyReactionsWithKEGGmetabolites)
 								go = TransportersUtilities.areAllMetabolitesKEGG(transportReaction);
-							
-							logger.debug("reaction {}\t are all from KEGG {}", transportReaction.getReactionID(), go);
-							
+
+							if(verbose)
+								logger.debug("reaction {}\t are all from KEGG {}", transportReaction.getReactionID(), go);
+
 							if(go) {
 
 								boolean addReaction=true;
@@ -253,6 +253,9 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 										Map<String, Map<String, MetabolitesOntology>> metOn = this.reactionsMetabolitesOntology.get(transportReaction.getReactionID());
 
 										synchronized(this.reactionsContainer) {
+
+											if(verbose)
+												logger.debug("updating reaction\t{}\toriginal\tmets\t{}",transportReaction, transportReaction.getOriginalReaction(), transportReaction.getMetabolites());
 
 											this.updateTransportReactionCI_information(transportReaction, locus_tag, geneID, metOn);
 										}
@@ -448,7 +451,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 										synchronized(this.reactionsContainer) {
 
 											String transportType = transportReaction.getTransportType();
-
+											
 											reactionId = this.addTransportReaction(transportReaction.getReactionID(), transportReaction.getReactionID(), transportReaction.isReversibility(), 
 													reactants, products, locus_tag, this.genesProteins.get(geneID), originalReaction_byGene, chebi_ontology_byGene,
 													general_equation_byGene, transportType, reversibilityConfirmed, originalReactionID_byGene);
@@ -469,10 +472,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 						}
 					}
 				}
-//				else {
-//
-//					either there are no selected metabolites or the selected metabolites for this gene are not available in this reaction, after filtering for removing symport metabolites.
-//				}
+				//				else {
+				//
+				//					either there are no selected metabolites or the selected metabolites for this gene are not available in this reaction, after filtering for removing symport metabolites.
+				//				}
 
 			}
 		}
@@ -513,19 +516,20 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 		TransportReactionCI transportReactionCI = this.reactionsContainer.get(transportReaction.getReactionID());
 
-		if(transportReactionCI.getIsOriginalReaction_byGene()==null)
+		if(transportReactionCI.getIsOriginalReaction_byGene()==null) 
 			transportReactionCI.setIsOriginalReaction_byGene(new HashMap<String, Boolean>());
-		{
+		
+		if(transportReactionCI.getIsOriginalReaction_byGene().containsKey(locus_tag)) {
 
-			if(transportReactionCI.getIsOriginalReaction_byGene().containsKey(locus_tag)) {
-
-				if(!transportReactionCI.getIsOriginalReaction_byGene().get(locus_tag))
-					transportReactionCI.getIsOriginalReaction_byGene().put(locus_tag,transportReaction.getOriginalReaction().get(locus_tag));
-			}
-			else {
-
-				transportReactionCI.getIsOriginalReaction_byGene().put(locus_tag,transportReaction.getOriginalReaction().get(locus_tag));
-			}
+			boolean existingOriginal = transportReactionCI.getIsOriginalReaction_byGene().get(locus_tag);
+			boolean newOriginal = transportReaction.getOriginalReaction().get(locus_tag);
+			
+				if(!existingOriginal && newOriginal)
+					transportReactionCI.getIsOriginalReaction_byGene().put(locus_tag, newOriginal);
+		}
+		else {
+			
+			transportReactionCI.getIsOriginalReaction_byGene().put(locus_tag,transportReaction.getOriginalReaction().get(locus_tag));
 		}
 
 		if(transportReactionCI.getChebi_ontology_byGene()==null)
@@ -674,16 +678,25 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				transportReactionSetResult = this.ontologyReactions.get(originalTransportReaction.getReactionID());
 
 				for(TransportReaction tr : transportReactionSetResult) {
-
+					
+					
+					boolean sameID = tr.getReactionID().equalsIgnoreCase(originalTransportReaction.getReactionID());
+					boolean sameMetabolites = compareReactionMetabolites(tr,originalTransportReaction);
+					boolean sameTransportType = tr.getTransportType().equals(originalTransportReaction.getTransportType());
+					
 					boolean original = false;
 
-					if(tr.getReactionID().equalsIgnoreCase(originalTransportReaction.getReactionID()) ||
-							(compareReactionMetabolites(tr,originalTransportReaction) && tr.getTransportType().equals(originalTransportReaction.getTransportType())))
-						original=originalTransportReaction.getOriginalReaction().get(locus_tag);
+					if(sameID || (sameMetabolites && sameTransportType))
+						original = originalTransportReaction.getOriginalReaction().get(locus_tag);
 
-					tr.getGeneral_equation().put(locus_tag, originalTransportReaction.getGeneral_equation().get(locus_tag));
-					tr.getOriginalReaction().put(locus_tag, original);
-					tr.getOriginalReactionID().put(locus_tag, originalTransportReaction.getReactionID());
+					if(!tr.getGeneral_equation().containsKey(locus_tag) || original)
+							tr.getGeneral_equation().put(locus_tag, originalTransportReaction.getGeneral_equation().get(locus_tag));
+					
+					if(!tr.getOriginalReaction().containsKey(locus_tag) || original)
+						tr.getOriginalReaction().put(locus_tag, original);
+					
+					if(!tr.getGeneral_equation().containsKey(locus_tag) || original)
+							tr.getOriginalReactionID().put(locus_tag, originalTransportReaction.getReactionID());
 
 					String surrogate_gene = null;
 
@@ -772,15 +785,15 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				}
 
 				for(TransportReaction transportReaction : new HashSet<TransportReaction>(transportReactionSetResult)) {
-
+					
 					String reactionID = this.existsReaction(transportReaction);
 
 					if(reactionID!=null) {
-
+						
 						transportReactionSetResult.remove(transportReaction);
 
 						synchronized (this.transportReactionsList) {
-
+							
 							boolean original = transportReaction.getOriginalReaction().get(locus_tag);
 							if(!original && this.transportReactionsList.get(reactionID).getOriginalReaction().containsKey(locus_tag) && this.transportReactionsList.get(reactionID).getOriginalReaction().get(locus_tag))
 								original=true;
@@ -788,6 +801,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 							this.transportReactionsList.get(reactionID).getGeneral_equation().put(locus_tag, originalTransportReaction.getGeneral_equation().get(locus_tag));
 							this.transportReactionsList.get(reactionID).getOriginalReaction().put(locus_tag, original);
 							this.transportReactionsList.get(reactionID).getOriginalReactionID().put(locus_tag, originalTransportReaction.getReactionID());
+							
 						}
 
 						synchronized (this.reactionsMetabolitesOntology) {
@@ -816,6 +830,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				this.ontologyReactions.put(originalTransportReaction.getReactionID(),transportReactionSetResult);
 			}
 		}
+
 		return transportReactionSetResult;
 	}
 
@@ -965,7 +980,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 								boolean deleteReaction=true;
 
 								for(String previousMetabolites:transportReaction.getMetabolites().keySet()) {
-									
+
 									String  metabolite = transportReaction.getMetabolites().get(previousMetabolites).getChEBIMiriam();
 
 									if(!ExternalRefSource.CHEBI.getSourceId("urn:miriam:obo.chebi:CHEBI:15346").equals(ExternalRefSource.CHEBI.getSourceId(transportReaction.getMetabolites().get(previousMetabolites).getChEBIMiriam()))
@@ -1015,7 +1030,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 			return this.reactionsToBeReplaced.get(transportReaction.getReactionID());
 		}
-
+		
 		for(String reactionID : this.transportReactionsList.keySet()) {
 
 			TransportReaction existingTransportReaction = this.transportReactionsList.get(reactionID);
@@ -1114,6 +1129,27 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 		}
 		return null;
 	}
+
+
+	/**
+	 * @param reaction
+	 */
+//	private void mapReactionToMetabolites(TransportReaction transportReaction) {
+//
+//		synchronized(this.metaboliteReactions) {
+//
+//			for(String metabolite : transportReaction.getMetabolites().keySet()) {
+//
+//				Set<String> reactions = new HashSet<>();
+//
+//				if(this.metaboliteReactions.containsKey(metabolite))
+//					reactions = metaboliteReactions.get(metabolite);
+//
+//				reactions.add(transportReaction.getReactionID());
+//				metaboliteReactions.put(metabolite, reactions);
+//			}
+//		}
+//	}
 
 	/**
 	 * @param directions
@@ -1238,7 +1274,6 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			for(String tc_family:proteinID.getTc_families_above_half().keySet()) 
 				transportReactionCI.addProtein(tc_family);
 
-
 		if(!this.genesContainer.containsKey(locus_tag))
 			this.addGeneCI(locus_tag);
 
@@ -1294,7 +1329,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			if(metabolitesContainer.containsKey(met))
 				transportReactions.addAll(metabolitesContainer.get(met).getReactionsId());
 			transportReactions.remove(id);
-			
+
 			if(keggMiriam.containsKey(met) && keggMiriam.get(met)!= null && !keggMiriam.get(met).equalsIgnoreCase("null"))
 				if(!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00080") &&
 						!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00002") &&

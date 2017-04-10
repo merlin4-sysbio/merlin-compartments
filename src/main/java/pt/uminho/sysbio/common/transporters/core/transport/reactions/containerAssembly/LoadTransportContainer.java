@@ -92,7 +92,6 @@ public class LoadTransportContainer extends Observable implements Observer {
 		this.setSaveOnlyReactionsWithKEGGmetabolites(saveOnlyReactionsWithKEGGmetabolites);
 		this.setGeneProcessingCounter(counter);
 		this.setMetabolites_ontology(metabolites_ontology);
-		
 		this.setGeneContainer(new ConcurrentHashMap<String, GeneCI>());
 		this.setReactionsContainer(new ConcurrentHashMap<String, TransportReactionCI>());
 		this.setMetabolitesContainer(new ConcurrentHashMap<String, MetaboliteCI>());
@@ -112,6 +111,8 @@ public class LoadTransportContainer extends Observable implements Observer {
 		this.existingReactions = new ConcurrentHashMap<>();
 		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
 	}
+
+
 
 	/**
 	 * @throws InterruptedException 
@@ -507,5 +508,5 @@ public class LoadTransportContainer extends Observable implements Observer {
 	public void setChebi_miriam(Map<String, String> chebi_miriam) {
 		this.chebi_miriam = chebi_miriam;
 	}
-
+	
 }
