@@ -62,6 +62,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 	private Graph<String, String> graph;
 	private Map<String, Map<String, Map<String, MetabolitesOntology>>> reactionsMetabolitesOntology;
 	private Set<String> ignoreSymportMetabolites;
+	private Map<String, Set<String>> rejectedGenesMetabolites;
 
 	/**
 	 * @param genes
@@ -98,7 +99,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			ConcurrentHashMap<String, String> reactionsToBeReplaced, ConcurrentHashMap<String,TransportReaction> transportReactionsList,
 			Map<String, TransportMetabolite> transportMetabolites, ConcurrentHashMap<String, Set<String>> metaboliteFunctionalParent_map,
 			ConcurrentHashMap<String,Set<TransportReaction>> ontologyReactions, Map<String, Set<String>> metabolites_ontology,
-			Map<String, Set<String>> selectedGenesMetabolites, Map<String, ProteinFamiliesSet> genesProteins,
+			Map<String, Set<String>> selectedGenesMetabolites, Map<String, Set<String>> rejectedGenesMetabolites, Map<String, ProteinFamiliesSet> genesProteins,
 			AtomicInteger counter, Map<String, String>  keggMiriam, Map<String, String>  chebiMiriam,
 			Map<String,String> metabolitesFormula, boolean saveOnlyReactionsWithKEGGmetabolites, Graph<String, String> graph,
 			Map<String, Map<String, Integer>> metabolite_generation, Map<String, Map<String, Map<String, MetabolitesOntology>>> reactions_metabolites_ontology,
@@ -119,6 +120,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 		this.ontologyReactions = ontologyReactions;
 		this.metabolites_ontology = metabolites_ontology;
 		this.selectedGenesMetabolites = selectedGenesMetabolites;
+		this.rejectedGenesMetabolites = rejectedGenesMetabolites;
 		this.counter = counter;
 		this.metabolitesFormula = metabolitesFormula;
 		this.keggMiriam = keggMiriam;
@@ -192,12 +194,20 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 				//removing metabolites not transported
 				Set<String> reactionSelectedMetabolites = this.removeReactantsAndProducts(originalTransportReaction.getMetaboliteDirection(), this.selectedGenesMetabolites.get(geneID), originalTransportReaction.getProtein_family_IDs());
+				//same for rejected
+				if(this.rejectedGenesMetabolites.containsKey(geneID))
+					this.rejectedGenesMetabolites.put(geneID, this.removeReactantsAndProducts(originalTransportReaction.getMetaboliteDirection(), this.rejectedGenesMetabolites.get(geneID), originalTransportReaction.getProtein_family_IDs()));
 				if(verbose)
 					logger.info("reaction {}\tselected metabolites {}", originalTransportReaction.getReactionID(), reactionSelectedMetabolites);
 
 				//Ignore symport metabolites
-				if(originalTransportReaction.getTransportType().equalsIgnoreCase("symport") && this.ignoreSymportMetabolites!=null && !this.ignoreSymportMetabolites.isEmpty())
+				if(originalTransportReaction.getTransportType().equalsIgnoreCase("symport") && this.ignoreSymportMetabolites!=null && !this.ignoreSymportMetabolites.isEmpty()) {
+					
 					reactionSelectedMetabolites = this.processIgnoreSymportMetabolites(ignoreSymportMetabolites, reactionSelectedMetabolites);
+					//same for rejected
+					if(this.rejectedGenesMetabolites.containsKey(geneID))
+						this.rejectedGenesMetabolites.put(geneID, this.processIgnoreSymportMetabolites(ignoreSymportMetabolites, this.rejectedGenesMetabolites.get(geneID)));
+				}
 				if(verbose)
 					logger.info("reaction {}\tselected metabolites removing ignored {}", originalTransportReaction.getReactionID(), reactionSelectedMetabolites);
 
@@ -225,7 +235,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 						//get transport reactions from metabolites ontology
 						String originalReactionID = originalTransportReaction.getReactionID();
 
-						Set<TransportReaction> transportReactionsFromOntology = this.getTransportReactionFromOntology(originalTransportReaction, locus_tag);
+						Set<TransportReaction> transportReactionsFromOntology = this.getTransportReactionFromOntology(originalTransportReaction, locus_tag, geneID);
 
 						if(verbose)
 							logger.info("reaction {}\tget transport reactions from metabolites ontology {}", originalTransportReaction.getReactionID(), transportReactionsFromOntology);
@@ -665,9 +675,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 	/**
 	 * @param originalTransportReaction
 	 * @param locus_tag
+	 * @param geneID 
 	 * @return
 	 */
-	private Set<TransportReaction> getTransportReactionFromOntology(TransportReaction originalTransportReaction, String locus_tag) {
+	private Set<TransportReaction> getTransportReactionFromOntology(TransportReaction originalTransportReaction, String locus_tag, String geneID) {
 
 		Set<TransportReaction> transportReactionSetResult = new HashSet<TransportReaction>();
 
@@ -678,7 +689,6 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 				transportReactionSetResult = this.ontologyReactions.get(originalTransportReaction.getReactionID());
 
 				for(TransportReaction tr : transportReactionSetResult) {
-					
 					
 					boolean sameID = tr.getReactionID().equalsIgnoreCase(originalTransportReaction.getReactionID());
 					boolean sameMetabolites = compareReactionMetabolites(tr,originalTransportReaction);
@@ -692,11 +702,17 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 					if(!tr.getGeneral_equation().containsKey(locus_tag) || original)
 							tr.getGeneral_equation().put(locus_tag, originalTransportReaction.getGeneral_equation().get(locus_tag));
 					
-					if(!tr.getOriginalReaction().containsKey(locus_tag) || original)
-						tr.getOriginalReaction().put(locus_tag, original);
-					
 					if(!tr.getGeneral_equation().containsKey(locus_tag) || original)
 							tr.getOriginalReactionID().put(locus_tag, originalTransportReaction.getReactionID());
+					
+					// if ontology reaction contains at least one metabolite bellow threshold (symports and reacting metabolties have been removed) it means that this reactions should be considered original
+					
+					for(String metabolite : tr.getMetabolites().keySet())
+						if(this.rejectedGenesMetabolites.containsKey(geneID) && this.rejectedGenesMetabolites.get(geneID).contains(metabolite))
+							original = true;
+					
+					if(!tr.getOriginalReaction().containsKey(locus_tag) || original)
+						tr.getOriginalReaction().put(locus_tag, original);
 
 					String surrogate_gene = null;
 

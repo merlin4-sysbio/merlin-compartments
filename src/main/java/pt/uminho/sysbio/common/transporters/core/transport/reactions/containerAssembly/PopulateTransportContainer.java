@@ -47,7 +47,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 	private static final Logger logger = LoggerFactory.getLogger(PopulateTransportContainer.class);
 	private Statement stmt;
-	private Map<String, Set<String>> selectedGenesMetabolites;
+	private Map<String, Set<String>> selectedGenesMetabolites, rejectedGenesMetabolites;
 	private Map<String, Set<TransportReaction>> genesReactions;
 	private Map<String, ProteinFamiliesSet> genesProteins;
 	private Map<String, String> genesLocusTag;
@@ -253,6 +253,8 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	private void getMetabolitesAboveThreshold() throws SQLException {
 
 		this.selectedGenesMetabolites = new TreeMap<String, Set<String>>();
+		this.rejectedGenesMetabolites = new TreeMap<String, Set<String>>();
+		
 		Map<Integer, MetaboliteTaxonomyScores> metaboliteTaxonomyScoresMap = this.getMetabolitesGeneScore();
 
 		for(int i: metaboliteTaxonomyScoresMap.keySet()) {
@@ -281,7 +283,13 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			}
 			else {
 
-				//System.out.println(gene+"\t"+metabolite);
+				Set<String> metabolitesList = new TreeSet<String>();
+
+				if(this.rejectedGenesMetabolites.containsKey(gene))
+					metabolitesList=this.rejectedGenesMetabolites.get(gene);
+
+				metabolitesList.add(metabolite);
+				this.rejectedGenesMetabolites.put(gene, metabolitesList);
 			}
 		}
 	}
@@ -611,7 +619,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		notifyObservers();
 
 		LoadTransportContainer ltc = new LoadTransportContainer(this.genesReactions, this.cancel, this.genesLocusTag, this.genesMetabolitesTransportTypeMap, 
-				this.selectedGenesMetabolites, this.genesProteins, this.transportMetabolites, this.metabolites_ontology, 
+				this.selectedGenesMetabolites, this.rejectedGenesMetabolites, this.genesProteins, this.transportMetabolites, this.metabolites_ontology, 
 				this.metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.geneProcessingCounter, this.graph, this.kegg_miriam, this.chebi_miriam, this.ignoreSymportMetabolites);
 		ltc.addObserver(this);
 		ltc.loadContainer();

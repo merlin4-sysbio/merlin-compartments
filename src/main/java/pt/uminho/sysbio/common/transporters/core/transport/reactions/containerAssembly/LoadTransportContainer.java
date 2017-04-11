@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import biosynth.core.components.representation.basic.graph.Graph;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.MetaboliteCI;
-import biosynth.core.components.representation.basic.graph.Graph;
 
 /**
  * @author ODias
@@ -54,6 +54,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 	private  Map<String, Map<String, Map<String, MetabolitesOntology>>> reactions_metabolites_ontology;
 	private Map<String, String> kegg_miriam, chebi_miriam;
 	private Set<String> ignoreSymportMetabolites;
+	private Map<String, Set<String>> rejectedGenesMetabolites;
 	
 	/**
 	 * @param genesReactions
@@ -61,6 +62,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 	 * @param genesLocusTag
 	 * @param genesMetabolitesTransportTypeMap
 	 * @param selectedGenesMetabolites
+	 * @param rejectedGenesMetabolites 
 	 * @param genesProteins
 	 * @param transportMetabolites
 	 * @param metabolites_ontology
@@ -74,7 +76,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 	 */
 	public LoadTransportContainer(Map<String, Set<TransportReaction>> genesReactions, AtomicBoolean cancel, Map<String,String> genesLocusTag,
 			Map<String, GenesMetabolitesTransportType> genesMetabolitesTransportTypeMap, Map<String, Set<String>> selectedGenesMetabolites,
-			Map<String, ProteinFamiliesSet> genesProteins, Map<String, TransportMetabolite> transportMetabolites, 
+			Map<String, Set<String>> rejectedGenesMetabolites, Map<String, ProteinFamiliesSet> genesProteins, Map<String, TransportMetabolite> transportMetabolites, 
 			Map<String, Set<String>> metabolites_ontology, Map<String,String> metabolitesFormula, 
 			boolean saveOnlyReactionsWithKEGGmetabolites, AtomicInteger counter, Graph<String, String> graph,
 			Map<String, String> kegg_miriam, Map<String, String> chebi_miriam, Set<String> ignoreSymportMetabolites) {
@@ -86,6 +88,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 		this.setCancel(cancel);
 		this.setGenesLocusTag(genesLocusTag);	
 		this.setSelectedGenesMetabolites(selectedGenesMetabolites);
+		this.setRejectedGenesMetabolites(rejectedGenesMetabolites);
 		this.setGenesMetabolitesTransportTypeMap(genesMetabolitesTransportTypeMap);
 		this.setGenesProteins(genesProteins);
 		this.setTransportMetabolites(transportMetabolites);
@@ -112,8 +115,6 @@ public class LoadTransportContainer extends Observable implements Observer {
 		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
 	}
 
-
-
 	/**
 	 * @throws InterruptedException 
 	 * 
@@ -132,7 +133,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 
 			Runnable lc	= new TransportContainerRunnable(genes, genesReactions, cancel, geneContainer, reactionsContainer, 
 					metabolitesContainer, genesLocusTag, genesMetabolitesTransportTypeMap, reactionsToBeReplaced, transportReactionsList,
-					transportMetabolites, metaboliteFunctionalParent_map, ontologyReactions, metabolites_ontology, selectedGenesMetabolites, 
+					transportMetabolites, metaboliteFunctionalParent_map, ontologyReactions, metabolites_ontology, selectedGenesMetabolites, this.rejectedGenesMetabolites,
 					genesProteins, geneProcessingCounter, kegg_miriam, chebi_miriam, metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.graph,
 					this.metabolite_generation, this.reactions_metabolites_ontology, existingReactions, ignoreSymportMetabolites);
 
@@ -508,5 +509,11 @@ public class LoadTransportContainer extends Observable implements Observer {
 	public void setChebi_miriam(Map<String, String> chebi_miriam) {
 		this.chebi_miriam = chebi_miriam;
 	}
+	
+	private void setRejectedGenesMetabolites(Map<String, Set<String>> rejectedGenesMetabolites) {
+		
+		this.rejectedGenesMetabolites = rejectedGenesMetabolites;
+	}
+
 	
 }
