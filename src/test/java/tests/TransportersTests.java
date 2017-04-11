@@ -60,10 +60,11 @@ public class TransportersTests {
 	}
 
 
-	@Test
+	//@Test
 	public void test() throws Exception {
 
 		List<String> mets = new ArrayList<>();
+		mets.add("D-glucose");
 		mets.add("h+");
 		mets.add("proton");
 		mets.add("Zn2+");
@@ -113,13 +114,13 @@ public class TransportersTests {
 	/**
 	 * @param args
 	 */
+	@Test
 	public void wolfpSort () {
-
-		//obj.getCompartments("C:/Users/ODias/Desktop/CR382121.faa", "fungi");
 
 		String out = "C:/Users/ODias/Desktop/out.out";
 		try {
-			WoLFPSORT.getCompartments("fungi","C:/Users/Oscar/Desktop/CP004143.faa", out);
+			
+			WoLFPSORT.getCompartments("fungi","D:/Dropbox/Public_/merlin_releases/griffin.faa", out);
 		}
 		catch (Exception e) {
 

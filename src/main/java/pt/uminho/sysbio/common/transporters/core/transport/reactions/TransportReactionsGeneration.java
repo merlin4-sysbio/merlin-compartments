@@ -637,7 +637,9 @@ public class TransportReactionsGeneration extends Observable {
 		String[] result = new String[2];
 
 		try {
-
+			
+			System.out.println(this.reviewedMetsCodes.containsKey(metabolite.getName()));
+			System.out.println(metabolite);
 
 			if(this.reviewedMetsCodes.containsKey(metabolite.getName())) {
 
@@ -646,7 +648,12 @@ public class TransportReactionsGeneration extends Observable {
 			}
 			else {
 
-				if(miriamData.containsKey(metabolite.getName()) && miriamData.get(metabolite.getName()).getKegg_miriam()!=null && miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
+				System.out.println(miriamData.containsKey(metabolite.getName()));
+				System.out.println(miriamData.get(metabolite.getName()).getKegg_miriam());
+				System.out.println(miriamData.get(metabolite.getName()).getChebi_miriam());
+				
+				if(miriamData.containsKey(metabolite.getName()) && miriamData.get(metabolite.getName()).getKegg_miriam()!=null 
+						&& miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
 					TransportMetaboliteCodes transportMetaboliteCodes = miriamData.get(metabolite.getName()); 
 					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
@@ -656,6 +663,9 @@ public class TransportReactionsGeneration extends Observable {
 				else {
 
 					result=MIRIAM_Data.getMIRIAM_codes(metabolite.getName(), this.metabolitesToBeVerified, verbose);
+					
+					System.out.println(miriamData.get(metabolite.getName()).getKegg_miriam());
+					System.out.println(miriamData.get(metabolite.getName()).getChebi_miriam());
 
 					TransportMetaboliteCodes transportMetaboliteCodes = new TransportMetaboliteCodes(metabolite.getName());
 

@@ -46,6 +46,8 @@ public class MIRIAM_Data {
 		if(results.length<100) {
 
 			xRefs = MIRIAM_Data.getKEGGData(results, metabolite, kegg_compounds_collection, xRefs, 0);
+			
+			System.out.println(xRefs[0]);
 
 			if(xRefs[0]!= null && xRefs[1]!= null)
 				return xRefs;
