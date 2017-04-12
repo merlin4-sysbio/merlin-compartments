@@ -60,33 +60,34 @@ public class TransportersTests {
 	}
 
 
-	//@Test
+	@Test
 	public void test() throws Exception {
 
 		List<String> mets = new ArrayList<>();
-		mets.add("D-glucose");
-		mets.add("h+");
-		mets.add("proton");
-		mets.add("Zn2+");
-		mets.add("zinc");
-		mets.add("zinc ion");
-		mets.add("acetan");
-		mets.add("ferric ion");
-		mets.add("ferric iron");
-		mets.add("Fe2+");
-		mets.add("hop");
-		mets.add("sterol");
-		mets.add("steroids");
-		mets.add("calcium");
-		mets.add("HCO3-");
-		mets.add("bicarbonate");
-		mets.add("ca2+");
-		mets.add("small molecules");
-		mets.add("small molecule");
-		mets.add("3-hydroxy kynurenine");
-		mets.add("3-hydroxykynurenine");
-		mets.add("Ni2+");
-		mets.add("nickel");
+		mets.add("D-mannose");
+//		mets.add("D-glucose");
+//		mets.add("h+");
+//		mets.add("proton");
+//		mets.add("Zn2+");
+//		mets.add("zinc");
+//		mets.add("zinc ion");
+//		mets.add("acetan");
+//		mets.add("ferric ion");
+//		mets.add("ferric iron");
+//		mets.add("Fe2+");
+//		mets.add("hop");
+//		mets.add("sterol");
+//		mets.add("steroids");
+//		mets.add("calcium");
+//		mets.add("HCO3-");
+//		mets.add("bicarbonate");
+//		mets.add("ca2+");
+//		mets.add("small molecules");
+//		mets.add("small molecule");
+//		mets.add("3-hydroxy kynurenine");
+//		mets.add("3-hydroxykynurenine");
+//		mets.add("Ni2+");
+//		mets.add("nickel");
 
 		for(String n : mets) {
 			
@@ -114,7 +115,7 @@ public class TransportersTests {
 	/**
 	 * @param args
 	 */
-	@Test
+//	@Test
 	public void wolfpSort () {
 
 		String out = "C:/Users/ODias/Desktop/out.out";

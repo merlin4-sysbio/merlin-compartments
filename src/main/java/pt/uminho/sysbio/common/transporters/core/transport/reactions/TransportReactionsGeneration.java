@@ -648,10 +648,6 @@ public class TransportReactionsGeneration extends Observable {
 			}
 			else {
 
-				System.out.println(miriamData.containsKey(metabolite.getName()));
-				System.out.println(miriamData.get(metabolite.getName()).getKegg_miriam());
-				System.out.println(miriamData.get(metabolite.getName()).getChebi_miriam());
-				
 				if(miriamData.containsKey(metabolite.getName()) && miriamData.get(metabolite.getName()).getKegg_miriam()!=null 
 						&& miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
@@ -664,9 +660,6 @@ public class TransportReactionsGeneration extends Observable {
 
 					result=MIRIAM_Data.getMIRIAM_codes(metabolite.getName(), this.metabolitesToBeVerified, verbose);
 					
-					System.out.println(miriamData.get(metabolite.getName()).getKegg_miriam());
-					System.out.println(miriamData.get(metabolite.getName()).getChebi_miriam());
-
 					TransportMetaboliteCodes transportMetaboliteCodes = new TransportMetaboliteCodes(metabolite.getName());
 
 					if(result!=null) {
