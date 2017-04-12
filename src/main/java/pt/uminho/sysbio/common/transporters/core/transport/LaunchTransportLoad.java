@@ -45,12 +45,13 @@ public class LaunchTransportLoad extends Observable implements Observer {
 	 * @param project_id
 	 * @param verbose
 	 * @param ignoreSymportMetabolites
+	 * @param generations 
 	 * @return
 	 * @throws Exception
 	 */
 	public static TransportContainer createTransportContainer(DatabaseAccess dba, double alpha, int minimalFrequency, double beta, 
 			double threshold, boolean validateReaction, boolean saveOnlyReactionsWithKEGGmetabolites, String outputObjectFileName,
-			String outputTextReactionsfileName, String path, int project_id, boolean verbose, Set<String> ignoreSymportMetabolites, long taxonomy) throws Exception {
+			String outputTextReactionsfileName, String path, int project_id, boolean verbose, Set<String> ignoreSymportMetabolites, long taxonomy, int generations) throws Exception {
 
 		long startTime = System.currentTimeMillis();
 
@@ -85,7 +86,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 
 			populateTransportContainer.getDataFromDatabase();
 			saveOnlyReactionsWithKEGGmetabolites = true;
-			transportContainer = populateTransportContainer.loadContainer(saveOnlyReactionsWithKEGGmetabolites);
+			transportContainer = populateTransportContainer.loadContainer(saveOnlyReactionsWithKEGGmetabolites, generations);
 			transportContainer = populateTransportContainer.containerValidation(transportContainer, verbose);
 			
 			if(outputTextReactionsfileName!=null) {
