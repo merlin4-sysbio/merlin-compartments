@@ -63,6 +63,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 	private Map<String, Map<String, Map<String, MetabolitesOntology>>> reactionsMetabolitesOntology;
 	private Set<String> ignoreSymportMetabolites;
 	private Map<String, Set<String>> rejectedGenesMetabolites;
+	private int generations;
 
 	/**
 	 * @param genes
@@ -80,6 +81,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 	 * @param ontologyReactions
 	 * @param metabolites_ontology
 	 * @param selectedGenesMetabolites
+	 * @param rejectedGenesMetabolites
 	 * @param genesProteins
 	 * @param counter
 	 * @param keggMiriam
@@ -88,9 +90,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 	 * @param saveOnlyReactionsWithKEGGmetabolites
 	 * @param graph
 	 * @param metabolite_generation
-	 * @param reactionsMetabolitesOntology
+	 * @param reactions_metabolites_ontology
 	 * @param existingReactions
 	 * @param ignoreSymportMetabolites
+	 * @param generations 
 	 */
 	public TransportContainerRunnable(ConcurrentLinkedDeque<String> genes, Map<String, Set<TransportReaction>> genesReactions, AtomicBoolean cancel, 
 			ConcurrentHashMap<String,GeneCI> genesContainer, ConcurrentHashMap<String, TransportReactionCI> reactionsContainer, 
@@ -103,7 +106,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			AtomicInteger counter, Map<String, String>  keggMiriam, Map<String, String>  chebiMiriam,
 			Map<String,String> metabolitesFormula, boolean saveOnlyReactionsWithKEGGmetabolites, Graph<String, String> graph,
 			Map<String, Map<String, Integer>> metabolite_generation, Map<String, Map<String, Map<String, MetabolitesOntology>>> reactions_metabolites_ontology,
-			ConcurrentHashMap<String, String> existingReactions, Set<String> ignoreSymportMetabolites) {
+			ConcurrentHashMap<String, String> existingReactions, Set<String> ignoreSymportMetabolites, int generations) {
 
 		this.genes = genes;
 		this.genesReactions = genesReactions;
@@ -131,6 +134,7 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 		this.reactionsMetabolitesOntology = reactions_metabolites_ontology;
 		this.existingReactions = existingReactions;
 		this.ignoreSymportMetabolites = ignoreSymportMetabolites;
+		this.generations = generations;
 	}
 
 	/* (non-Javadoc)
@@ -941,9 +945,11 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 
 						String upperParentMetaboliteID = alg.getShortestPath(metaboliteID).get(alg.getShortestPath(metaboliteID).size()-2);
 
-						MetabolitesOntology metOnt = new MetabolitesOntology(metaboliteID, alg.getSource(), upperParentMetaboliteID, generation, originalReactionID, transportReactionClone.getReactionID());
-
-						metabolitesLink.put(metaboliteID, metOnt);
+						if(generation <= this.generations) {
+						
+							MetabolitesOntology metOnt = new MetabolitesOntology(metaboliteID, alg.getSource(), upperParentMetaboliteID, generation, originalReactionID, transportReactionClone.getReactionID());
+							metabolitesLink.put(metaboliteID, metOnt);
+						}
 					}
 
 					//					if(alg == null && this.metabolites_ontology.containsKey(metabolites.get(0))) {

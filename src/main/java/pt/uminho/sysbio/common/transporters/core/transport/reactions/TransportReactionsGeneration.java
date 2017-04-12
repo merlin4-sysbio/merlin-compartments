@@ -289,12 +289,8 @@ public class TransportReactionsGeneration extends Observable {
 
 			Set<String> geneSet = ltd.getLoadedGenes();
 
-			System.out.println(geneSet);
-			
 			for(AlignedGenesContainer alignedGenes: alignedGenesContainer) {
 				
-				System.out.println(alignedGenes.getLocusTag());
-
 				if(!geneSet.contains(alignedGenes.getLocusTag())) {
 
 					if(this.originTaxonomy==null)

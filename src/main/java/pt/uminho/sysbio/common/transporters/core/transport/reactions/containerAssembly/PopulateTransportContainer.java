@@ -599,11 +599,12 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 
 	/**
+	 * @param generations 
 	 * @throws Exception 
 	 * @throws IOException 
 	 * 
 	 */
-	public TransportContainer loadContainer(boolean saveOnlyReactionsWithKEGGmetabolites) throws Exception {
+	public TransportContainer loadContainer(boolean saveOnlyReactionsWithKEGGmetabolites, int generations) throws Exception {
 
 		TransportContainer transportContainer = new TransportContainer(this.alpha,this.minimalFrequency,this.threshold,this.beta);
 		transportContainer.setKeggMetabolitesReactions(saveOnlyReactionsWithKEGGmetabolites);
@@ -622,7 +623,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				this.selectedGenesMetabolites, this.rejectedGenesMetabolites, this.genesProteins, this.transportMetabolites, this.metabolites_ontology, 
 				this.metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.geneProcessingCounter, this.graph, this.kegg_miriam, this.chebi_miriam, this.ignoreSymportMetabolites);
 		ltc.addObserver(this);
-		ltc.loadContainer();
+		ltc.loadContainer(generations);
 		transportContainer.setMetabolites(ltc.getMetabolitesContainer());
 		transportContainer.setTransportReactions(ltc.getReactionsContainer());
 		transportContainer.setGenes(ltc.getGeneContainer());

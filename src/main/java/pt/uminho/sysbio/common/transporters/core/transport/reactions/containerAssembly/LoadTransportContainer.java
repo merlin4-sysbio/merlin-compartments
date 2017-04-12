@@ -95,6 +95,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 		this.setSaveOnlyReactionsWithKEGGmetabolites(saveOnlyReactionsWithKEGGmetabolites);
 		this.setGeneProcessingCounter(counter);
 		this.setMetabolites_ontology(metabolites_ontology);
+		
 		this.setGeneContainer(new ConcurrentHashMap<String, GeneCI>());
 		this.setReactionsContainer(new ConcurrentHashMap<String, TransportReactionCI>());
 		this.setMetabolitesContainer(new ConcurrentHashMap<String, MetaboliteCI>());
@@ -116,16 +117,19 @@ public class LoadTransportContainer extends Observable implements Observer {
 	}
 
 	/**
+	 * @param generations 
 	 * @throws InterruptedException 
 	 * 
 	 */
-	public void loadContainer() throws InterruptedException {
+	public void loadContainer(int generations) throws InterruptedException {
 		
 		int numberOfCores = Runtime.getRuntime().availableProcessors()*2;
 		List<Thread> threads = new ArrayList<Thread>();
 		
 		if(this.getGenes().size()<numberOfCores)
 			numberOfCores=this.getGenes().size();
+		
+		numberOfCores=1;
 		
 		System.out.println("number Of threads: "+numberOfCores);
 		
@@ -135,7 +139,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 					metabolitesContainer, genesLocusTag, genesMetabolitesTransportTypeMap, reactionsToBeReplaced, transportReactionsList,
 					transportMetabolites, metaboliteFunctionalParent_map, ontologyReactions, metabolites_ontology, selectedGenesMetabolites, this.rejectedGenesMetabolites,
 					genesProteins, geneProcessingCounter, kegg_miriam, chebi_miriam, metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.graph,
-					this.metabolite_generation, this.reactions_metabolites_ontology, existingReactions, ignoreSymportMetabolites);
+					this.metabolite_generation, this.reactions_metabolites_ontology, existingReactions, ignoreSymportMetabolites, generations);
 
 			((TransportContainerRunnable) lc).addObserver(this);
 			Thread thread = new Thread(lc);
