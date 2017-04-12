@@ -804,27 +804,41 @@ public class LoadTransportersData {
 
 		if(this.metabolites_id_map.containsKey(name)) {
 
-			ResultSet rs = this.statement.executeQuery("SELECT name FROM metabolites WHERE kegg_miriam='"+kegg+"' AND datatype='"+DATATYPE.AUTO+"';");
+			if(kegg!=null) {
 
-			if(rs.next()) {
+				ResultSet rs = this.statement.executeQuery("SELECT name, chebi_miriam FROM metabolites WHERE kegg_miriam='"+kegg+"' AND datatype='"+DATATYPE.AUTO+"';");
 
-				String nameInDatabase= rs.getString(1);
+				if(rs.next()) {
 
-				if(nameInDatabase.equalsIgnoreCase(name)) {
+					String nameInDatabase= rs.getString(1);
+					String chebiInDatabase= rs.getString(2);
 
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
+					if(nameInDatabase.equalsIgnoreCase(name) && chebi.equalsIgnoreCase(chebiInDatabase)) {
 
-					return this.metabolites_id_map.get(name);
+						if(datatype.equals(DATATYPE.MANUAL))
+							this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';");
+
+						return this.metabolites_id_map.get(name);
+					}
+					else {
+
+						System.out.println(name);
+						System.out.println(nameInDatabase);
+						System.out.println(chebi);
+						System.out.println(chebiInDatabase);
+						System.out.println(kegg);
+						
+						this.statement.execute("UPDATE metabolites SET name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"-ChEBI' WHERE chebi_miriam = '"+chebiInDatabase+"';");
+						this.metabolites_id_map.remove(name);
+					}
 				}
 				else {
-
-					this.statement.execute("UPDATE metabolites SET name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"-ChEBI' WHERE chebi_miriam = '"+chebi+"';");
+					
 					this.metabolites_id_map.remove(name);
 				}
 			}
 		}
-
+		
 		if(kegg_name!= null && this.metabolites_id_map.containsKey(kegg_name.toLowerCase())) {
 
 			kegg_name = kegg_name.toLowerCase();
@@ -860,30 +874,29 @@ public class LoadTransportersData {
 
 		if(name.matches("\\d{4,9}")) {
 
-			if(kegg_name!=null) {
-
+			if(kegg_name!=null)
 				name=kegg_name;
-			}
-			else if(chebi_name!=null) {
-
+			else if(chebi_name!=null)
 				name=chebi_name;
-			}
 		}
 
 		int result=-1;
-		ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
+		
+		String aux = "";
+		
+		if(kegg!=null)
+			aux = " AND kegg_miriam = '"+kegg+"'";
+		
+		ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"'" + aux + ";");
 
 		if(rs.next()) {
 
 			result=rs.getInt(1); 
 
-			if(rs.getString(2).equals(DATATYPE.AUTO.toString())) {
-
-				if(datatype.equals(DATATYPE.MANUAL)) {
-
+			if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
+				if(datatype.equals(DATATYPE.MANUAL))
 					this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
-				}
-			}
+			
 			rs.close();
 			this.metabolites_id_map.put(name, result);
 			return result;
@@ -899,11 +912,16 @@ public class LoadTransportersData {
 
 		if(kegg!=null && chebi!=null) {
 
-			rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE kegg_miriam='"+kegg+"' AND chebi_miriam='"+chebi+"';");
+			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE kegg_miriam='"+kegg+"' AND chebi_miriam='"+chebi+"';");
 
 			if(rs.next()) {
-
+				
 				result=rs.getInt(1);
+				
+				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
+				
 				rs.close();
 				this.metabolites_id_map.put(name, result);
 				return result;
@@ -912,11 +930,16 @@ public class LoadTransportersData {
 
 		if(kegg!=null && chebi==null) {
 
-			rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE kegg_miriam='"+kegg+"';");
+			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE kegg_miriam='"+kegg+"';");
 
 			if(rs.next()) {
 
-				result=rs.getInt(1); 
+				result=rs.getInt(1);
+				
+				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
+				
 				rs.close();
 				this.metabolites_id_map.put(name, result);
 				return result;
@@ -925,10 +948,15 @@ public class LoadTransportersData {
 
 		if(chebi!=null && kegg==null) {
 
-			rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE chebi_miriam='"+chebi+"';");
+			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE chebi_miriam='"+chebi+"';");
 			if(rs.next()) {
 
 				result=rs.getInt(1);
+				
+				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
+				
 				rs.close();
 				this.metabolites_id_map.put(name, result);
 				return result;
@@ -937,27 +965,19 @@ public class LoadTransportersData {
 
 		//System.err.println("metabolites\t"+name+"\tdoes not exist! loading new metabolite");
 
-		if(kegg_name!=null) {
-
+		if(kegg_name!=null)
 			kegg_name=kegg_name.replace("'", "\\'");
-		}
 
-		if(chebi_name!=null) {
-
+		if(chebi_name!=null)
 			chebi_name=chebi_name.replace("'", "\\'");
-		}
 
 		String kegg_formula="", chebi_formula="";
 
-		if(kegg!=null) {
-
+		if(kegg!=null)
 			kegg_formula = this.getKeggFormula(ExternalRefSource.KEGG_CPD.getSourceId(kegg), 0);
-		}
 
-		if(chebi!=null) {
-
+		if(chebi!=null)
 			chebi_formula = this.getChebiFormula(ExternalRefSource.CHEBI.getSourceId(chebi), 0);
-		}
 
 		this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
 				"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg+"','"+chebi+"','"+
@@ -969,10 +989,8 @@ public class LoadTransportersData {
 		result =  rs.getInt(1);
 		rs.close();
 
-		if(kegg!=null) {
-
+		if(kegg!=null)
 			this.keggMiriam.put(kegg, result);
-		}
 
 		if(chebi!=null) {
 
@@ -1084,21 +1102,13 @@ public class LoadTransportersData {
 
 		int metabolite_id = -1;
 
-		if(metabolite.getKegg_miriam()!=null) {
-
-			if(this.keggMiriam.containsKey(metabolite.getKegg_miriam())) {
-
+		if(metabolite.getKegg_miriam()!=null)
+			if(this.keggMiriam.containsKey(metabolite.getKegg_miriam()))
 				metabolite_id = this.keggMiriam.get(metabolite.getKegg_miriam());
-			}
-		}
 
-		if(metabolite.getChebi_miriam()!=null) {
-
-			if(this.chebiMiriam.containsKey(metabolite.getChebi_miriam())) {
-
+		if(metabolite.getChebi_miriam()!=null)
+			if(this.chebiMiriam.containsKey(metabolite.getChebi_miriam()))
 				metabolite_id = this.chebiMiriam.get(metabolite.getChebi_miriam());
-			}
-		}
 
 		if(metabolite_id > 0) {
 

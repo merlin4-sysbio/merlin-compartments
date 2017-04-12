@@ -638,16 +638,13 @@ public class TransportReactionsGeneration extends Observable {
 
 		try {
 			
-			System.out.println(this.reviewedMetsCodes.containsKey(metabolite.getName()));
-			System.out.println(metabolite);
-
 			if(this.reviewedMetsCodes.containsKey(metabolite.getName())) {
 
 				TransportMetaboliteCodes transportMetaboliteCodes = this.reviewedMetsCodes.get(metabolite.getName()); 
 				metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
 			}
 			else {
-
+				
 				if(miriamData.containsKey(metabolite.getName()) && miriamData.get(metabolite.getName()).getKegg_miriam()!=null 
 						&& miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
