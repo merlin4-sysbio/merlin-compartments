@@ -45,7 +45,7 @@ import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
  */
 public class LoadTransportersData {
 
-	private Map<String,Integer> keggMiriam, chebiMiriam;
+	//	private Map<String,Integer> keggMiriam, chebiMiriam;
 	private Map<String,String> directionMap;
 	private Map<String,Integer> transportDirectionsMap;
 	private Map<String, Integer>  organism_id;
@@ -53,8 +53,7 @@ public class LoadTransportersData {
 	private Map <String, Integer> local_database_id;
 	private Map<String, Set<String>> genes_uniprot;
 	private Map<String, Integer> uniprot_latest_version;
-	private Map<String, Integer> metabolites_id_map;
-	private Set<String> synonyms;
+	//private Set<String> synonyms;
 	private DatabaseType databaseType;
 
 
@@ -69,7 +68,7 @@ public class LoadTransportersData {
 		this.transportDirectionsMap=new HashMap<String, Integer>();
 		this.organism_id=new HashMap<String, Integer>();
 		this.local_database_id = new HashMap<String, Integer>();
-		this.get_codes_miriam();
+		//this.getCodesMiriam();
 		this.getUniprotVersions();
 		this.deleteProcessingGenes();
 		this.deleteProcessingRegistries();
@@ -79,44 +78,35 @@ public class LoadTransportersData {
 	/**
 	 * 
 	 */
-	public void get_codes_miriam() {
-
-		this.keggMiriam = new HashMap<String, Integer>();
-		this.chebiMiriam = new HashMap<String, Integer>();
-		this.metabolites_id_map = new HashMap<String, Integer>();
-		this.synonyms = new HashSet<String>();
-
-		try {
-
-			ResultSet rs = this.statement.executeQuery("SELECT * FROM metabolites");
-
-			while(rs.next()) {
-
-				if(!rs.getString(3).equals("null")) {
-
-					this.keggMiriam.put(rs.getString(3), rs.getInt(1));
-
-				}
-
-				if(!rs.getString(5).equals("null")) {
-
-					this.chebiMiriam.put(rs.getString(5), rs.getInt(1));
-				}
-
-				this.metabolites_id_map.put(rs.getString(2).toLowerCase(), rs.getInt(1));
-			}
-
-			rs = this.statement.executeQuery("SELECT name, metabolite_id FROM synonyms;");
-
-			while(rs.next()) {
-
-				this.metabolites_id_map.put(rs.getString(1).toLowerCase(), rs.getInt(2));
-				this.synonyms.add(rs.getString(1).toLowerCase());
-			}
-
-		}
-		catch (SQLException e) {e.printStackTrace();}
-	}
+	//	public void getCodesMiriam() {
+	//
+	//		this.keggMiriam = new HashMap<String, Integer>();
+	//		this.chebiMiriam = new HashMap<String, Integer>();
+	//		this.synonyms = new HashSet<String>();
+	//
+	//		try {
+	//
+	//			ResultSet rs = this.statement.executeQuery("SELECT * FROM metabolites");
+	//
+	//			while(rs.next()) {
+	//
+	//				if(!rs.getString(3).isEmpty() && !rs.getString(3).equals("null"))
+	//					this.keggMiriam.put(rs.getString(3), rs.getInt(1));
+	//
+	//				if(!rs.getString(5).isEmpty() && !rs.getString(5).equals("null"))
+	//					this.chebiMiriam.put(rs.getString(5), rs.getInt(1));
+	//
+	//				//this.metabolites_id_map.put(rs.getString(2).toLowerCase(), rs.getInt(1));
+	//			}
+	//
+	//			rs = this.statement.executeQuery("SELECT name, metabolite_id FROM synonyms;");
+	//			while(rs.next())
+	//				//this.metabolites_id_map.put(rs.getString(1).toLowerCase(), rs.getInt(2));
+	//				this.synonyms.add(rs.getString(1).toLowerCase());
+	//
+	//		}
+	//		catch (SQLException e) {e.printStackTrace();}
+	//	}
 
 
 	/**
@@ -178,10 +168,8 @@ public class LoadTransportersData {
 
 			ResultSet rs = this.statement.executeQuery("SELECT DISTINCT(uniprot_id) FROM tcdb_registries;");
 
-			while(rs.next()) {
-
+			while(rs.next())
 				uniprot_ids.add(rs.getString(1));
-			}
 		}
 		catch (SQLException e) {e.printStackTrace();}
 
@@ -803,97 +791,224 @@ public class LoadTransportersData {
 		String kegg_formula="", chebi_formula="";
 
 		String kegg__name ="";
-		if(kegg_name!=null)
-			kegg__name=kegg_name.replace("'", "\\'");
-
-		if(chebi_name!=null)
-			chebi_name=chebi_name.replace("'", "\\'");
 
 		String kegg_miriam ="";
 		if(kegg!=null) {
 
 			kegg_miriam = kegg;
+			kegg__name=kegg_name;
 			kegg_formula = this.getKeggFormula(ExternalRefSource.KEGG_CPD.getSourceId(kegg), 0);
 		}
 
-		if(chebi!=null)
-			chebi_formula = this.getChebiFormula(ExternalRefSource.CHEBI.getSourceId(chebi), 0);
+		String chebi_miriam = "";
+		if(chebi!=null) {
 
+			chebi_miriam = chebi;
+			chebi_formula = this.getChebiFormula(ExternalRefSource.CHEBI.getSourceId(chebi), 0);
+		}
 
 		String name = metabolite.getName().toLowerCase();
 
-		if(this.metabolites_id_map.containsKey(name)) {
+		if(kegg!=null && chebi!= null) {
 
-			if(kegg!=null) {
+			ResultSet rs = this.statement.executeQuery("SELECT name, datatype, id FROM metabolites WHERE kegg_miriam='"+kegg+"' AND chebi_miriam = '"+chebi_miriam+"'");
 
-				ResultSet rs = this.statement.executeQuery("SELECT name, chebi_miriam, id FROM metabolites WHERE kegg_miriam='"+kegg+"'");// AND datatype='"+DATATYPE.AUTO+"';");
+			if(rs.next()) {
 
-				if(rs.next()) {
+				String datatypeInDatabase = rs.getString(2);
+				int result = rs.getInt(3);
+				rs.close();
 
-					String nameInDatabase= rs.getString(1);
-					String chebiInDatabase= rs.getString(2);
-					int result = rs.getInt(3);
+				if(datatype.equals(DATATYPE.MANUAL) && datatypeInDatabase.equalsIgnoreCase(DATATYPE.AUTO.toString()))
+					this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';");
 
-					if(nameInDatabase.equalsIgnoreCase(name) && chebi.equalsIgnoreCase(chebiInDatabase)) {
+				return result;
+			}
 
-						if(datatype.equals(DATATYPE.MANUAL))
-							this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';");
-					}
-					else {
+			rs = this.statement.executeQuery("SELECT name, chebi_miriam, datatype, id FROM metabolites WHERE kegg_miriam='"+kegg+"'");// AND datatype='"+DATATYPE.AUTO+"';");
 
-						//this.statement.execute("UPDATE metabolites SET name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"-ChEBI' WHERE chebi_miriam = '"+chebiInDatabase+"';");
+			if(rs.next()) {
 
-						this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
-								"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi+"','"+
-								DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"','"+
-								DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
-								"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
-						rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-						rs.next();
-						result =  rs.getInt(1);
-						rs.close();
-					}
-					this.metabolites_id_map.remove(name);
-					return result;
+				String nameInDatabase= rs.getString(1);
+				String chebiInDatabase = rs.getString(2);
+				String datatypeInDatabase = rs.getString(3);
+				int result = rs.getInt(4);
+
+				if(nameInDatabase.equalsIgnoreCase(name) && chebi.equalsIgnoreCase(chebiInDatabase)) {
+
+					if(datatype.equals(DATATYPE.MANUAL) && datatypeInDatabase.equalsIgnoreCase(DATATYPE.AUTO.toString()))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';");
 				}
 				else {
 
-					this.metabolites_id_map.remove(name);
+					this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
+							"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi_miriam+"','"+
+							DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"','"+
+							DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
+							"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
+					rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
+					rs.next();
+					result =  rs.getInt(1);
+					rs.close();
+
+					if(chebi!=null)
+						this.loadOntologies(result, chebi);
 				}
+
+				return result;
+			}
+			rs.close();
+
+			this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
+					"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi_miriam+"','"+
+					DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"','"+
+					DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
+					"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
+			rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
+			rs.next();
+			int result =  rs.getInt(1);
+			rs.close();
+
+			if(chebi!=null)
+				this.loadOntologies(result, chebi);
+
+			return result;
+		}
+
+		if(kegg!=null && chebi == null) {
+
+			ResultSet rs = this.statement.executeQuery("SELECT name, id, datatype FROM metabolites WHERE kegg_miriam = '"+kegg+"';");
+
+			if(rs.next()) {
+
+				String nameInDatabase = rs.getString(1);
+				int result = rs.getInt(2);
+				String datatypeInDatabase = rs.getString(3);
+
+				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam = '"+kegg+"';");
+
+				rs = this.statement.executeQuery("SELECT metabolite_id, datatype, name FROM synonyms WHERE name = '"+nameInDatabase+"';");
+				if(!rs.next()) {
+
+					if(!nameInDatabase.equalsIgnoreCase(name))
+						this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+result+",'"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"','"+datatype+"')");
+				}
+
+				rs.close();
+				return result;
 			}
 		}
 
-		if(kegg_name!= null && !kegg_name.equalsIgnoreCase(name) && this.metabolites_id_map.containsKey(kegg_name.toLowerCase())) {
+		if(chebi!=null && kegg == null) {
+
+			ResultSet rs = this.statement.executeQuery("SELECT name, id, datatype FROM metabolites WHERE chebi_miriam = '"+chebi+"';");
+
+			if(rs.next()) {
+
+				String nameInDatabase = rs.getString(1);
+				int result=rs.getInt(2);
+				String datatypeInDatabase = rs.getString(3);
+
+				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE chebi_miriam = '"+chebi+"';");
+
+				int synonymOriginalID = LoadTransportersData.existsSynonym(nameInDatabase, datatype, databaseType, statement);
+				if(synonymOriginalID < 0) {
+					
+						if(!nameInDatabase.equalsIgnoreCase(name))
+							LoadTransportersData.insertSynonym(result, nameInDatabase, datatype, databaseType, statement);
+				}
+				else {
+					
+					if(synonymOriginalID != result)
+						System.err.println("two mets with same synonym!!! "+synonymOriginalID+" AND "+result);
+				}
+
+				rs.close();
+				return result;
+			}
+			rs.close();
+		}
+
+		if(name!= null) {
+
+			ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
+
+			if(rs.next()) {
+
+				int result = rs.getInt(1);
+				String datatypeInDatabase = rs.getString(2);
+
+				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
+
+				rs.close();
+				return result;
+			}
+			else {
+
+				int synonymOriginalID = LoadTransportersData.existsSynonym(name, datatype, databaseType, statement);
+				if(synonymOriginalID > 0)
+					return synonymOriginalID;
+			}
+		}
+
+		if(kegg_name!= null && !kegg_name.equalsIgnoreCase(name)) {
 
 			kegg_name = kegg_name.toLowerCase();
 
-			if(!this.synonyms.contains(name)) {
+			ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"';");
 
-				if(chebi_name!=null) {
+			if(rs.next()) {
 
-					this.statement.execute("UPDATE metabolites SET chebi_name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"' , chebi_miriam = '"+chebi+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
-				}
-				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(kegg__name)+",'"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"','"+datatype+"')");
-				this.synonyms.add(name);
-				this.metabolites_id_map.put(name, this.metabolites_id_map.get(kegg_name));
+				int result = rs.getInt(1);
+				String datatypeInDatabase = rs.getString(2);
+
+				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"';");
+
+				rs.close();
+				return result;
 			}
-			return this.metabolites_id_map.get(name);
+			else {
+
+				int synonymOriginalID = LoadTransportersData.existsSynonym(kegg_name, datatype, databaseType, statement);
+				if(synonymOriginalID > 0)
+					return synonymOriginalID;
+			}
+			rs.close();
 		}
 
-		if(chebi_name!=null && !chebi_name.equalsIgnoreCase(name) && this.metabolites_id_map.containsKey(chebi_name.toLowerCase())) {
+		if(chebi_name!=null && !chebi_name.equalsIgnoreCase(name)) {
 
 			chebi_name = chebi_name.toLowerCase();
 
-			if(!this.synonyms.contains(name)) {
+			ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"';");
 
-				if(kegg_name!=null)
-					this.statement.execute("UPDATE metabolites SET kegg_name = '"+DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"' , kegg_miriam = '"+kegg+"' WHERE id="+this.metabolites_id_map.get(chebi_name));
+			if(rs.next()) {
 
-				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+this.metabolites_id_map.get(chebi_name)+",'"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"','"+datatype+"')");
-				this.synonyms.add(name);
-				this.metabolites_id_map.put(name, this.metabolites_id_map.get(chebi_name));
+				int result = rs.getInt(1);
+				String datatypeInDatabase = rs.getString(2);
+
+				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
+					if(datatype.equals(DATATYPE.MANUAL))
+						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"';");
+
+				rs.close();
+				return result;
 			}
-			return this.metabolites_id_map.get(name);
+			else {
+
+				int synonymOriginalID = LoadTransportersData.existsSynonym(chebi_name, datatype, databaseType, statement);
+				if(synonymOriginalID > 0)
+					return synonymOriginalID;
+			}
+			rs.close();
 		}
 
 		if(name.matches("\\d{4,9}")) {
@@ -906,122 +1021,103 @@ public class LoadTransportersData {
 
 		int result=-1;
 
-		String aux = "";
+		//		result = this.existsSynonym(metabolite,datatype);
+		//
+		//		if(result>0) {
+		//
+		//			return result;
+		//		}
 
-		if(kegg!=null)
-			aux = " AND kegg_miriam = '"+kegg+"'";
+		//		if(kegg!=null && chebi!=null) {
+		//
+		//			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE kegg_miriam='"+kegg+"' AND chebi_miriam='"+chebi_miriam+"';");
+		//
+		//			if(rs.next()) {
+		//
+		//				result=rs.getInt(1);
+		//
+		//				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
+		//					if(datatype.equals(DATATYPE.MANUAL))
+		//						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
+		//
+		//				rs.close();
+		//				return result;
+		//			}
+		//		}
 
-		ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"'" + aux + ";");
+		//		if(kegg!=null && chebi==null) {
+		//
+		//			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE kegg_miriam='"+kegg+"';");
+		//
+		//			if(rs.next()) {
+		//
+		//				result=rs.getInt(1);
+		//
+		//				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
+		//					if(datatype.equals(DATATYPE.MANUAL))
+		//						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
+		//
+		//				rs.close();
+		//				return result;
+		//			}
+		//		}
 
-		if(rs.next()) {
-
-			result=rs.getInt(1); 
-
-			if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
-				if(datatype.equals(DATATYPE.MANUAL))
-					this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name='"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
-
-			rs.close();
-			this.metabolites_id_map.put(name, result);
-			return result;
-		}
-
-		result = this.existsSynonym(metabolite,datatype);
-
-		if(result>0) {
-
-			this.metabolites_id_map.put(name, result);
-			return result;
-		}
-
-		if(kegg!=null && chebi!=null) {
-
-			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE kegg_miriam='"+kegg+"' AND chebi_miriam='"+chebi+"';");
-
-			if(rs.next()) {
-
-				result=rs.getInt(1);
-
-				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
-
-				rs.close();
-				this.metabolites_id_map.put(name, result);
-				return result;
-			}
-		}
-
-		if(kegg!=null && chebi==null) {
-
-			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE kegg_miriam='"+kegg+"';");
-
-			if(rs.next()) {
-
-				result=rs.getInt(1);
-
-				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
-
-				rs.close();
-				this.metabolites_id_map.put(name, result);
-				return result;
-			}
-		}
-
-		if(chebi!=null && kegg==null) {
-
-			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE chebi_miriam='"+chebi+"';");
-			if(rs.next()) {
-
-				result=rs.getInt(1);
-
-				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
-
-				rs.close();
-				this.metabolites_id_map.put(name, result);
-				return result;
-			}
-		}
+		//		if(chebi!=null && kegg==null) {
+		//
+		//			rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE chebi_miriam='"+chebi_miriam+"';");
+		//			if(rs.next()) {
+		//
+		//				result=rs.getInt(1);
+		//
+		//				if(rs.getString(2).equals(DATATYPE.AUTO.toString()))
+		//					if(datatype.equals(DATATYPE.MANUAL))
+		//						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE id ="+result+";");
+		//
+		//				rs.close();
+		//				return result;
+		//			}
+		//		}
 
 
 		this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
-				"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi+"','"+
+				"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi_miriam+"','"+
 				DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"','"+
 				DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
 				"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
-		rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
+		ResultSet rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
 		rs.next();
 		result =  rs.getInt(1);
 		rs.close();
 
-		if(kegg!=null)
-			this.keggMiriam.put(kegg, result);
+		//		if(kegg!=null)
+		//			this.keggMiriam.put(kegg, result);
 
-		if(chebi!=null) {
-
-			this.chebiMiriam.put(chebi, result);
-
-			String metaboliteChebiID = ExternalRefSource.CHEBI.getSourceId(chebi);
-
-			// not CoA childs
-			if(metaboliteChebiID!=null && !chebi.equalsIgnoreCase("urn:miriam:obo.chebi:CHEBI:15346"))  {
-
-				Map<String, ChebiER> chebi_entity = MIRIAM_Data.get_chebi_miriam_child_metabolites(metaboliteChebiID);
-
-				if(chebi_entity!=null) {
-
-					this.loadMetabolitesOntology(metaboliteChebiID, result, chebi_entity,0);
-				}
-			}
-		}
-		this.metabolites_id_map.put(name, result);
+		if(chebi!=null)
+			this.loadOntologies(result, chebi);
 
 		return result;
 	}
+
+	/**
+	 * @param metaboliteID
+	 * @param chebi_miriam
+	 */
+	private void loadOntologies(int metaboliteID, String chebi_miriam) {
+
+		//this.chebiMiriam.put(chebi, result);
+
+		String metaboliteChebiID = ExternalRefSource.CHEBI.getSourceId(chebi_miriam);
+
+		// not CoA childs
+		if(metaboliteChebiID!=null && !chebi_miriam.equalsIgnoreCase("urn:miriam:obo.chebi:CHEBI:15346"))  {
+
+			Map<String, ChebiER> chebi_entity = MIRIAM_Data.get_chebi_miriam_child_metabolites(metaboliteChebiID);
+			if(chebi_entity!=null)
+				this.loadMetabolitesOntology(metaboliteChebiID, metaboliteID, chebi_entity,0);
+		}
+
+	}
+
 
 	/**
 	 * @param chebiID
@@ -1034,9 +1130,7 @@ public class LoadTransportersData {
 
 			ChebiER chebiER = ChebiAPIInterface.getExternalReference(chebiID);
 			if(chebiER!=null)
-			{
 				return chebiER.getFormula();
-			}
 			return "";
 		} 
 		catch (WebServiceException e) {
@@ -1101,40 +1195,59 @@ public class LoadTransportersData {
 		}
 	}
 
+
+
+
 	/**
-	 * @param name
-	 * @param miriam
+	 * @param metabolite
+	 * @param datatype
+	 * @param databaseType
+	 * @param statement
 	 * @return
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
-	private int existsSynonym(TransportMetaboliteDirectionStoichiometryContainer metabolite, DATATYPE datatype) throws SQLException{
+	public static int existsSynonym(String name, DATATYPE datatype, DatabaseType databaseType, Statement statement) throws SQLException{
 
-		int metabolite_id = -1;
+		ResultSet rs = statement.executeQuery("SELECT metabolite_id, datatype, name FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(name,databaseType).toLowerCase()+"';");
 
-		if(metabolite.getKegg_miriam()!=null)
-			if(this.keggMiriam.containsKey(metabolite.getKegg_miriam()))
-				metabolite_id = this.keggMiriam.get(metabolite.getKegg_miriam());
+		if(rs.next()) {
+			
+			int result = rs.getInt(1);
+			String datatypeInDatabase = rs.getString(2);
+			rs.close();
 
-		if(metabolite.getChebi_miriam()!=null)
-			if(this.chebiMiriam.containsKey(metabolite.getChebi_miriam()))
-				metabolite_id = this.chebiMiriam.get(metabolite.getChebi_miriam());
-
-		if(metabolite_id > 0) {
-
-			ResultSet rs = this.statement.executeQuery("SELECT * FROM synonyms WHERE metabolite_id="+metabolite_id+" AND name='"+DatabaseUtilities.databaseStrConverter(metabolite.getName(),this.databaseType).toLowerCase()+"';");
-
-			if(!rs.next()) {
-
-				this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+metabolite_id+",'"+DatabaseUtilities.databaseStrConverter(metabolite.getName(),this.databaseType).toLowerCase()+"','"+datatype+"')");
-				rs.close();
-			}
-
-			if(datatype.equals(DATATYPE.MANUAL)) {
-
-				this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolites.id="+metabolite_id);
-			}
+			if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
+				if(datatype.equals(DATATYPE.MANUAL))
+					statement.execute("UPDATE synonyms SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolite_id = "+result+";");
+			
+			return result;
 		}
-		return metabolite_id;
+		
+		return -1;
+	}
+
+	/**
+	 * @param metabolite_id
+	 * @param name
+	 * @param datatype
+	 * @param databaseType
+	 * @param statement
+	 * @throws SQLException
+	 */
+	public static void insertSynonym(int metabolite_id, String name, DATATYPE datatype, DatabaseType databaseType, Statement statement) throws SQLException {
+
+		ResultSet rs = statement.executeQuery("SELECT * FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(name,databaseType).toLowerCase()+"';");
+
+		if(rs.next()) {
+
+			if(datatype.equals(DATATYPE.MANUAL))
+				statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolites.id="+metabolite_id);
+		}
+		else {
+
+			statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+metabolite_id+",'"+DatabaseUtilities.databaseStrConverter(name, databaseType).toLowerCase()+"','"+datatype+"')");
+		}
+		rs.close();
 	}
 
 
@@ -1431,10 +1544,8 @@ public class LoadTransportersData {
 								//avoid loops
 								rs = this.statement.executeQuery("SELECT id FROM metabolites_ontology WHERE metabolite_id="+local_database_id.get(child)+" AND child_id="+local_database_id.get(key)+"");
 
-								if(!rs.next()) {
-
+								if(!rs.next())
 									this.statement.execute("INSERT INTO metabolites_ontology (metabolite_id, child_id) VALUES("+local_database_id.get(key)+","+local_database_id.get(child)+")");
-								}
 							}
 						}
 					}

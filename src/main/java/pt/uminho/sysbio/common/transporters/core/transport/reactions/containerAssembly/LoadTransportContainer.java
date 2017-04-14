@@ -129,7 +129,7 @@ public class LoadTransportContainer extends Observable implements Observer {
 		if(this.getGenes().size()<numberOfCores)
 			numberOfCores=this.getGenes().size();
 		
-		numberOfCores=1;
+		//numberOfCores=1;
 		
 		System.out.println("number Of threads: "+numberOfCores);
 		

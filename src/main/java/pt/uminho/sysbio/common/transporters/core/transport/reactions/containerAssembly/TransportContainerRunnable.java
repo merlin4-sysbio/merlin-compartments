@@ -494,6 +494,8 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			}
 		}
 
+		logger.debug("Gene {} processed!", locus_tag);
+		
 		if(this.genesContainer.containsKey(locus_tag) && this.genesContainer.get(locus_tag).getReactionIds().isEmpty())
 			this.genesContainer.remove(locus_tag);
 	}
@@ -950,6 +952,10 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 							MetabolitesOntology metOnt = new MetabolitesOntology(metaboliteID, alg.getSource(), upperParentMetaboliteID, generation, originalReactionID, transportReactionClone.getReactionID());
 							metabolitesLink.put(metaboliteID, metOnt);
 						}
+						else {
+							
+							logger.debug("generation {}\treaction {}\toriginal reaction {}", generation, transportReactionClone.getReactionID(), originalReactionID);
+						}
 					}
 
 					//					if(alg == null && this.metabolites_ontology.containsKey(metabolites.get(0))) {
@@ -958,11 +964,9 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 					//						System.out.println();
 					//					}
 
-
 					if(!metabolitesLink.isEmpty()) {
 
 						res.put(locus_tag, metabolitesLink);
-
 						this.reactionsMetabolitesOntology.put(transportReactionClone.getReactionID(), res);
 					}
 				}
