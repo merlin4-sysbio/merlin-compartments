@@ -81,7 +81,7 @@ public class TransportersUtilities {
 	public static boolean areAllMetabolitesKEGG(TransportReaction transportReaction) {
 
 		for(TransportMetabolite metabolite : transportReaction.getMetabolites().values())
-			if(metabolite.getKeggMiriam()==null || metabolite.getKeggMiriam().equalsIgnoreCase("null"))
+			if(metabolite.getKeggMiriam()==null || metabolite.getKeggMiriam().equalsIgnoreCase("null") || metabolite.getKeggMiriam().isEmpty())
 				return false;
 		
 		return true;

@@ -254,7 +254,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		this.selectedGenesMetabolites = new TreeMap<String, Set<String>>();
 		this.rejectedGenesMetabolites = new TreeMap<String, Set<String>>();
-		
+
 		Map<Integer, MetaboliteTaxonomyScores> metaboliteTaxonomyScoresMap = this.getMetabolitesGeneScore();
 
 		for(int i: metaboliteTaxonomyScoresMap.keySet()) {
@@ -1010,28 +1010,10 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	}
 
 	private Map<String, Map<String, Double>> procedure_getMetabolitesGeneScore(int projectID) throws SQLException {
-		//		-- CREATE PROCEDURE getMetaboliteTaxonomyScores (IN originTaxonomy BIGINT UNSIGNED, IN minimal_hits BIGINT UNSIGNED, IN alpha FLOAT UNSIGNED, IN beta_penalty FLOAT UNSIGNED, IN idproject BIGINT UNSIGNED)
-		//		-- BEGIN
-		//		--    SELECT metabolite_id, gene_id, similarity_score_sum/(
-		//		--        SELECT SUM(similarity)
-		//		--        FROM genes_has_tcdb_registries
-		//		--        INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id
-		//		--        INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version)
-		//		--        WHERE project_id = idproject AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites.gene_id)
-		//		--    *alpha+(1-alpha)*
-		//		--    (taxonomy_score_sum*(1-(minimal_hits-getFrequency(frequency,minimal_hits))*beta_penalty)/(originTaxonomy*frequency)) as final_score
-		//		--    FROM genes_has_metabolites;
-		//		-- END 
+
 		Map<String, Map<String, Double>> procedure_data = new HashMap<>();
 
-		//		ResultSet query1 = this.stmt.executeQuery( "SELECT genes.id, SUM(similarity) FROM genes_has_tcdb_registries "
-		//				+ " INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id "
-		//				+ " INNER JOIN genes_has_metabolites ON genes.id = genes_has_metabolites.gene_id "
-		//				+ " INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version)"
-		//				+ " WHERE (project_id = "+projectID+" AND latest_version)"
-		//				+ " GROUP BY genes.id, metabolite_id");
-
-		ResultSet genesTotalScore = this.stmt.executeQuery("SELECT gene_id, SUM(similarity_score_sum) FROM genes_has_metabolites GROUP BY gene_id;");
+		ResultSet genesTotalScore = this.stmt.executeQuery("SELECT gene_id, SUM(similarity) FROM genes_has_tcdb_registries GROUP BY gene_id;");
 
 		Map<String, Integer> similarities = new HashMap<>();
 		while(genesTotalScore.next()) {
@@ -1047,8 +1029,10 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			String metaboliteID = metabolitesScores.getString(1), geneID = metabolitesScores.getString(2);
 			double similarity_score_sum = metabolitesScores.getDouble(3), taxonomy_score_sum = metabolitesScores.getDouble(4);
 			int frequency = metabolitesScores.getInt(5);
+			double frequencyScore = similarity_score_sum/(similarities.get(geneID));
+			double taxonomyScore = (taxonomy_score_sum*(1-(this.minimalFrequency-func_getFrequency(frequency, this.minimalFrequency))*this.beta)/(this.originTaxonomy*frequency));
 
-			double final_score = similarity_score_sum/(similarities.get(geneID)*this.alpha+(1-this.alpha)*(taxonomy_score_sum*(1-(this.minimalFrequency-func_getFrequency(frequency, this.minimalFrequency))*this.beta)/(this.originTaxonomy*frequency)));
+			double final_score = frequencyScore*this.alpha+(1-this.alpha)*taxonomyScore;
 
 			Map<String, Double> metaboliteScore = new HashMap<>();
 			if(procedure_data.containsKey(geneID))
@@ -1086,7 +1070,11 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		//				+ "INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version) "
 		//				+ "WHERE (project_id = "+projectID+" AND latest_version AND genes_has_tcdb_registries.gene_id = genes_has_metabolites_has_type.gene_id AND genes_has_metabolites.metabolite_id=genes_has_metabolites_has_type.metabolite_id)");
 
-		ResultSet query1=this.stmt.executeQuery( "SELECT gene_id, metabolite_id, SUM(transport_type_score_sum) FROM genes_has_metabolites_has_type GROUP BY gene_id, metabolite_id;");
+		ResultSet query1=this.stmt.executeQuery( "SELECT genes_has_tcdb_registries.gene_id, metabolite_id, SUM(similarity) FROM genes_has_tcdb_registries "
+				+ " INNER JOIN genes_has_metabolites ON genes_has_tcdb_registries.gene_id=genes_has_metabolites.gene_id "
+				+ " INNER JOIN genes ON genes.id = genes_has_tcdb_registries.gene_id "
+				+ " INNER JOIN tcdb_registries ON (genes_has_tcdb_registries.uniprot_id=tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version=tcdb_registries.version) "
+				+ " GROUP BY genes_has_tcdb_registries.gene_id, metabolite_id;");
 
 		Map<String, Map<String, Integer>> transportType = new HashMap<>();
 

@@ -1355,13 +1355,13 @@ public class TransportContainerRunnable extends Observable implements Runnable  
 			if(metabolitesContainer.containsKey(met))
 				transportReactions.addAll(metabolitesContainer.get(met).getReactionsId());
 			transportReactions.remove(id);
-
-			if(keggMiriam.containsKey(met) && keggMiriam.get(met)!= null && !keggMiriam.get(met).equalsIgnoreCase("null"))
-				if(!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00080") &&
-						!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00002") &&
-						!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00008") &&
-						!ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met)).equalsIgnoreCase("C00009"))
-					i = mets.size();
+			
+			if(keggMiriam.containsKey(met) && keggMiriam.get(met)!= null && !keggMiriam.get(met).equalsIgnoreCase("null") && !keggMiriam.get(met).isEmpty()) {			
+				
+				String keggID = ExternalRefSource.KEGG_CPD.getSourceId(keggMiriam.get(met));
+				if(!keggID.equalsIgnoreCase("C00080") && !keggID.equalsIgnoreCase("C00002") && !keggID.equalsIgnoreCase("C00008") && !keggID.equalsIgnoreCase("C00009")) 
+				i = mets.size();
+			}
 		}
 
 		for (int i=0; i< transportReactions.size(); i++) {
