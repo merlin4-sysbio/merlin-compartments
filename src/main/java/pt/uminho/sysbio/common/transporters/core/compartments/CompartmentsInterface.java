@@ -5,6 +5,7 @@ package pt.uminho.sysbio.common.transporters.core.compartments;
 
 import java.io.File;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -15,7 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract interface CompartmentsInterface {
 	
-	
 	/**
 	 * @return
 	 */
@@ -25,14 +25,14 @@ public abstract interface CompartmentsInterface {
 	 * @param project_id
 	 * @throws Exception
 	 */
-	public void loadCompartmentsInformation() throws Exception;
+	public void loadCompartmentsInformation(Statement statement) throws Exception;
 	
 	/**
 	 * @param threshold
 	 * @param project_id
 	 * @return
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException;
+	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException;
 
 	/**
 	 * @param string

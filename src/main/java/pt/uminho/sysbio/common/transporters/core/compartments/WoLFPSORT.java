@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +22,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 
 	private String genomeCode;
 	private String tempPath;
-	private LoadCompartments loadCompartments;
 	private int normalization=27;
 	private AtomicBoolean cancel;
 	private boolean isUseProxy, isUseAuthentication;
@@ -35,7 +35,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 	 */
 	public WoLFPSORT(Connection conn, String genomeCode, int project_id) {
 
-		this.loadCompartments = new LoadCompartments(conn);
 		this.genomeCode = genomeCode;
 		this.tempPath = FileUtils.getCurrentTempDirectory();
 		this.cancel = new AtomicBoolean(false);
@@ -50,7 +49,6 @@ public class WoLFPSORT implements CompartmentsInterface{
 	 */
 	public WoLFPSORT(Connection conn, String genomeCode, String tempPath, int project_id) {
 
-		this.loadCompartments = new LoadCompartments(conn);
 		this.genomeCode = genomeCode;
 		this.tempPath = FileUtils.getCurrentTempDirectory();
 		this.cancel = new AtomicBoolean(false);
@@ -109,26 +107,26 @@ public class WoLFPSORT implements CompartmentsInterface{
 	 * @throws IOException 
 	 * 
 	 */
-	public void loadCompartmentsInformation() throws Exception {
+	public void loadCompartmentsInformation(Statement statement) throws Exception {
 
 		List<WoLFPSORT_Result> results= this.addGeneInformation();
 
 		for(WoLFPSORT_Result woLFPSORT_Result : results) {
 
-			this.loadCompartments.loadData(woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments(), this.project_id);
+			LoadCompartments.loadData(woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments(), this.project_id, statement);
 		}
 	}
 
 	/* (non-Javadoc)
 	 * @see compartments.CompartmentsInterface#loadCompartmentsInformation()
 	 */
-	public void loadCompartmentsInformation(boolean silico) throws Exception {
+	public void loadCompartmentsInformation(boolean silico, Statement statement) throws Exception {
 
 		List<WoLFPSORT_Result> results= this.addGeneInformation();
 
 		for(WoLFPSORT_Result woLFPSORT_Result : results) {
 
-			this.loadCompartments.loadData(woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments(), this.project_id);
+			LoadCompartments.loadData(woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments(), this.project_id, statement);
 		}
 	}
 
@@ -387,9 +385,9 @@ public class WoLFPSORT implements CompartmentsInterface{
 	/* (non-Javadoc)
 	 * @see compartments.CompartmentsInterface#getBestCompartmentsForGene(double)
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException  {
+	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException  {
 
-		return this.loadCompartments.getBestCompartmenForGene(threshold,this.normalization, this.project_id);
+		return LoadCompartments.getBestCompartmenForGene(threshold,this.normalization, this.project_id, statement);
 	}
 
 	@Override

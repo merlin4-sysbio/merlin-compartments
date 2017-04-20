@@ -5,11 +5,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 /**
  * @author Oscar Dias
@@ -19,12 +18,9 @@ public class ReadLocTree implements CompartmentsInterface {
 
 	private static int normalization=100;
 	private AtomicBoolean cancel;
-	private LoadCompartments loadCompartments;
 	private Map<String, CompartmentResult> results;
 	private int project_id;
 	private boolean typePlant;
-
-
 
 	/**
 	 * @param organismType
@@ -34,6 +30,14 @@ public class ReadLocTree implements CompartmentsInterface {
 		this.cancel = new AtomicBoolean(false);
 		this.typePlant = typePlant;
 	}
+	
+	/**
+	 * @param project_id
+	 */
+	public ReadLocTree(int project_id) {
+
+		this.project_id = project_id;
+	}
 
 	/**
 	 * @param conn
@@ -41,10 +45,9 @@ public class ReadLocTree implements CompartmentsInterface {
 	 * @param project_id
 	 * @param organismType
 	 */
-	public ReadLocTree(Connection conn, Map<String, CompartmentResult> results, int project_id, boolean typePlant) {
+	public ReadLocTree(Map<String, CompartmentResult> results, int project_id, boolean typePlant) {
 
 		this.cancel = new AtomicBoolean(false);
-		this.loadCompartments = new LoadCompartments(conn);
 		this.results = results;
 		this.project_id = project_id;
 		this.typePlant = typePlant;
@@ -89,6 +92,7 @@ public class ReadLocTree implements CompartmentsInterface {
 
 
 		while ((str = in.readLine()) != null && !this.cancel.get()) {
+			
 
 			if(str.startsWith("#")) {
 
@@ -140,6 +144,7 @@ public class ReadLocTree implements CompartmentsInterface {
 			}
 		}
 		in.close();
+		
 		return compartmentLists;
 	}
 
@@ -182,17 +187,27 @@ public class ReadLocTree implements CompartmentsInterface {
 				}
 	 */
 
+	/**
+	 * @param threshold
+	 * @param statement
+	 * @return
+	 * @throws SQLException
+	 */
 	@Override
-	public Map<String, GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException {
+	public Map<String, GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException {
 
-		return this.loadCompartments.getBestCompartmenForGene(threshold, ReadLocTree.normalization, this.project_id);
+		return LoadCompartments.getBestCompartmenForGene(threshold, ReadLocTree.normalization, this.project_id, statement);
 	}
 
 
-	public void loadCompartmentsInformation() throws Exception {
+	/**
+	 * @param statement
+	 * @throws Exception
+	 */
+	public void loadCompartmentsInformation(Statement statement) throws Exception {
 
 		for(CompartmentResult locTreeResult : this.results.values())
-			this.loadCompartments.loadData(locTreeResult.getGeneID(), locTreeResult.getCompartments(), project_id);
+			LoadCompartments.loadData(locTreeResult.getGeneID(), locTreeResult.getCompartments(), project_id, statement);
 
 	}
 

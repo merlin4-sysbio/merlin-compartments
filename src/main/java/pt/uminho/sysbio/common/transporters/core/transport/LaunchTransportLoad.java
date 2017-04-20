@@ -9,17 +9,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.sql.SQLException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import pt.uminho.ceb.biosystems.mew.biocomponents.container.io.exceptions.ReactionAlreadyExistsException;
-import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
-import pt.uminho.sysbio.common.transporters.core.compartments.CompartmentsInterface;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.PopulateTransportContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportContainer;
 
@@ -115,21 +111,21 @@ public class LaunchTransportLoad extends Observable implements Observer {
 	 * @throws SQLException
 	 * @throws ReactionAlreadyExistsException 
 	 */
-	public TransportContainer compartmentaliseTransportContainer(String path, TransportContainer transportContainer, CompartmentsInterface obj, KINGDOM k) throws IOException, SQLException, ReactionAlreadyExistsException {
-
-		CompartmentaliseTransportContainer compartmentaliseTransportContainer = new CompartmentaliseTransportContainer(transportContainer, obj.getBestCompartmentsByGene(10), k);
-		compartmentaliseTransportContainer.loadCompartmentsToContainer();
-		compartmentaliseTransportContainer.createReactionsFiles(path);
-		compartmentaliseTransportContainer.createReactionsAnnotationsTabFiles(path);
-
-		return transportContainer;
-
-		//		TransportReactionsModelIntegration transportReactionsModelIntegration = new TransportReactionsModelIntegration();
-		//		transportReactionsModelIntegration.setCompartmentaliseTransportContainer(compartmentaliseTransportContainer);
-		//		transportReactionsModelIntegration.setListFromFile(outPath);
-		//		transportReactionsModelIntegration.selectReactionToIntegrateInModel(useInternalReactions,useKeggMetabolitesOnly);
-		//		transportReactionsModelIntegration.getListToFile(directory+"transportReactionsModel.txt");
-	}
+//	public TransportContainer compartmentaliseTransportContainer(String path, TransportContainer transportContainer, CompartmentsInterface obj, KINGDOM k) throws IOException, SQLException, ReactionAlreadyExistsException {
+//
+//		CompartmentaliseTransportContainer compartmentaliseTransportContainer = new CompartmentaliseTransportContainer(transportContainer, obj.getBestCompartmentsByGene(10, statement), k);
+//		compartmentaliseTransportContainer.loadCompartmentsToContainer();
+//		compartmentaliseTransportContainer.createReactionsFiles(path);
+//		compartmentaliseTransportContainer.createReactionsAnnotationsTabFiles(path);
+//
+//		return transportContainer;
+//
+//		//		TransportReactionsModelIntegration transportReactionsModelIntegration = new TransportReactionsModelIntegration();
+//		//		transportReactionsModelIntegration.setCompartmentaliseTransportContainer(compartmentaliseTransportContainer);
+//		//		transportReactionsModelIntegration.setListFromFile(outPath);
+//		//		transportReactionsModelIntegration.selectReactionToIntegrateInModel(useInternalReactions,useKeggMetabolitesOnly);
+//		//		transportReactionsModelIntegration.getListToFile(directory+"transportReactionsModel.txt");
+//	}
 
 	/**
 	 * @param transportContainer

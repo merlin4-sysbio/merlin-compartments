@@ -8,11 +8,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 
 /**
  * @author ODias
@@ -22,7 +21,6 @@ public class ReadPSort3 implements CompartmentsInterface{
 
 	private static int normalization=10;
 	private Map<String, CompartmentResult> results;
-	private LoadCompartments loadCompartments;
 	private AtomicBoolean cancel;
 	private int project_id;
 
@@ -43,10 +41,9 @@ public class ReadPSort3 implements CompartmentsInterface{
 	 * @param conn
 	 * @param results
 	 */
-	public ReadPSort3(Connection conn, Map<String, CompartmentResult> results, int project_id) {
+	public ReadPSort3(Map<String, CompartmentResult> results, int project_id) {
 
 		this.cancel = new AtomicBoolean(false);
-		this.loadCompartments = new LoadCompartments(conn);
 		this.results = results;
 		this.project_id = project_id;
 	}
@@ -54,10 +51,9 @@ public class ReadPSort3 implements CompartmentsInterface{
 	/**
 	 * @param connection
 	 */
-	public ReadPSort3(Connection connection, int project_id) {
+	public ReadPSort3(int project_id) {
 
 		this.cancel = new AtomicBoolean(false);
-		this.loadCompartments = new LoadCompartments(connection);
 		this.project_id = project_id;
 	}
 
@@ -69,22 +65,13 @@ public class ReadPSort3 implements CompartmentsInterface{
 		this.cancel = new AtomicBoolean(false);
 	}
 
-	/**
-	 * @param project_id
-	 */
-	public ReadPSort3(int project_id) {
-
-		this.cancel = new AtomicBoolean(false);
-		this.project_id = project_id;
-	}
-
 	/* (non-Javadoc)
 	 * @see compartments.CompartmentsInterface#loadCompartmentsInformation()
 	 */
-	public void loadCompartmentsInformation() {
+	public void loadCompartmentsInformation(Statement statement) {
 
 		for(CompartmentResult pSORT3Result : this.results.values())
-			this.loadCompartments.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), project_id);
+			LoadCompartments.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), project_id, statement);
 	}
 
 	/**
@@ -155,9 +142,12 @@ public class ReadPSort3 implements CompartmentsInterface{
 				}
 				else {
 
-					PSort3Result pSort3Result = new PSort3Result(line[seqID_index]);
-					String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
-
+					
+					//String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
+					String locus_tag = line[seqID_index].split(" ")[0];
+					
+					PSort3Result pSort3Result = new PSort3Result(locus_tag);
+					
 					boolean unknown=true;
 
 					Double.valueOf(line[cytoplasmicMembrane_Score_index]);
@@ -254,7 +244,7 @@ public class ReadPSort3 implements CompartmentsInterface{
 
 						if(returnFinalLocalisation) {
 
-							pSort3Result = new PSort3Result(line[seqID_index]);
+							pSort3Result = new PSort3Result(locus_tag);
 							String out;
 							if(line[final_Localization_index].trim().equalsIgnoreCase("Cytoplasmic")){out = "cytop";}
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("CytoplasmicMembrane")){out = "cytmem";}
@@ -262,10 +252,11 @@ public class ReadPSort3 implements CompartmentsInterface{
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("OuterMembrane")){out = "outme";}
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("Cellwall")){out = "cellw";}
 							else{out = "extr";}
-
+							
 							pSort3Result.addCompartment(out,10);
 						}
 					}
+					
 					compartmentLists.put(locus_tag, pSort3Result);
 				}
 			}
@@ -278,9 +269,9 @@ public class ReadPSort3 implements CompartmentsInterface{
 	/* (non-Javadoc)
 	 * @see compartments.CompartmentsInterface#getBestCompartmentsByGene(double, int)
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold) throws SQLException{
+	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException{
 
-		return loadCompartments.getBestCompartmenForGene(threshold, ReadPSort3.normalization, this.project_id);
+		return LoadCompartments.getBestCompartmenForGene(threshold, ReadPSort3.normalization, this.project_id, statement);
 	}
 
 	@Override
