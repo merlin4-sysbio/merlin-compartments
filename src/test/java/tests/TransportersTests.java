@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
@@ -34,7 +35,7 @@ public class TransportersTests {
 
 	public void testOrg() throws Exception {
 
-		DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "SCE_transporters");
+		DatabaseAccess msqlmt = new MySQLDatabaseAccess("root", "password", "127.0.0.1", "3306", "SCE_transporters", new File(FileUtils.getCurrentDirectory()).getParentFile().getParent());
 		Connection connection = new Connection(msqlmt);
 		Statement statment = connection.createStatement();
 		TransportReactionsGeneration t = new TransportReactionsGeneration(-1);
