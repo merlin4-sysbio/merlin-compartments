@@ -1,5 +1,4 @@
 package pt.uminho.sysbio.common.transporters.core.transport;
-import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -8,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
@@ -21,7 +19,7 @@ public class TransportersSchemaUpdate {
 		
 		
 		//DatabaseAccess m =  new DatabaseAccess("root", "password", "127.0.0.1", 3306, "transporters");
-		DatabaseAccess m =  new MySQLDatabaseAccess("odias", "#!odias#2013@silico", "192.168.1.100", 3306, "transporters",new File(FileUtils.getCurrentDirectory()).getParentFile().getParent());
+		DatabaseAccess m =  new MySQLDatabaseAccess("odias", "#!odias#2013@silico", "192.168.1.100", 3306, "transporters");
 	
 		
 		Connection c = new Connection(m);
