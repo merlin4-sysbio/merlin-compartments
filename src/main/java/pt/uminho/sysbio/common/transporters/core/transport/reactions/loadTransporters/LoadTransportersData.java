@@ -795,6 +795,9 @@ public class LoadTransportersData {
 		String kegg_miriam ="";
 		if(kegg!=null) {
 
+			System.out.println("id "+kegg+"|");
+			System.out.println("name "+kegg__name+"|");
+
 			kegg_miriam = kegg;
 			kegg__name=kegg_name;
 			kegg_formula = this.getKeggFormula(ExternalRefSource.KEGG_CPD.getSourceId(kegg), 0);
@@ -917,12 +920,12 @@ public class LoadTransportersData {
 
 				int synonymOriginalID = LoadTransportersData.existsSynonym(nameInDatabase, datatype, databaseType, statement);
 				if(synonymOriginalID < 0) {
-					
-						if(!nameInDatabase.equalsIgnoreCase(name))
-							LoadTransportersData.insertSynonym(result, nameInDatabase, datatype, databaseType, statement);
+
+					if(!nameInDatabase.equalsIgnoreCase(name))
+						LoadTransportersData.insertSynonym(result, nameInDatabase, datatype, databaseType, statement);
 				}
 				else {
-					
+
 					if(synonymOriginalID != result)
 						System.err.println("two mets with same synonym!!! "+synonymOriginalID+" AND "+result);
 				}
@@ -1161,28 +1164,31 @@ public class LoadTransportersData {
 	 * @return
 	 */
 	private String getKeggFormula(String keggID, int counter){
-		try 
-		{
+
+		try  {
+
 			KeggCompoundER met = KeggAPI.getCompoundByKeggId(keggID);
+			
 			if(met!=null)
-			{
 				return met.getFormula();
-			}
+
 			return "";
 		} 
 		catch (WebServiceException e) {
-			if(counter<10)
-			{
+			
+			if(counter<10) {
+				
 				counter = counter+1;
 				return this.getKeggFormula(keggID, counter);
 			}
 			e.printStackTrace();
 			return "";
 
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 
-			if(counter<10)
-			{
+			if(counter<10) {
+				
 				counter = counter+1;
 				return this.getKeggFormula(keggID, counter);
 			}
@@ -1190,7 +1196,7 @@ public class LoadTransportersData {
 
 				System.out.println("No KEgg  formula "+ keggID);
 			}
-			e.printStackTrace();
+			//e.printStackTrace();
 			return "";
 		}
 	}
@@ -1211,7 +1217,7 @@ public class LoadTransportersData {
 		ResultSet rs = statement.executeQuery("SELECT metabolite_id, datatype, name FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(name,databaseType).toLowerCase()+"';");
 
 		if(rs.next()) {
-			
+
 			int result = rs.getInt(1);
 			String datatypeInDatabase = rs.getString(2);
 			rs.close();
@@ -1219,10 +1225,10 @@ public class LoadTransportersData {
 			if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
 				if(datatype.equals(DATATYPE.MANUAL))
 					statement.execute("UPDATE synonyms SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolite_id = "+result+";");
-			
+
 			return result;
 		}
-		
+
 		return -1;
 	}
 

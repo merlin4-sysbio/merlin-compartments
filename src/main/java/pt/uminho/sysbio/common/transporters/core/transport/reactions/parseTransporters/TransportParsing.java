@@ -205,7 +205,6 @@ public class TransportParsing {
 					tmds.setStoichiometry(Double.valueOf(products_stoichiometry.get(j)));
 
 					metabolites_temp_clone.get(i).add(tmds);
-
 				}
 			}
 			
@@ -253,8 +252,9 @@ public class TransportParsing {
 		while(metabolitesToken.hasMoreTokens()) {
 			
 			String[] metabolite_data = metabolitesToken.nextToken().trim().split("\\:");
-			stoichiometries.add(metabolite_data[0].trim());
-			metabolites.add(metabolite_data[1].trim());
+			//System.out.println(reacting_metabolites);System.out.println(metabolite_data[0].trim());System.out.println(metabolite_data[1].trim()); System.out.println();
+			stoichiometries.add(metabolite_data[0].trim()); 
+			metabolites.add(metabolite_data[1].trim()); 
 		}
 		return result;
 	}

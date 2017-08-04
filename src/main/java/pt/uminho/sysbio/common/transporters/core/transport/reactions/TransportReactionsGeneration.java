@@ -51,6 +51,7 @@ import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
  */
 public class TransportReactionsGeneration extends Observable {
 
+	private final boolean verbose = false;
 	private static final Logger logger = LoggerFactory.getLogger(TransportReactionsGeneration.class);
 	private Map<String, TransportMetaboliteCodes> reviewedMetsNames, reviewedMetsCodes;
 	private List<NcbiTaxon> originTaxonomy;
@@ -290,7 +291,7 @@ public class TransportReactionsGeneration extends Observable {
 			Set<String> geneSet = ltd.getLoadedGenes();
 
 			for(AlignedGenesContainer alignedGenes: alignedGenesContainer) {
-				
+
 				if(!geneSet.contains(alignedGenes.getLocusTag())) {
 
 					if(this.originTaxonomy==null)
@@ -365,25 +366,23 @@ public class TransportReactionsGeneration extends Observable {
 	/**
 	 * @param databaseName
 	 * @param path
-	 * @param verbose
 	 * @param statement
 	 * @param databaseType
 	 * @throws SQLException
 	 */
-	public void parseAndLoadTransportersDatabase(String databaseName, String path, boolean verbose, Statement statement, DatabaseType databaseType) throws SQLException {
+	public void parseAndLoadTransportersDatabase(String databaseName, String path, Statement statement, DatabaseType databaseType) throws SQLException {
 
-		this.parseAndLoadTransportersDatabase(databaseName, new File(path),  verbose, statement, databaseType);
+		this.parseAndLoadTransportersDatabase(databaseName, new File(path),  statement, databaseType);
 	}
 
 	/**
 	 * @param databaseName
 	 * @param file
-	 * @param verbose
 	 * @param statement
 	 * @param databaseType
 	 * @return
 	 */
-	public boolean parseAndLoadTransportersDatabase(String databaseName, File file, boolean verbose, Statement statement, DatabaseType databaseType) {
+	public boolean parseAndLoadTransportersDatabase(String databaseName, File file, Statement statement, DatabaseType databaseType) {
 
 		try {
 
@@ -485,7 +484,7 @@ public class TransportReactionsGeneration extends Observable {
 
 					ltd.setTCnumberLoaded(parserContainer.getUniprot_id());
 				}
-				
+
 				this.counter.incrementAndGet();
 				setChanged();
 				notifyObservers();
@@ -547,6 +546,7 @@ public class TransportReactionsGeneration extends Observable {
 			TransportMetaboliteDirectionStoichiometryContainer metaboliteContainer = tmdsList.get(j);
 			metaboliteContainer = this.getMiriamCodes(metaboliteContainer, verbose, miriamData);
 			metaboliteContainer = this.getMiriamNames(metaboliteContainer, verbose, miriamData);
+
 			ltd.loadMetabolite(metaboliteContainer, LoadTransportersData.DATATYPE.MANUAL);
 
 			tmdsList.set(j, metaboliteContainer);
@@ -589,8 +589,12 @@ public class TransportReactionsGeneration extends Observable {
 
 						transportMetaboliteCodes.setKegg_miriam(metabolite.getKegg_miriam());
 						transportMetaboliteCodes.setChebi_miriam(metabolite.getChebi_miriam());
-						transportMetaboliteCodes.setKegg_name(names[0]);
-						transportMetaboliteCodes.setChebi_name(names[1]);
+						
+						if(!names[0].isEmpty() && !names[0].equalsIgnoreCase("null"))
+							transportMetaboliteCodes.setKegg_name(names[0]);
+						
+						if(!names[1].isEmpty() && !names[1].equalsIgnoreCase("null"))
+							transportMetaboliteCodes.setChebi_name(names[1]);
 					}
 
 					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
@@ -633,14 +637,14 @@ public class TransportReactionsGeneration extends Observable {
 		String[] result = new String[2];
 
 		try {
-			
+
 			if(this.reviewedMetsCodes.containsKey(metabolite.getName())) {
 
 				TransportMetaboliteCodes transportMetaboliteCodes = this.reviewedMetsCodes.get(metabolite.getName()); 
 				metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
 			}
 			else {
-				
+
 				if(miriamData.containsKey(metabolite.getName()) && miriamData.get(metabolite.getName()).getKegg_miriam()!=null 
 						&& miriamData.get(metabolite.getName()).getChebi_miriam()!=null) {
 
@@ -652,16 +656,20 @@ public class TransportReactionsGeneration extends Observable {
 				else {
 
 					result=MIRIAM_Data.getMIRIAM_codes(metabolite.getName(), this.metabolitesToBeVerified, verbose);
-					
+
 					TransportMetaboliteCodes transportMetaboliteCodes = new TransportMetaboliteCodes(metabolite.getName());
 
 					if(result!=null) {
 
-						if(result[0]==null && result[1]==null)
-							this.metabolitesNotAnnotated.add(metabolite.getName());
+						if(result[0]==null && result[1]==null) {
 
-						transportMetaboliteCodes.setKegg_miriam(result[0]);
-						transportMetaboliteCodes.setChebi_miriam(result[1]);
+							this.metabolitesNotAnnotated.add(metabolite.getName());
+						}
+						else {
+
+							transportMetaboliteCodes.setKegg_miriam(result[0]);
+							transportMetaboliteCodes.setChebi_miriam(result[1]);
+						}
 					}
 
 					metabolite.setTransportMetaboliteCodes(transportMetaboliteCodes);
