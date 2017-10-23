@@ -3,9 +3,9 @@ package pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTr
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
+import pt.uminho.sysbio.common.database.connector.databaseAPI.TransportersAPI;
 
 /**
  * 
@@ -394,60 +395,54 @@ public class AnnotateTransporters {
 	 * @return
 	 * @throws SQLException
 	 */
-	private static TransporterAnnotation getExistingAnnotation(String uniprot_id, TransporterAnnotation transporterAnnotation, Statement statement) throws SQLException {
+	private static TransporterAnnotation getExistingAnnotation(String uniprotID, TransporterAnnotation transporterAnnotation, Statement statement) throws SQLException {
 
-		ResultSet rs = statement.executeQuery("SELECT directions, equation, transport_systems.reversible, direction, metabolites.name  FROM tcdb_registries " +
-				" INNER JOIN tc_numbers ON (tc_numbers.tc_number = tcdb_registries.tc_number AND tc_numbers.tc_version = tcdb_registries.tc_version )" +
-				" INNER JOIN general_equation ON (tc_numbers.general_equation_id = general_equation.id ) " +
-				" INNER JOIN tc_numbers_has_transport_systems ON (tc_numbers_has_transport_systems.tc_number = tc_numbers.tc_number AND tc_numbers_has_transport_systems.tc_version = tc_numbers.tc_version)" +
-				" INNER JOIN transport_systems ON (tc_numbers_has_transport_systems.transport_system_id = transport_systems.id)" +
-				" INNER JOIN transport_types ON (transport_types.id = transport_type_id)" +
-				" INNER JOIN transported_metabolites_directions ON (transported_metabolites_directions.transport_system_id = transport_systems.id) " +
-				" INNER JOIN directions ON (transported_metabolites_directions.direction_id = directions.id) " +
-				" INNER JOIN metabolites ON (transported_metabolites_directions.metabolite_id = metabolites.id) " +
-				" WHERE uniprot_id = '"+uniprot_id+"' AND datatype = 'MANUAL'");
-
-		String direction = "", metabolite = "", reversibility = "", reactingMetabolites = "", equation = "";
-
+		String direction = "", reversibility = "", reactingMetabolites = "", equation = "", metabolite = "";
+		
+		ArrayList<String[]> result = TransportersAPI.getExistingAnnotation(uniprotID, statement);
+		
 		Set<String> metabolite_added = new TreeSet<String>();
 		boolean exists = false;
-
-		while (rs.next()) {
+		
+		for(int i=0; i<result.size(); i++){
+			String[] list = result.get(i);
+			
+			direction = list[0];
+			equation = list[1];
+			reversibility = list[2].toUpperCase();
+			metabolite = list[4];
 
 			exists = true;
-			direction = rs.getString(1);
-			equation = rs.getString(2);
-			reversibility = rs.getBoolean(3)+"".toUpperCase();
-
-			if(rs.getString(4).equalsIgnoreCase("reactant") || rs.getString(4).equalsIgnoreCase("product")) {
+			
+			if(list[3].equalsIgnoreCase("reactant") || list[3].equalsIgnoreCase("product")) {
 
 				String separator = " || ";
 
-				if(rs.last()) {
+				if(i == result.size()-1) {
 
 					separator = "";
 				}
 
-				if(!metabolite_added.contains(rs.getString(5))) {
+				if(!metabolite_added.contains(metabolite)) {
 
-					reactingMetabolites = reactingMetabolites.concat(rs.getString(5)+separator);
-					metabolite_added.add(rs.getString(5));
+					reactingMetabolites = reactingMetabolites.concat(metabolite+separator);
+					metabolite_added.add(metabolite);
 				}
 			}
 			else {
 
 				String separator = "; ";
 
-				if(rs.last()) {
+				if(i == result.size()-1) {
 
 					separator = "";
 				}
 
 
-				if(!metabolite_added.contains(rs.getString(5))) {
+				if(!metabolite_added.contains(metabolite)) {
 
-					metabolite = metabolite.concat(rs.getString(5)+separator);
-					metabolite_added.add(rs.getString(5));
+					metabolite = metabolite.concat(metabolite+separator);
+					metabolite_added.add(metabolite);
 				}
 			}
 

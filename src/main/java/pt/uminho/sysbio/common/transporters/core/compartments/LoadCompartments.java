@@ -1,13 +1,15 @@
 package pt.uminho.sysbio.common.transporters.core.compartments;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import pt.uminho.sysbio.common.database.connector.databaseAPI.CompartmentsAPI;
+import pt.uminho.sysbio.common.database.connector.databaseAPI.TransportersAPI;
 import pt.uminho.sysbio.common.transporters.core.utils.TransportersUtilities;
 import pt.uminho.sysbio.merlin.utilities.Pair;
 
@@ -26,36 +28,19 @@ public class LoadCompartments {
 			
 			LoadCompartments.initCompartments(statement);
 			
-			java.sql.Date sqlToday = new java.sql.Date((new java.util.Date()).getTime());
+			String idLT = TransportersAPI.getIdLocusTag(locust_tag, project_id, statement);
 			
-			ResultSet rs = statement.executeQuery("SELECT id FROM psort_reports WHERE locus_tag='"+locust_tag+"' AND project_id = "+project_id);
-			if(!rs.next()) {
-				
-				statement.execute("INSERT INTO psort_reports (locus_tag, project_id, date) VALUES('"+locust_tag+"', "+project_id+",'"+sqlToday+"')");
-				rs = statement.executeQuery("SELECT LAST_INSERT_ID()");
-				rs.next();
-			}
-			
-			String idLT = rs.getString(1);
-
 			for(Pair<String, Double> compartment: probabilities) {
-
-				if(compartment.getB()>=0) {
-
-					rs = statement.executeQuery("SELECT id FROM compartments WHERE abbreviation='"+compartment.getA().toUpperCase()+"'");
-
-					if(!rs.next()) {
-
-						statement.execute("INSERT INTO compartments (name,abbreviation) VALUES('"+TransportersUtilities.parseAbbreviation(compartment.getA())+"', '"+compartment.getA().toUpperCase()+"')");
-						rs = statement.executeQuery("SELECT LAST_INSERT_ID()");
-						rs.next();
-					}
-					String idHIT = rs.getString(1);
-
-					rs = statement.executeQuery("SELECT * FROM psort_reports_has_compartments WHERE psort_report_id='"+idLT+"' AND compartment_id='"+idHIT+"'");
-
-					if(!rs.next())
-						statement.execute("INSERT INTO psort_reports_has_compartments (psort_report_id, compartment_id, score) VALUES("+idLT+","+idHIT+","+compartment.getB()+")");
+				
+				Double nComp = compartment.getB();
+				
+				if(nComp>=0) {
+					
+					String name = compartment.getA();
+					
+					String abbreviation = TransportersUtilities.parseAbbreviation(compartment.getA());
+					
+					TransportersAPI.insertIntoCompartments(idLT, name, abbreviation, nComp, statement);
 				}
 			}
 		} 
@@ -72,41 +57,42 @@ public class LoadCompartments {
 	 * @return
 	 * @throws SQLException
 	 */
-	public static Map<String, GeneCompartments> getBestCompartmenForGene(double threshold, int knn, int project_id, Statement statement) throws SQLException {
+	public static Map<String, GeneCompartments> getBestCompartmenForGene(double threshold, int knn, int projectID, Statement statement) throws SQLException {
 
 		Map<String, GeneCompartments> compartments = new HashMap<String, GeneCompartments>();
-		ResultSet rs;
 
-			rs = statement.executeQuery("SELECT psort_report_id, locus_tag, score, abbreviation, name FROM psort_reports_has_compartments " +
-					"INNER JOIN psort_reports ON psort_reports.id=psort_report_id " +
-					"INNER JOIN compartments ON compartments.id=compartment_id " +
-					"WHERE project_id = "+project_id+" "+
-					"ORDER BY psort_report_id ASC, score DESC;"
-					);
+		ArrayList<String[]> result = TransportersAPI.getBestCompartmenForGene(projectID, statement);
+		
+			double score;
 			
-			double score = 0;
-			
-			while(rs.next()) {
+			for(int i=0; i<result.size(); i++){
+				String[] list = result.get(i);
 				
-				if(!rs.getString(4).contains("_")) {
+				String geneID = list[1];
+				score = Double.parseDouble(list[2]);  
+				String abbreviation = list[3];		
+				String name = list[4];				
+
+				
+				
+				if(!abbreviation.contains("_")) {
 					
-					String geneID = rs.getString(2);	
 					if(compartments.keySet().contains(geneID)) {
 						
 						GeneCompartments geneCompartment = compartments.get(geneID);
-						score=(rs.getDouble(3))/(knn)*100;
+						score=(score)/(knn)*100;
 						
 						if((geneCompartment.getPrimary_score()-score)<=threshold) {
 							
 							geneCompartment.setDualLocalisation(true);
-							geneCompartment.addSecondaryLocation(rs.getString(5), rs.getString(4), score);
+							geneCompartment.addSecondaryLocation(name, abbreviation, score);
 							compartments.put(geneID, geneCompartment);
 						}
 					}
 					else {
 						
-						score = (rs.getDouble(3))/(knn)*100;
-						GeneCompartments geneCompartments = new GeneCompartments(geneID, rs.getString(2), rs.getString(5),rs.getString(4), score);
+						score = (score)/(knn)*100;
+						GeneCompartments geneCompartments = new GeneCompartments(geneID, geneID, name, abbreviation, score);
 						compartments.put(geneID, geneCompartments);
 					}
 				}
@@ -147,18 +133,11 @@ public class LoadCompartments {
 
 		try
 		{
-			for(String abbreviation:compartments.keySet()) {
-				
-				ResultSet rs = statement.executeQuery("Select * FROM compartments WHERE name='"+compartments.get(abbreviation)+"'");
-				
-				if(!rs.next())
-					statement.execute("INSERT INTO compartments (name,abbreviation) VALUES('"+compartments.get(abbreviation)+"', '"+abbreviation.toUpperCase()+"')");
-			}
+			CompartmentsAPI.initCompartments(compartments, statement);
 		}
 		catch (SQLException e) {e.printStackTrace();return false;}
 		return true;
 
 	}
 
-	
 }
