@@ -1262,7 +1262,7 @@ public class LoadTransportersData {
 			ArrayList<String> data = TransportersAPI.getMetaboliteIDs(query, statement);
 
 			if(data.size()>0) {
-				result=Integer.getInteger(data.get(0));
+				result=Integer.parseInt(data.get(0));
 			}
 			else {
 
