@@ -173,6 +173,9 @@ public class TransportersUtilities {
 
 		else if(abbreviation.equals("lyso"))
 			return "lysosome";
+		
+		else if(abbreviation.equals("cellw"))
+			return "cellwall";
 
 		else if(abbreviation.contains("_")) {
 
@@ -184,7 +187,7 @@ public class TransportersUtilities {
 				if(i!=0)
 					compartment=compartment.concat("_");
 
-				compartment=compartment.concat(dual_compartment[i]);
+				compartment=compartment.concat(TransportersUtilities.parseAbbreviation(dual_compartment[i]));
 			}
 			return compartment;
 		}
@@ -279,6 +282,9 @@ public class TransportersUtilities {
 
 		else if(compartmentID.equals("lysosome"))
 			return "lyso";
+		
+		else if(compartmentID.equals("cellwall"))
+			return "cellw";
 
 		//		else if(abbreviation.contains("_")) {
 		//			

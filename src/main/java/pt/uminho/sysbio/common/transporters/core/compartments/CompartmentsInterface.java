@@ -22,17 +22,22 @@ public abstract interface CompartmentsInterface {
 	public boolean isEukaryote();
 	
 	/**
+	 * @return
+	 */
+	public void setPlant(boolean typePlant);
+	
+	/**
 	 * @param project_id
 	 * @throws Exception
 	 */
-	public void loadCompartmentsInformation(Statement statement) throws Exception;
+	public void loadCompartmentsInformation(Map<String, CompartmentResult> results, int projectID, Statement statement) throws Exception;
 	
 	/**
 	 * @param threshold
 	 * @param project_id
 	 * @return
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException;
+	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, int projectID, Statement statement) throws SQLException;
 
 	/**
 	 * @param string
@@ -57,5 +62,12 @@ public abstract interface CompartmentsInterface {
 	 * @throws Exception 
 	 */
 	public Map<String, CompartmentResult> addGeneInformation(File outFile) throws Exception;
+	
+	/**
+	 * @param link
+	 * @return
+	 * @throws Exception 
+	 */
+	public Map<String, CompartmentResult> addGeneInformation(String link) throws Exception;
 
 }

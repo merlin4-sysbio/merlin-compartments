@@ -1,5 +1,6 @@
 package pt.uminho.sysbio.common.transporters.core.compartments;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,8 +11,9 @@ import pt.uminho.sysbio.merlin.utilities.Pair;
  * @author ODias
  *
  */
-public class WoLFPSORT_Result {
+public class WoLFPSORT_Result implements Serializable, CompartmentResult {
 
+	private static final long serialVersionUID = 1L;
 	private String geneID;
 	private List<Pair<String, Double>> compartments;
 	

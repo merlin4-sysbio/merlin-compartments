@@ -2,7 +2,6 @@ package pt.uminho.sysbio.common.transporters.core.compartments;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -10,49 +9,34 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
 /**
  * @author Oscar Dias
+ *
+ */
+/**
+ * @author davidelagoa
+ *
+ */
+/**
+ * @author davidelagoa
  *
  */
 public class ReadLocTree implements CompartmentsInterface {
 
 	private static int normalization=100;
 	private AtomicBoolean cancel;
-	private Map<String, CompartmentResult> results;
-	private int project_id;
 	private boolean typePlant;
 
 	/**
 	 * @param organismType
 	 */
-	public ReadLocTree(boolean typePlant) {
+	public ReadLocTree() {
 
 		this.cancel = new AtomicBoolean(false);
-		this.typePlant = typePlant;
 	}
-	
-	/**
-	 * @param project_id
-	 */
-	public ReadLocTree(int project_id) {
-
-		this.project_id = project_id;
-	}
-
-	/**
-	 * @param conn
-	 * @param results
-	 * @param project_id
-	 * @param organismType
-	 */
-	public ReadLocTree(Map<String, CompartmentResult> results, int project_id, boolean typePlant) {
-
-		this.cancel = new AtomicBoolean(false);
-		this.results = results;
-		this.project_id = project_id;
-		this.typePlant = typePlant;
-	}
-
 
 	/**
 	 * @return the cancel
@@ -74,75 +58,186 @@ public class ReadLocTree implements CompartmentsInterface {
 		return false;
 	}
 
-
+	public void setPlant(boolean typePlant){
+		this.typePlant = typePlant;
+	}
 
 	/**
-	 * @param outFile
-	 * @return
+	 * Method to parse a BufferedReader containing information about compartments.
+	 * 
+	 * @param in
+	 * @return Map<String, CompartmentResult>
 	 * @throws IOException
 	 */
-	public Map<String, CompartmentResult> readLocTreeFile(File outFile) throws IOException {
+	public Map<String, CompartmentResult> readLocTreeFile(BufferedReader in) throws IOException {
 
 		Map<String, CompartmentResult> compartmentLists = new HashMap<>();
 
-		BufferedReader in = new BufferedReader(new FileReader(outFile));
-		String str;
+		String inputLine;
 
-		int proteinID = 0, score = 1, localization = 2, geneOntologyTerms = 3, expectedAccuracy = -1, annotationType=-1;
+		int protID = -1, scr = -1, loc = -1, geneOnto = -1, acc = -1, annType=-1;
+		
+		String proteinID = null, localization = null, geneOntologyTerms = null, accuracy = null, annotationType = null;
+		
+		double score = 0.0;
+		
+		int count = 0;
 
+		boolean header = true, flag = false;
+		
+		LocTreeResult locTR = null;
+		
+		
 
-		while ((str = in.readLine()) != null && !this.cancel.get()) {
+		while ((inputLine = in.readLine()) != null && !this.cancel.get() && !inputLine.contains("Mouse click")) {
 			
-
-			if(str.startsWith("#")) {
-
-				if(str.toLowerCase().contains("Expected Accuracy".toLowerCase()) && str.toLowerCase().contains("Annotation Type".toLowerCase())) {
-
-					expectedAccuracy = 2;
-					localization = 3;
-					geneOntologyTerms = 4;
-					annotationType = 5; 
-				}
-			} 
-			else {
-
-				String[] locT = str.split("\\t");
-
-				LocTreeResult locTR = null;
-
-				String localizationString = locT[localization];
-
-				if(!typePlant) {
-
-					if (localizationString.equals("chloroplast") || 
-							localizationString.equals("plastid"))
-						localizationString = "mitochondrion";
-
-					if (localizationString.equals("chloroplast membrane") || 
-							localizationString.equals("plastid membrane"))
-						localizationString = "mitochondrion membrane";
-				}
-
-				if(compartmentLists.containsKey(locT[0])) {
-
-					locTR = (LocTreeResult) compartmentLists.get(locT[proteinID]);
-					locTR.addCompartment(localizationString, new Double(locT[score]));
-				}
-				else {
-
-					locTR = new LocTreeResult(locT[proteinID], new Double(locT[score]), localizationString, locT[geneOntologyTerms]);
+			Document doc = Jsoup.parse(inputLine);
+			String str = doc.body().text();
+			
+			if (!flag){							//reads the order of the information
+				if (str.contains("Details")){
 					
+					if (!header)
+						flag = true;
 					
-					if(expectedAccuracy>0 && annotationType>0) {
+					count = 0;
+					header = false;
+				}
+					
+				else if (str.contains("Protein ID"))
+					protID = count;
+				
+				else if(str.contains("Score"))
+					scr = count;
+				
+				else if(str.contains("Expected Accuracy"))
+					acc = count;
 
-						locTR.setAnnotationType(locT[annotationType]);
-						locTR.setExpectedAccuracy(locT[expectedAccuracy]);
+				else if(str.contains("Localization Class"))
+					loc = count;
+						
+				else if(str.contains("Gene Ontology Terms"))
+					geneOnto = count;
+						
+				else if(str.contains("Annotation Type"))
+					annType = count;
+			
+				count++;
+			}
+			
+			if (flag){
+				
+				if(!str.contains("Details") && str != null && !str.equals("")){
+					
+					if(count == protID) 
+						proteinID = str;
+					if(count == scr) 
+						score = Double.parseDouble(str);
+					if(count == acc) 
+						accuracy = str;
+					if(count == loc){
+						localization = str;
+						
+						if(!typePlant) {
+		
+							if (localization.equals("chloroplast") || 
+									localization.equals("plastid"))
+								localization = "mitochondrion";
+		
+							if (localization.equals("chloroplast membrane") || 
+									localization.equals("plastid membrane"))
+								localization = "mitochondrion membrane";
+						}
+					}
+						
+					if(count == geneOnto) 
+						geneOntologyTerms = str;
+					if(count == annType) 
+						annotationType = str;
+					
+					count ++;
+				
+					if (count == 7){
+						
+						if(compartmentLists.containsKey(proteinID)) {
+							locTR = (LocTreeResult) compartmentLists.get(proteinID);
+							locTR.addCompartment(localization, score);
+						}
+						else {
+	
+							locTR = new LocTreeResult(proteinID, score, localization, geneOntologyTerms);
+							locTR.setAnnotationType(annotationType);
+							locTR.setExpectedAccuracy(accuracy);
+						}
+					
+						compartmentLists.put(proteinID, locTR);
+						locTR = null;
+						count = 1;
+						proteinID = null;
+						localization = null;
+						geneOntologyTerms = null;
+						accuracy = null;
+						annotationType = null;
+						
 					}
 				}
-
-				compartmentLists.put(locT[proteinID], locTR);
 			}
+			
 		}
+
+// ###############################################	old parser
+	
+	
+//			if(str.startsWith("#")) {
+//
+//				if(str.toLowerCase().contains("Expected Accuracy".toLowerCase()) && str.toLowerCase().contains("Annotation Type".toLowerCase())) {
+//
+//					expectedAccuracy = 2;
+//					localization = 3;
+//					geneOntologyTerms = 4;
+//					annotationType = 5; 
+//				}
+//			} 
+//			else {
+//
+//				String[] locT = str.split("\\t");
+//
+//				LocTreeResult locTR = null;
+//
+//				String localizationString = locT[localization];
+//
+//				if(!typePlant) {
+//
+//					if (localizationString.equals("chloroplast") || 
+//							localizationString.equals("plastid"))
+//						localizationString = "mitochondrion";
+//
+//					if (localizationString.equals("chloroplast membrane") || 
+//							localizationString.equals("plastid membrane"))
+//						localizationString = "mitochondrion membrane";
+//				}
+//
+//				if(compartmentLists.containsKey(locT[proteinID])) {
+//
+//					locTR = (LocTreeResult) compartmentLists.get(locT[proteinID]);
+//					locTR.addCompartment(localizationString, new Double(locT[score]));
+//				}
+//				else {
+//
+//					locTR = new LocTreeResult(locT[proteinID], new Double(locT[score]), localizationString, locT[geneOntologyTerms]);
+//					
+//					
+//					if(expectedAccuracy>0 && annotationType>0) {
+//
+//						locTR.setAnnotationType(locT[annotationType]);
+//						locTR.setExpectedAccuracy(locT[expectedAccuracy]);
+//					}
+//				}
+//
+//				compartmentLists.put(locT[proteinID], locTR);
+//			}
+//		}
+		
 		in.close();
 		
 		return compartmentLists;
@@ -152,14 +247,12 @@ public class ReadLocTree implements CompartmentsInterface {
 	 * @see pt.uminho.sysbio.common.transporters.core.compartments.CompartmentsInterface#addGeneInformation(java.io.File)
 	 */
 	public Map<String, CompartmentResult> addGeneInformation(File outFile) throws Exception {
-
-		Map<String, CompartmentResult> compartmentLists = this.readLocTreeFile(outFile);
-
-		Map<String, CompartmentResult> compartmentResults = compartmentLists;
-
-		return compartmentResults;
+		
+		return null;
 	}
 
+	
+	
 
 	/**
 	 * 
@@ -188,26 +281,32 @@ public class ReadLocTree implements CompartmentsInterface {
 	 */
 
 	/**
+	 * Get best compartments by gene.
+	 * 
 	 * @param threshold
 	 * @param statement
+	 * @param projectID
 	 * @return
 	 * @throws SQLException
 	 */
 	@Override
-	public Map<String, GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException {
+	public Map<String, GeneCompartments> getBestCompartmentsByGene(double threshold, int projectID,  Statement statement) throws SQLException {
 
-		return LoadCompartments.getBestCompartmenForGene(threshold, ReadLocTree.normalization, this.project_id, statement);
+		return LoadCompartments.getBestCompartmenForGene(threshold, ReadLocTree.normalization, projectID, statement);
 	}
 
-
 	/**
+	 *  Load compartments from results.
+	 * 
+	 * @param results
+	 * @param projectID
 	 * @param statement
 	 * @throws Exception
 	 */
-	public void loadCompartmentsInformation(Statement statement) throws Exception {
+	public void loadCompartmentsInformation(Map<String, CompartmentResult> results, int projectID, Statement statement) throws Exception {
 
-		for(CompartmentResult locTreeResult : this.results.values())
-			LoadCompartments.loadData(locTreeResult.getGeneID(), locTreeResult.getCompartments(), project_id, statement);
+		for(CompartmentResult locTreeResult : results.values())
+			LoadCompartments.loadData(locTreeResult.getGeneID(), locTreeResult.getCompartments(), projectID, statement);
 
 	}
 
@@ -218,4 +317,15 @@ public class ReadLocTree implements CompartmentsInterface {
 
 		return true;
 	}
+
+	@Override
+	public Map<String, CompartmentResult> addGeneInformation(String link) throws Exception {
+		
+		BufferedReader data = RemoteCompartmentsResults.retrieveDataFromURL(link);
+
+		Map<String, CompartmentResult> compartmentLists = this.readLocTreeFile(data); 
+
+		return compartmentLists;
+	}
+
 }
