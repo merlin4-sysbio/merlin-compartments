@@ -13,6 +13,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pt.uminho.sysbio.common.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
@@ -185,7 +187,7 @@ public class TransportersTests {
 	
 	
 	
-	@Test
+//	@Test
 	public void connectToUrl() throws Exception{
 	     doTrustToCertificates();//  
 	     URL url = new URL("https://wolfpsort.hgc.jp/results/aSN3d14e056647f7cefede942f6edf1b754.html");
@@ -204,34 +206,8 @@ public class TransportersTests {
      		 System.out.println(text);
 		}
 	     
-	    
-	     
-	     
-	     
-	     
-	     
-	     
-	     
-	     
-	     
-	     
-	     
 	     in.close();
 	}
-	//@Test
-	public void parser() {
-        try {
-
-        	
-        		
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-	
-	
-	
-	
 	
 	
 	public void readLocTree () {
@@ -239,7 +215,7 @@ public class TransportersTests {
 		try {
 
 			URL url = new URL("https://www.rostlab.org/services/loctree3/results.php?id=caed4a6a-6baf-4111-a5bf-8325c447abc6");
-			String file = "/Users/davidelagoa/Desktop/coiso.txt";
+			String file = "/Users/davidelagoa/Desktop/file.txt";
 		
 		    System.out.println("opening connection");
 		    InputStream in = url.openStream();
@@ -282,8 +258,6 @@ public class TransportersTests {
 		}
 		System.out.println("fim");
 	}
-	
-	
 	
 //	public void mainTests() throws Exception {
 //
