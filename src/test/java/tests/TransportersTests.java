@@ -115,7 +115,7 @@ public class TransportersTests {
 	/**
 	 * @param args
 	 */
-//	@Test
+	@Test
 	public void wolfpSort () {
 
 		String out = "C:/Users/ODias/Desktop/out.out";

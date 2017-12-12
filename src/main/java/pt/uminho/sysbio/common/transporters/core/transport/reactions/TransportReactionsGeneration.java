@@ -608,9 +608,11 @@ public class TransportReactionsGeneration extends Observable {
 		catch(Exception u) {
 
 			if(this.trialCounter<10) {
-
-				metabolite = getMiriamNames(metabolite, verbose, miriamData);
+				
 				this.trialCounter++;
+				System.out.println(this.reviewedMetsNames);
+				System.out.println("Error retrieving miriam names for "+metabolite.getName());
+				metabolite = getMiriamNames(metabolite, verbose, miriamData);
 			}
 			else {
 
