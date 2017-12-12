@@ -1,6 +1,5 @@
 package pt.uminho.sysbio.common.transporters.core.compartments;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
@@ -9,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
+import pt.uminho.sysbio.common.database.connector.databaseAPI.CompartmentsAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.STAIN;
 import pt.uminho.sysbio.common.transporters.core.utils.TransportersUtilities;
@@ -162,19 +162,15 @@ public class ProcessCompartments {
 	 * @return
 	 * @throws SQLException
 	 */
-	public String autoSetInteriorCompartment(Statement statement) throws SQLException {
+	public String autoSetInteriorCompartment(Statement statement){
 
-		ResultSet rs = statement.executeQuery("SELECT idcompartment, abbreviation FROM compartment;");
-
-		while(rs.next()) {
-
-			if(rs.getString(2).equalsIgnoreCase("cyto"))
-				this.interiorCompartment = "cyto";
-
-			if( rs.getString(2).equalsIgnoreCase("cytop"))
-				this.interiorCompartment = "cytop";
-		}
-		rs.close();
+		try {
+			this.interiorCompartment = CompartmentsAPI.getCompartmentAbbreviation(this.interiorCompartment, statement);
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			}
+		
 		return interiorCompartment;
 	}
 
@@ -183,37 +179,38 @@ public class ProcessCompartments {
 	 * @param compartment
 	 * @throws SQLException
 	 */
-	public int getCompartmentID(String compartment, Connection connection) throws SQLException{
+	public int getCompartmentID(String compartment, Connection connection) {
 
-		Statement stmt = connection.createStatement();
-
-		String abbreviation;
+		Statement stmt;
+		int compartmentID = -1;
 		
-		if(compartment.length()>3) {
+		try {
+			stmt = connection.createStatement();
+			
+			String abbreviation;
+			
+			if(compartment.length()>3) {
 
-			abbreviation=compartment.substring(0,3).toUpperCase();
+				abbreviation=compartment.substring(0,3).toUpperCase();
+			}
+			else {
+
+				abbreviation=compartment.toUpperCase().concat("_");
+
+				while(abbreviation.length()<4)
+					abbreviation=abbreviation.concat("_");
+			}
+			
+			abbreviation=abbreviation.toUpperCase();
+			
+			compartmentID = CompartmentsAPI.selectCompartmentID(compartment, abbreviation, stmt);
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
-		else {
 
-			abbreviation=compartment.toUpperCase().concat("_");
+	return compartmentID;
 
-			while(abbreviation.length()<4)
-				abbreviation=abbreviation.concat("_");
-		}
-		
-		abbreviation=abbreviation.toUpperCase();
-
-		ResultSet rs = stmt.executeQuery("SELECT idcompartment FROM compartment WHERE name ='"+compartment+"' AND abbreviation ='"+abbreviation+"'");
-
-		if(!rs.next()) {
-
-			stmt.execute("INSERT INTO compartment(name, abbreviation) VALUES('"+compartment+"','"+abbreviation+"')");
-			rs = stmt.executeQuery("SELECT LAST_INSERT_ID()");
-			rs.next();
-		}
-		int idCompartment = rs.getInt(1);
-
-		return idCompartment;
 	}
 
 	/**

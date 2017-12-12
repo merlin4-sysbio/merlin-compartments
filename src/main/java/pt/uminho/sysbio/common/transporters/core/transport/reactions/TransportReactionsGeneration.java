@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ import pt.uminho.ceb.biosystems.mew.utilities.io.FileUtils;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.TaxonomyContainer;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ncbi.NcbiAPI;
+import pt.uminho.sysbio.common.database.connector.databaseAPI.TransportersAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Enumerators.DatabaseType;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.annotateTransporters.AnnotateTransporters;
@@ -108,23 +108,19 @@ public class TransportReactionsGeneration extends Observable {
 	 * @throws SQLException 
 	 * @throws IOException 
 	 */
-	public List<AlignedGenesContainer> getCandidatesFromDatabase(String outPath, int project_id, Statement statement) throws SQLException, IOException {
+	public List<AlignedGenesContainer> getCandidatesFromDatabase(String outPath, int projectID, Statement statement) throws SQLException, IOException {
 
 		List<AlignedGenesContainer> data = new ArrayList<AlignedGenesContainer>();
 		Map<String, Integer> genes_map = new HashMap<String, Integer>();
 
-		ResultSet rs = statement.executeQuery("SELECT sw_reports.id, locus_tag, similarity, acc, tcdb_id FROM sw_reports " +
-				" INNER JOIN sw_similarities ON sw_reports.id=sw_similarities.sw_report_id " +
-				" INNER JOIN sw_hits ON sw_hits.id=sw_similarities.sw_hit_id " +
-				" WHERE project_id = "+ project_id +
-				" ORDER BY sw_reports.locus_tag, similarity DESC");
-
+		ArrayList<String[]> result = TransportersAPI.getCandidatesFromDatabase(projectID, statement);
 		int counter = 0;
 
-		while(rs.next()) {
+		for(int i = 0; i<result.size(); i++){
+			String[] list = result.get(i);
 
 			AlignedGenesContainer alignedGenesContainer;
-			String locusTag = rs.getString(2);
+			String locusTag = list[1];
 
 			if(genes_map.containsKey(locusTag)) {
 
@@ -140,22 +136,23 @@ public class TransportReactionsGeneration extends Observable {
 
 			logger.trace("Genes {} ",alignedGenesContainer.toString());
 
-			AlignmentResult alignmentResult = new AlignmentResult(rs.getString(4).toUpperCase(), rs.getDouble(3));
+			AlignmentResult alignmentResult = new AlignmentResult(list[3].toUpperCase(), Double.parseDouble(list[2]));
 			alignedGenesContainer.addAlignmentResult(alignmentResult);
 
-			UnnannotatedTransportersContainer unnannotatedTransportersContainer = new UnnannotatedTransportersContainer(rs.getString(4).toUpperCase(),rs.getString(5).toUpperCase());
+			UnnannotatedTransportersContainer unnannotatedTransportersContainer = new UnnannotatedTransportersContainer(list[3].toUpperCase(),list[4].toUpperCase());
 			this.unAnnotatedTransporters.add(unnannotatedTransportersContainer);
 		}
 
 		this.setInitialHomolguesSize(this.unAnnotatedTransporters.size());
 
-		rs = statement.executeQuery("SELECT uniprot_id, tc_number, latest_version FROM tcdb_registries;");
+		result = TransportersAPI.getLatestVersion(statement);
 
-		while(rs.next()) {
+		for(int i = 0; i<result.size(); i++){
+			String[] list = result.get(i);
 
-			UnnannotatedTransportersContainer transporter = new UnnannotatedTransportersContainer(rs.getString(1).toUpperCase(), rs.getString(2).toUpperCase());
+			UnnannotatedTransportersContainer transporter = new UnnannotatedTransportersContainer(list[0].toUpperCase(), list[1].toUpperCase());
 
-			if(rs.getBoolean(3)) {
+			if(Boolean.valueOf(list[2])) {
 
 				this.unAnnotatedTransporters.remove(transporter);
 			}
@@ -956,45 +953,47 @@ public class TransportReactionsGeneration extends Observable {
 
 			Map<String, TransportMetaboliteCodes> miriamData = new TreeMap<>();
 
-			ResultSet rs = statement.executeQuery("SELECT * FROM metabolites");
+			ArrayList<String[]> data = TransportersAPI.getAllMetabolitesData(statement);
+			
+			for(int i=0; i<data.size(); i++){
+				String[] list = data.get(i);
 
-			while(rs.next()) {
+				TransportMetaboliteCodes tMet = new TransportMetaboliteCodes(list[1]);
 
-				TransportMetaboliteCodes tMet = new TransportMetaboliteCodes(rs.getString(2));
+				if(list[2]!=null && !list[2].equalsIgnoreCase("null"))
+					tMet.setKegg_miriam(list[2]);
 
-				if(rs.getString(3)!=null && !rs.getString(3).equalsIgnoreCase("null"))
-					tMet.setKegg_miriam(rs.getString(3));
+				if(list[3]!=null && !list[3].equalsIgnoreCase("null"))
+					tMet.setKegg_name(list[3]);
 
-				if(rs.getString(4)!=null && !rs.getString(4).equalsIgnoreCase("null"))
-					tMet.setKegg_name(rs.getString(4));
+				if(list[4]!=null && !list[4].equalsIgnoreCase("null"))
+					tMet.setChebi_miriam(list[4]);
 
-				if(rs.getString(5)!=null && !rs.getString(5).equalsIgnoreCase("null"))
-					tMet.setChebi_miriam(rs.getString(5));
+				if(list[5]!=null && !list[5].equalsIgnoreCase("null"))
+					tMet.setChebi_name(list[5]);
 
-				if(rs.getString(6)!=null && !rs.getString(6).equalsIgnoreCase("null"))
-					tMet.setChebi_name(rs.getString(6));
-
-				miriamData.put(rs.getString(2), tMet);
+				miriamData.put(list[1], tMet);
 			}
 
-			rs = statement.executeQuery("SELECT * FROM synonyms JOIN metabolites ON (metabolite_id=metabolites.id);");
+			data = TransportersAPI.getAllSynonymsData(statement);
 
-			while(rs.next()) {
+			for(int i=0; i<data.size(); i++){
+				String[] list = data.get(i);
 
-				TransportMetaboliteCodes tMet = new TransportMetaboliteCodes(rs.getString(2));
-				if(rs.getString(6)!=null && !rs.getString(6).equalsIgnoreCase("null"))
-					tMet.setKegg_miriam(rs.getString(6));
+				TransportMetaboliteCodes tMet = new TransportMetaboliteCodes(list[1]);
+				if(list[5]!=null && !list[5].equalsIgnoreCase("null"))
+					tMet.setKegg_miriam(list[5]);
 
-				if(rs.getString(7)!=null && !rs.getString(7).equalsIgnoreCase("null"))
-					tMet.setKegg_name(rs.getString(7));
+				if(list[6]!=null && !list[6].equalsIgnoreCase("null"))
+					tMet.setKegg_name(list[6]);
 
-				if(rs.getString(8)!=null && !rs.getString(8).equalsIgnoreCase("null"))
-					tMet.setChebi_miriam(rs.getString(8));
+				if(list[7]!=null && !list[7].equalsIgnoreCase("null"))
+					tMet.setChebi_miriam(list[7]);
 
-				if(rs.getString(9)!=null && !rs.getString(9).equalsIgnoreCase("null"))
-					tMet.setChebi_name(rs.getString(9));
+				if(list[8]!=null && !list[8].equalsIgnoreCase("null"))
+					tMet.setChebi_name(list[8]);
 
-				miriamData.put(rs.getString(2), tMet);
+				miriamData.put(list[1], tMet);
 			}
 			return miriamData;
 		}

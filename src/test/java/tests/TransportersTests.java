@@ -1,15 +1,35 @@
 package tests;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.X509TrustManager;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pt.uminho.sysbio.common.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
 import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
@@ -49,7 +69,7 @@ public class TransportersTests {
 
 	public void runPSort() throws Exception {
 
-		ReadPSort3 readPSort3 =new ReadPSort3(-1);
+		ReadPSort3 readPSort3 = new ReadPSort3();
 
 		Map<String, CompartmentResult> res = readPSort3.addGeneInformation(new File("D:/My Dropbox/WORK/Projecto_PEM/reu/PSort/psortb-results_extr2.txt"));
 
@@ -60,7 +80,7 @@ public class TransportersTests {
 	}
 
 
-	@Test
+	//@Test
 	public void test() throws Exception {
 
 		List<String> mets = new ArrayList<>();
@@ -129,6 +149,115 @@ public class TransportersTests {
 		}
 	}
 	
+	
+	public void doTrustToCertificates() throws Exception {
+        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+        X509TrustManager[] trustAllCerts = new X509TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                        return;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                        return;
+                    }
+                }
+        };
+
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        HostnameVerifier hv = new HostnameVerifier() {
+            public boolean verify(String urlHostName, SSLSession session) {
+                if (!urlHostName.equalsIgnoreCase(session.getPeerHost())) {
+                    System.out.println("Warning: URL host '" + urlHostName + "' is different to SSLSession host '" + session.getPeerHost() + "'.");
+                }
+                return true;
+            }
+        };
+        HttpsURLConnection.setDefaultHostnameVerifier(hv);
+    }
+	
+	
+	
+	
+	
+	
+//	@Test
+	public void connectToUrl() throws Exception{
+	     doTrustToCertificates();//  
+	     URL url = new URL("https://wolfpsort.hgc.jp/results/aSN3d14e056647f7cefede942f6edf1b754.html");
+	     HttpURLConnection conn = (HttpURLConnection)url.openConnection(); 
+	     System.out.println("ResponseCode ="+conn.getResponseCode());
+	     
+	     BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+	     String inputLine;
+	     
+	     String html = null;
+	     
+		 while ((inputLine = in.readLine()) != null){
+	    	 html = inputLine;
+     		 Document doc = Jsoup.parse(html);
+     		 String text = doc.body().text();
+     		 System.out.println(text);
+		}
+	     
+	     in.close();
+	}
+	
+	
+	public void readLocTree () {
+
+		try {
+
+			URL url = new URL("https://www.rostlab.org/services/loctree3/results.php?id=caed4a6a-6baf-4111-a5bf-8325c447abc6");
+			String file = "/Users/davidelagoa/Desktop/file.txt";
+		
+		    System.out.println("opening connection");
+		    InputStream in = url.openStream();
+		    FileOutputStream fos = new FileOutputStream(new File(file));
+
+		    System.out.println("reading file...");
+		    int length = -1;
+		    byte[] buffer = new byte[1024];// buffer for portion of data from
+		    // connection
+		    while ((length = in.read(buffer)) > -1) {
+		        fos.write(buffer, 0, length);
+		    }
+
+		    
+		    
+		    
+
+		    fos.close();
+		    in.close();
+		    System.out.println("file was downloaded");
+		
+	
+			
+//		    URL myURL = new URL("https://www.rostlab.org/services/loctree3/results.php?id=caed4a6a-6baf-4111-a5bf-8325c447abc6.xml");
+////		    URLConnection myURLConnection = myURL.openConnection();
+////		    myURLConnection.getInputStream();
+//		    
+////		    URL oracle = new URL("http://www.oracle.com/");
+//	        BufferedReader in = new BufferedReader(new InputStreamReader(myURL.openStream()));
+//	        System.out.println("URLFJ");
+//	        System.out.println("URL"+myURL);
+//	        String inputLine;
+//	        while ((inputLine = in.readLine()) != null)
+//	            System.out.println(inputLine+"linha");
+//	        in.close();
+		    
+		} 
+		catch (Exception e) { 
+		   e.printStackTrace();
+		}
+		System.out.println("fim");
+	}
 	
 //	public void mainTests() throws Exception {
 //

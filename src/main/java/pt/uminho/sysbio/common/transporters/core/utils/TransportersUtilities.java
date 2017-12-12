@@ -1,22 +1,119 @@
 package pt.uminho.sysbio.common.transporters.core.utils;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.biojava.nbio.core.sequence.ProteinSequence;
+import org.biojava.nbio.core.sequence.compound.AminoAcidCompound;
+import org.biojava.nbio.core.sequence.compound.AminoAcidCompoundSet;
+import org.biojava.nbio.core.sequence.io.FastaReader;
+import org.biojava.nbio.core.sequence.io.GenericFastaHeaderParser;
+import org.biojava.nbio.core.sequence.io.ProteinSequenceCreator;
+import org.biojava.nbio.core.sequence.template.AbstractSequence;
 
 import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
+import pt.uminho.sysbio.common.database.connector.databaseAPI.TransportersAPI;
 import pt.uminho.sysbio.common.transporters.core.compartments.GeneCompartments;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportContainer;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportMetabolite;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportReaction;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;
 import pt.uminho.sysbio.common.transporters.core.utils.Enumerators.STAIN;
+import pt.uminho.sysbio.merlin.utilities.DatabaseProgressStatus;
 
 public class TransportersUtilities {
-	
+
 	//separar compartimentos e nais tarde separar compartimentos para outro projeto
-	
+
+
+	/**
+	 * Filter genes with at least @param minNumberOfHelices
+	 * 
+	 * @param allSequences
+	 * @param transmembraneGenes
+	 * @param minNumberOfHelices
+	 * @param project_id
+	 * @param statement
+	 * @return
+	 * @throws SQLException
+	 */
+	public static ConcurrentHashMap<String, AbstractSequence<?>> filterTransmembraneGenes(ConcurrentHashMap<String, AbstractSequence<?>> allSequences, Map<String, Integer> transmembraneGenes, int minNumberOfHelices, int project_id, Statement statement) throws SQLException{
+
+		for(String sequence_id : new HashSet<String>(allSequences.keySet())) {
+
+			String status = null;
+
+			if(transmembraneGenes.get(sequence_id) >= minNumberOfHelices) {
+
+				int seqLength = allSequences.get(sequence_id).getLength();
+
+				String matrix;
+				if(seqLength<35)
+					matrix="pam30";
+				else if(seqLength<50)
+					matrix="pam70";
+				else if(seqLength<85)
+					matrix="blosum80";
+				else
+					matrix="blosum62";
+
+				status = DatabaseProgressStatus.PROCESSING.toString();
+				TransportersAPI.loadTransportAlignmentsGenes(sequence_id, matrix, transmembraneGenes.get(sequence_id), status, project_id, statement);
+			}
+			else {
+
+				status = DatabaseProgressStatus.PROCESSED.toString();
+				TransportersAPI.loadTransportAlignmentsGenes(sequence_id, null, transmembraneGenes.get(sequence_id), status, project_id, statement);
+				allSequences.remove(sequence_id);
+				transmembraneGenes.remove(sequence_id);
+			}
+		}
+
+		return allSequences;
+	}
+
+	/**
+	 * Convert TCDB sequences to map
+	 * 
+	 * @param url
+	 * @return
+	 * @throws Exception
+	 */
+	public static Map<String, AbstractSequence<?>> convertTcdbToMap(String url) throws Exception {
+
+		InputStream tcdbInputStream = (new URL(url)).openStream();
+		BufferedReader br= new BufferedReader(new InputStreamReader(tcdbInputStream));
+		StringBuilder sb = new StringBuilder();
+		String line;
+
+		while ((line = br.readLine()) != null)
+			sb.append(line+"\n");
+
+		String theString = sb.toString().replace("</p>", "").replace("<p>", "").replace(">gnl|TC-DB|xxxxxx 3.A.1.205.14 \ndsfgdfg", "");
+		byte[] bytes = theString.getBytes("utf-8");
+		tcdbInputStream =  new ByteArrayInputStream(bytes);
+
+		FastaReader<ProteinSequence,AminoAcidCompound> fastaReader = new FastaReader<ProteinSequence,AminoAcidCompound>(
+				tcdbInputStream, 
+				//tcdbFile,
+				new GenericFastaHeaderParser<ProteinSequence,AminoAcidCompound>(), 
+				new ProteinSequenceCreator(AminoAcidCompoundSet.getAminoAcidCompoundSet()));
+
+		Map<String, AbstractSequence<?>> tcdb  =  new HashMap<>();
+		tcdb.putAll(fastaReader.process());
+		return tcdb;
+	}
+
 	static public Map<String, Set<String>> compartmentGenes(Map<String,GeneCompartments> geneComparments){
 
 		Map<String, Set<String>> compartmentGenes = new HashMap<String, Set<String>>();
@@ -44,7 +141,7 @@ public class TransportersUtilities {
 
 		return compartmentGenes;
 	}
-	
+
 	/**
 	 * Check if all metabolites have KEGG identifiers.
 	 * 
@@ -63,15 +160,15 @@ public class TransportersUtilities {
 		}
 
 		for(String key : new HashSet<>(trci.getProducts().keySet())) {
-			
+
 			String kegg = ExternalRefSource.KEGG_CPD.getSourceId(container.getKeggMiriam().get(key));
 			if(kegg==null || kegg=="null")
 				return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Check if all metabolites have KEGG identifiers.
 	 * 
@@ -83,7 +180,7 @@ public class TransportersUtilities {
 		for(TransportMetabolite metabolite : transportReaction.getMetabolites().values())
 			if(metabolite.getKeggMiriam()==null || metabolite.getKeggMiriam().equalsIgnoreCase("null") || metabolite.getKeggMiriam().isEmpty())
 				return false;
-		
+
 		return true;
 	}
 
@@ -174,6 +271,9 @@ public class TransportersUtilities {
 		else if(abbreviation.equals("lyso"))
 			return "lysosome";
 
+		else if(abbreviation.equals("cellw"))
+			return "cellwall";
+
 		else if(abbreviation.contains("_")) {
 
 			String compartment = "";
@@ -184,7 +284,7 @@ public class TransportersUtilities {
 				if(i!=0)
 					compartment=compartment.concat("_");
 
-				compartment=compartment.concat(dual_compartment[i]);
+				compartment=compartment.concat(TransportersUtilities.parseAbbreviation(dual_compartment[i]));
 			}
 			return compartment;
 		}
@@ -280,6 +380,9 @@ public class TransportersUtilities {
 		else if(compartmentID.equals("lysosome"))
 			return "lyso";
 
+		else if(compartmentID.equals("cellwall"))
+			return "cellw";
+
 		//		else if(abbreviation.contains("_")) {
 		//			
 		//			String compartment = "";
@@ -301,8 +404,8 @@ public class TransportersUtilities {
 
 		}
 	}
-	
-	
+
+
 	/**
 	 * Get the outside of the membranes
 	 * 
@@ -311,28 +414,28 @@ public class TransportersUtilities {
 	 * @throws Exception
 	 */
 	public static Set<String> getOutsideMembranes(String compartmentID) throws Exception {
-		
+
 		Set<String> list = new HashSet<String>();
-		
+
 		if(compartmentID.equalsIgnoreCase("outmem")) {
-			
+
 			list.add("EXTR");
 			list.add("PERIP");
 			return list;
 		}
-		
+
 		list.add("cytop");
 		list.add(TransportersUtilities.getOutsideMembrane(compartmentID));
-		
+
 		return list;
 	}
-	
+
 	/**
 	 * @param compartmentID
 	 * @return
 	 */
 	public static String getOutsideMembrane(String compartmentID) {
-		
+
 		if(compartmentID.equalsIgnoreCase("unkn"))
 			return ("unknown");
 		else if(compartmentID.equalsIgnoreCase("cytmem"))
@@ -367,9 +470,9 @@ public class TransportersUtilities {
 
 		else if(compartmentID.equalsIgnoreCase("poxmem") || compartmentID.equalsIgnoreCase("permem"))
 			return ("POX");
-		
+
 		return compartmentID;
-		
+
 	}
 
 	/**
@@ -435,6 +538,37 @@ public class TransportersUtilities {
 		else
 			return "cyto";
 
+	}
+
+	/**
+	 * get new thresholds for genes with over @param limit helices
+	 * 
+	 * @param transmembraneGenes
+	 * @param threshold
+	 * @param limit
+	 * @return
+	 */
+	public static Map<String, Double> getHelicesSpecificThresholds(Map<String, Integer> transmembraneGenes, int threshold, int limit) {
+
+		Map<String, Double> ret = new HashMap<>();
+
+		double min = threshold/2;
+
+		for (String query : transmembraneGenes.keySet()){
+
+			double helicesDependentSimilarity = threshold;
+
+			if(transmembraneGenes.get(query)>limit) {
+				// FIXME passar parametros para configuracao
+				helicesDependentSimilarity=(1-((transmembraneGenes.get(query)/2-2)*0.1))*threshold;
+
+				if (helicesDependentSimilarity>min)
+					ret.put(query, helicesDependentSimilarity);
+				else
+					ret.put(query, min);	
+			}	
+		}
+		return ret;
 	}
 
 

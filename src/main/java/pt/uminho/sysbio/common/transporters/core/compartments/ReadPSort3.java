@@ -20,9 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ReadPSort3 implements CompartmentsInterface{
 
 	private static int normalization=10;
-	private Map<String, CompartmentResult> results;
 	private AtomicBoolean cancel;
-	private int project_id;
 
 
 //	/**
@@ -38,40 +36,11 @@ public class ReadPSort3 implements CompartmentsInterface{
 //	}
 
 	/**
-	 * @param conn
-	 * @param results
-	 */
-	public ReadPSort3(Map<String, CompartmentResult> results, int project_id) {
-
-		this.cancel = new AtomicBoolean(false);
-		this.results = results;
-		this.project_id = project_id;
-	}
-
-	/**
-	 * @param connection
-	 */
-	public ReadPSort3(int project_id) {
-
-		this.cancel = new AtomicBoolean(false);
-		this.project_id = project_id;
-	}
-
-	/**
 	 * 
 	 */
 	public ReadPSort3() {
 
 		this.cancel = new AtomicBoolean(false);
-	}
-
-	/* (non-Javadoc)
-	 * @see compartments.CompartmentsInterface#loadCompartmentsInformation()
-	 */
-	public void loadCompartmentsInformation(Statement statement) {
-
-		for(CompartmentResult pSORT3Result : this.results.values())
-			LoadCompartments.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), project_id, statement);
 	}
 
 	/**
@@ -261,17 +230,9 @@ public class ReadPSort3 implements CompartmentsInterface{
 				}
 			}
 		}
+		
 		in.close();
 		return compartmentLists;
-	}
-
-
-	/* (non-Javadoc)
-	 * @see compartments.CompartmentsInterface#getBestCompartmentsByGene(double, int)
-	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException{
-
-		return LoadCompartments.getBestCompartmenForGene(threshold, ReadPSort3.normalization, this.project_id, statement);
 	}
 
 	@Override
@@ -297,5 +258,32 @@ public class ReadPSort3 implements CompartmentsInterface{
 	public boolean isEukaryote() {
 
 		return false;
+	}
+
+	@Override
+	public Map<String, CompartmentResult> addGeneInformation(String link) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void loadCompartmentsInformation(Map<String, CompartmentResult> results, int projectID, Statement statement)
+			throws Exception {
+		
+		for(CompartmentResult pSORT3Result : results.values())
+			LoadCompartments.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), projectID, statement);
+	}
+
+	@Override
+	public Map<String, GeneCompartments> getBestCompartmentsByGene(double threshold, int projectID, Statement statement)
+			throws SQLException {
+		
+		return LoadCompartments.getBestCompartmenForGene(threshold, ReadPSort3.normalization, projectID, statement);
+	}
+
+	@Override
+	public void setPlant(boolean typePlant) {
+		// TODO Auto-generated method stub
+		
 	}
 }

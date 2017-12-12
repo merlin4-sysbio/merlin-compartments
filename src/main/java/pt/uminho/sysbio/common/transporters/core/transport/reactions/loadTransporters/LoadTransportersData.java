@@ -3,7 +3,6 @@
  */
 package pt.uminho.sysbio.common.transporters.core.transport.reactions.loadTransporters;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -26,6 +25,7 @@ import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.TaxonomyContainer
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.UniProtAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.KeggAPI;
 import pt.uminho.sysbio.common.bioapis.externalAPI.kegg.datastructures.KeggCompoundER;
+import pt.uminho.sysbio.common.database.connector.databaseAPI.TransportersAPI;
 import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseUtilities;
 import pt.uminho.sysbio.common.database.connector.datatypes.Enumerators.DatabaseType;
 import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
@@ -113,23 +113,18 @@ public class LoadTransportersData {
 	 * @param locus_tag
 	 * @return
 	 */
-	public String loadGene(String locus_tag, int project_id) {
+	public String loadGene(String locusTag, int projectID) {
 
 		try {
 
-			String result;
-			ResultSet rs = this.statement.executeQuery("SELECT id FROM genes WHERE locus_tag='"+locus_tag+"' " +
-					"AND status='"+DatabaseProgressStatus.PROCESSED+"' AND project_id = "+project_id+";");
+			
+			String query = "SELECT id FROM genes WHERE locus_tag='"+locusTag+"' " +
+					"AND status='"+DatabaseProgressStatus.PROCESSED+"' AND project_id = "+projectID+";";
+			
+			String query2 = "INSERT INTO genes (project_id, locus_tag, status) "
+					+ "VALUES("+projectID+",'"+locusTag+"', '"+DatabaseProgressStatus.PROCESSING+"')";
 
-			if(!rs.next()) {
-
-				this.statement.clearWarnings();
-				this.statement.execute("INSERT INTO genes (project_id, locus_tag, status) VALUES("+project_id+",'"+locus_tag+"', '"+DatabaseProgressStatus.PROCESSING+"')");
-				rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-				rs.next();
-			}
-			result=rs.getString(1);
-			rs.close();
+			String result = TransportersAPI.loadGene(query, query2, locusTag, projectID, statement);
 
 			return result;
 		}
@@ -166,10 +161,7 @@ public class LoadTransportersData {
 
 		try {
 
-			ResultSet rs = this.statement.executeQuery("SELECT DISTINCT(uniprot_id) FROM tcdb_registries;");
-
-			while(rs.next())
-				uniprot_ids.add(rs.getString(1));
+			uniprot_ids = TransportersAPI.getUniprotDatabaseIDs(statement);
 		}
 		catch (SQLException e) {e.printStackTrace();}
 
@@ -253,20 +245,15 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException
 	 */
-	private Set<Integer> getTransportSystems(String uniprot_id, String tc_number) throws SQLException {
+	private Set<Integer> getTransportSystems(String uniprotID, String tcNumber){
 
-		Set<Integer> loadedTransportSystemIds = new TreeSet<Integer>(); 
-
-		ResultSet rs = this.statement.executeQuery("SELECT transport_system_id FROM tcdb_registries " +
-				" INNER JOIN tc_numbers_has_transport_systems " +
-				" ON (tc_numbers_has_transport_systems.tc_version = tcdb_registries.tc_version " +
-				"AND tc_numbers_has_transport_systems.tc_number = tcdb_registries.tc_number)" +
-				" WHERE uniprot_id='"+uniprot_id+"' AND tcdb_registries.tc_number='"+tc_number+"' AND latest_version");
-
-		while (rs.next())
-			loadedTransportSystemIds.add(rs.getInt(1));
-
-		rs.close();
+		Set<Integer> loadedTransportSystemIds = new TreeSet<Integer>();
+		
+		try {
+			loadedTransportSystemIds = TransportersAPI.getTransportSystems(uniprotID, tcNumber, statement);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
 		return loadedTransportSystemIds;
 	}
@@ -295,21 +282,17 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException 
 	 */
-	private int getTC_version(String tc_number, String uniprot_id) throws SQLException {
+	private int getTC_version(String tcNumber, String uniprotID) {
 
-		int tc_version = -1;
+		int tcVersion = -1;
+		
+		try {
+			tcVersion = TransportersAPI.getTC_version(uniprotID, tcNumber, statement);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
-		//		ResultSet rs = this.statement.executeQuery("SELECT MAX(tc_version) " +
-		//				" FROM tc_numbers WHERE tc_number='"+tc_number+"';");
-
-		ResultSet rs = this.statement.executeQuery("SELECT tc_version " +
-				" FROM tcdb_registries WHERE tc_number='"+tc_number+"' AND uniprot_id = '"+uniprot_id+"' AND latest_version;");
-
-		if(rs.next())
-			if(rs.getInt(1)>0)
-				tc_version = rs.getInt(1);
-
-		return tc_version;
+		return tcVersion;
 	}
 
 	/**
@@ -345,14 +328,19 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException
 	 */
-	private int addTC_number(String tc_number, int tc_version, String tc_family, String tc_location, String affinity, int taxonomy_data_id, int general_equation_id) throws SQLException {
+	private int addTC_number(String tc_number, int tc_version, String tc_family, String tc_location, String affinity, int taxonomy_data_id, int general_equation_id){
 
-		ResultSet rs = this.statement.executeQuery("SELECT * FROM tc_numbers WHERE tc_number='"+tc_number+"' AND tc_version = "+tc_version+";");
-
-		if(!rs.next())
-			this.statement.execute("INSERT INTO tc_numbers (tc_number, tc_version, tc_family, tc_location, affinity, taxonomy_data_id, general_equation_id)" +
-					" VALUES('"+tc_number+"', "+tc_version+", '"+tc_family+"','"+tc_location+"'," + "'"+affinity+"', "+taxonomy_data_id+", "+general_equation_id+")");
-
+		String query1 = "SELECT * FROM tc_numbers WHERE tc_number='"+tc_number+"' AND tc_version = "+tc_version+";";
+		
+		String query2 = "INSERT INTO tc_numbers (tc_number, tc_version, tc_family, tc_location, affinity, taxonomy_data_id, general_equation_id)" +
+				" VALUES('"+tc_number+"', "+tc_version+", '"+tc_family+"','"+tc_location+"'," + "'"+affinity+"', "+taxonomy_data_id+", "+general_equation_id+")";
+		
+		try {
+			TransportersAPI.addTC_number(query1, query2, statement);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
 		return tc_version;
 	}
 
@@ -373,23 +361,26 @@ public class LoadTransportersData {
 	 * @param tc_version
 	 * @throws SQLException
 	 */
-	private void add_tcdb_registry(String uniprot_id, String tc_number, int tc_version, DatabaseProgressStatus processing) throws SQLException {
+	private void add_tcdb_registry(String uniprotID, String tcNumber, int tcVersion, DatabaseProgressStatus processing){
 
 		int currentVersion = 1;
 
-		ResultSet rs = this.statement.executeQuery("SELECT MAX(version) " +
-				" FROM tcdb_registries WHERE uniprot_id='"+uniprot_id+"';");
+		try {
+			currentVersion = TransportersAPI.select_tcdb_registry(uniprotID, statement);
+			
+			String query1 = "UPDATE tcdb_registries SET latest_version = false, loaded_at=loaded_at " +
+					" WHERE uniprot_id = '"+uniprotID+"' AND tc_number = '"+tcNumber+"';";
+			
+			TransportersAPI.executeQuery(query1, statement);
 
-		if(rs.next())
-			if(rs.getInt(1)>0)
-				currentVersion = currentVersion + rs.getInt(1);
-		rs.close();
-
-		this.statement.execute("UPDATE tcdb_registries SET latest_version = false, loaded_at=loaded_at " +
-				" WHERE uniprot_id = '"+uniprot_id+"' AND tc_number = '"+tc_number+"';");
-
-		this.statement.execute("INSERT INTO tcdb_registries (uniprot_id, version, tc_number, tc_version, status, latest_version) " +
-				" VALUES('"+uniprot_id+"', "+currentVersion+", '"+tc_number+"', "+tc_version+", '"+processing+"', true)");
+			String query2 = "INSERT INTO tcdb_registries (uniprot_id, version, tc_number, tc_version, status, latest_version) " +
+					" VALUES('"+uniprotID+"', "+currentVersion+", '"+tcNumber+"', "+tcVersion+", '"+processing+"', true)";
+			
+			TransportersAPI.executeQuery(query2, statement);
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -400,35 +391,37 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException
 	 */
-	private int updateTC_version(String tc_number, String uniprot) throws SQLException {
+	private int updateTC_version(String tcNumber, String uniprot) throws SQLException {
 
 		int tc_version = -1;
+		String[] list;
 
-		ResultSet rs = this.statement.executeQuery("SELECT MAX(tc_version), taxonomy_data_id, tc_family, tc_location, affinity, general_equation_id FROM tc_numbers WHERE tc_number='"+tc_number+"';");
-
+		ArrayList<String[]> result = TransportersAPI.getTaxonomyData(tcNumber, statement);
+		
 		String tc_family, tc_location, affinity;
 		int taxonomy_data_id, general_equation_id;
 
-		if(rs.next() && rs.getInt(1)>0) {
-
-			tc_version = 1 + rs.getInt(1);
-			taxonomy_data_id = rs.getInt(2);
-			tc_family = rs.getString(3);
-			tc_location = rs.getString(4);
-			affinity = rs.getString(5);
-			general_equation_id = rs.getInt(6);
-
-			this.addTC_number(tc_number, tc_version, tc_family, tc_location, affinity, taxonomy_data_id, general_equation_id);
-			//this.updateUniprotRegistries(tc_number, tc_version);
-			System.out.println("updating annotations for "+uniprot);
-			this.add_tcdb_registry(uniprot, tc_number, tc_version, DatabaseProgressStatus.PROCESSED);
-
+		if(result.size()>0){
+			for(int i=0; i<result.size(); i++){
+				list = result.get(i);
+				if(Integer.parseInt(list[0])>0) {
+		
+					tc_version = 1 + Integer.parseInt(list[0]);
+					taxonomy_data_id = Integer.parseInt(list[1]);
+					tc_family = list[2];
+					tc_location = list[3];
+					affinity = list[4];
+					general_equation_id = Integer.parseInt(list[5]);
+		
+					this.addTC_number(tcNumber, tc_version, tc_family, tc_location, affinity, taxonomy_data_id, general_equation_id);
+					this.add_tcdb_registry(uniprot, tcNumber, tc_version, DatabaseProgressStatus.PROCESSED);
+				}
+			}
 		}
 		else {
 
 			throw new SQLException(" No TC number available!");
 		}
-		rs.close();
 
 		return tc_version;
 	}
@@ -441,21 +434,14 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException
 	 */
-	public void updateUniprotRegistries(String tc_number, int tc_version) throws SQLException {
+	public void updateUniprotRegistries(String tcNumber, int tc_version) throws SQLException {
 
-		Set<String> uniprot_ids = new HashSet<String>();
-		ResultSet rs = this.statement.executeQuery("SELECT uniprot_id FROM tcdb_registries WHERE tc_number='"+tc_number+"' AND latest_version");
+		Set<String> uniprotIDs = TransportersAPI.selectUniprotIDs(tcNumber, statement);
 
-		while(rs.next())
-			uniprot_ids.add(rs.getString(1));
-		rs.close();
+		if(uniprotIDs.size()>0) {
 
-		if(uniprot_ids.size()>0) {
-
-			System.out.println("updating annotations for "+uniprot_ids);
-
-			for(String uniprot : uniprot_ids)
-				this.add_tcdb_registry(uniprot, tc_number, tc_version, DatabaseProgressStatus.PROCESSED);
+			for(String uniprot : uniprotIDs)
+				this.add_tcdb_registry(uniprot, tcNumber, tc_version, DatabaseProgressStatus.PROCESSED);
 		}
 
 	}
@@ -480,19 +466,14 @@ public class LoadTransportersData {
 
 			try {
 
-				ResultSet rs = this.statement.executeQuery("SELECT id FROM taxonomy_data WHERE organism='"+organism+"';");
-				if(rs.next()) {
-
-					result = rs.getInt(1);
+				result = TransportersAPI.selectTaxonomyID(organism, statement);
+				if(result!=-1) {
 
 					return result;
 				}
-				this.statement.execute("INSERT INTO taxonomy_data (organism,taxonomy)" +
-						" VALUES('"+organism+"','"+taxonomy+"')");
-				rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-				rs.next();
-
-				result = rs.getInt(1);
+				
+				result = TransportersAPI.insertTaxonomyID(organism, taxonomy, statement);
+				
 				this.organism_id.put(organism, result);
 
 				return result;
@@ -526,9 +507,13 @@ public class LoadTransportersData {
 			}
 			else {
 
-				if(this.uniprot_latest_version.containsKey(alignmentResult.getUniprot_id().toUpperCase()))
-					this.statement.execute("INSERT INTO genes_has_tcdb_registries (gene_id, version, uniprot_id, similarity)" +
-							" VALUES('"+genes_id+"', "+this.uniprot_latest_version.get(alignmentResult.getUniprot_id().toUpperCase())+", '"+alignmentResult.getUniprot_id()+"','"+alignmentResult.getSimilarity()+"')");
+				if(this.uniprot_latest_version.containsKey(alignmentResult.getUniprot_id().toUpperCase())){
+					String query ="INSERT INTO genes_has_tcdb_registries (gene_id, version, uniprot_id, similarity)" +
+							" VALUES('"+genes_id+"', "+this.uniprot_latest_version.get(alignmentResult.getUniprot_id().toUpperCase())+
+							", '"+alignmentResult.getUniprot_id()+"','"+alignmentResult.getSimilarity()+"')";
+					
+					TransportersAPI.executeQuery(query, statement);
+				}
 				else
 					System.out.println("Uniprot record "+alignmentResult.getUniprot_id()+" not available in database!");
 			}
@@ -541,34 +526,39 @@ public class LoadTransportersData {
 	 * @param similarity_score
 	 * @param taxonomy_score
 	 */
-	public void load_genes_has_metabolites(String gene_id, String metabolites_id, double similarity_score, double taxonomy_score) {
+	public void load_genes_has_metabolites(String geneID, String metabolitesID, double similarity_score, double taxonomy_score) {
 
 		try {
 
-			ResultSet rs = this.statement.executeQuery("SELECT similarity_score_sum, taxonomy_score_sum, frequency FROM genes_has_metabolites" +
-					" WHERE gene_id='"+gene_id+"' AND metabolite_id='"+metabolites_id+"';");
-
-			if(rs.next()) {
-
-				similarity_score += rs.getDouble(1);
-				taxonomy_score += rs.getDouble(2);
-				int frequency = rs.getInt(3)+1;
-				this.statement.execute("UPDATE genes_has_metabolites SET similarity_score_sum='"+similarity_score+"'" +
-						", taxonomy_score_sum='"+taxonomy_score+"' " +
-						", frequency='"+frequency+"' " +
-						"WHERE metabolite_id='"+metabolites_id+"' AND gene_id='"+gene_id+"'");
+			ArrayList<String[]> result = TransportersAPI.getSimilarityAndTaxonomyScore(geneID, metabolitesID, statement);
+			String[] list = new String[6];
+			
+			if(result.size()>0){
+				for(int i = 0; i<result.size(); i++){
+					list = result.get(i);
+					
+					similarity_score += Double.parseDouble(list[0]);
+					taxonomy_score += Double.parseDouble(list[1]);
+					int frequency = Integer.parseInt(list[2])+1;
+					this.statement.execute("UPDATE genes_has_metabolites SET similarity_score_sum='"+similarity_score+"'" +
+							", taxonomy_score_sum='"+taxonomy_score+"' " +
+							", frequency='"+frequency+"' " +
+							"WHERE metabolite_id='"+metabolitesID+"' AND gene_id='"+geneID+"'");
+				}
 			}
 			else {
 
-				this.statement.execute("INSERT INTO genes_has_metabolites (gene_id, metabolite_id, similarity_score_sum, taxonomy_score_sum, frequency)" +
-						" VALUES('"+gene_id+"','"+metabolites_id+"','"+similarity_score+"','"+taxonomy_score+"','1')");
+				String query = "INSERT INTO genes_has_metabolites (gene_id, metabolite_id, similarity_score_sum, taxonomy_score_sum, frequency)" +
+						" VALUES('"+geneID+"','"+metabolitesID+"','"+similarity_score+"','"+taxonomy_score+"','1')";
+				
+				TransportersAPI.executeQuery(query, statement);
 			}
 
 		}
 		catch (SQLException e) {
 
-			System.err.println("Gene id "+gene_id);
-			System.err.println("Metabolites id "+metabolites_id);
+			System.err.println("Gene id "+geneID);
+			System.err.println("Metabolites id "+metabolitesID);
 			e.printStackTrace();}
 	}
 
@@ -578,28 +568,37 @@ public class LoadTransportersData {
 	 * @param type_id
 	 * @param score
 	 */
-	public void load_genes_has_metabolites_has_type(String genes_id, String metabolites_id, String type_id, double transport_type_score_sum, double taxonomy_score) {
+	public void load_genes_has_metabolites_has_type(String genesID, String metabolitesID, String typeID, double transport_type_score_sum, double taxonomy_score) {
 
 		try {
 
-			ResultSet rs = this.statement.executeQuery("SELECT transport_type_score_sum,taxonomy_score_sum,frequency FROM genes_has_metabolites_has_type" +
-					" WHERE gene_id='"+genes_id+"' AND transport_type_id='"+type_id+"' AND metabolite_id='"+metabolites_id+"';");
+			ArrayList<String[]> result = TransportersAPI.selectGeneHasMetaboliteHasType(genesID, metabolitesID, typeID, statement);
+			String[] list = new String[3];
 
-			if(rs.next()) {
+			if(result.size()>0) {
+				
+				for(int i = 0; i<result.size(); i++){
+					list = result.get(i);
 
-				transport_type_score_sum += rs.getDouble(1);
-				taxonomy_score += rs.getDouble(2);
-				int frequency = rs.getInt(3)+1;
+				transport_type_score_sum += Double.parseDouble(list[0]);
+				taxonomy_score += Double.parseDouble(list[1]);
+				int frequency = Integer.parseInt(list[2])+1;
 
-				this.statement.execute("UPDATE genes_has_metabolites_has_type SET transport_type_score_sum='"+transport_type_score_sum+"'" +
+				String query = "UPDATE genes_has_metabolites_has_type SET transport_type_score_sum='"+transport_type_score_sum+"'" +
 						", taxonomy_score_sum='"+taxonomy_score+"' " +
 						", frequency='"+frequency+"' " +
-						"WHERE gene_id='"+genes_id+"' AND metabolite_id='"+metabolites_id+"' AND transport_type_id='"+type_id+"'" );
+						"WHERE gene_id='"+genesID+"' AND metabolite_id='"+metabolitesID+"' AND transport_type_id='"+typeID+"'" ;
+				
+				TransportersAPI.executeQuery(query, statement);
+			
+				}
 			}
 			else {
 
-				this.statement.execute("INSERT INTO genes_has_metabolites_has_type (gene_id, metabolite_id, transport_type_id, transport_type_score_sum, taxonomy_score_sum,frequency)" +
-						" VALUES('"+genes_id+"','"+metabolites_id+"','"+type_id+"','"+transport_type_score_sum+"','"+taxonomy_score+"','1')");
+				String query = "INSERT INTO genes_has_metabolites_has_type (gene_id, metabolite_id, transport_type_id, transport_type_score_sum, taxonomy_score_sum,frequency)" +
+						" VALUES('"+genesID+"','"+metabolitesID+"','"+typeID+"','"+transport_type_score_sum+"','"+taxonomy_score+"','1')";
+				
+				TransportersAPI.executeQuery(query, statement);
 			}
 
 		}
@@ -610,21 +609,24 @@ public class LoadTransportersData {
 	 * @param tcnumber_id
 	 * @param transport_system_id
 	 */
-	public void load_tc_number_has_transport_system(String tcnumber_id, int transport_system_id, int tc_version) {
+	public void load_tc_number_has_transport_system(String tcNumberID, int transportSystemID, int tcVersion) {
 
 		try {
 
-			ResultSet rs = this.statement.executeQuery("SELECT * FROM tc_numbers_has_transport_systems" +
-					" WHERE tc_number='"+tcnumber_id+"' AND transport_system_id="+transport_system_id+" AND tc_version = "+tc_version+";");
+			ArrayList<String[]> result = TransportersAPI.loadTcNumberHasTransportSystem(tcNumberID, transportSystemID, tcVersion, statement);
 
-			if(!rs.next())
-				this.statement.execute("INSERT INTO tc_numbers_has_transport_systems (tc_number, tc_version, transport_system_id)" +
-						" VALUES('"+tcnumber_id+"', "+tc_version+", "+transport_system_id+")");
+
+			if(result.size() == 0){
+				String query = "INSERT INTO tc_numbers_has_transport_systems (tc_number, tc_version, transport_system_id)" +
+						" VALUES('"+tcNumberID+"', "+tcVersion+", "+transportSystemID+")";
+			
+				TransportersAPI.executeQuery(query, statement);
+			}
 		}
 		catch (SQLException e) {
 
-			System.out.println("tc_number\t"+tcnumber_id);
-			System.out.println("transport_system_id\t"+transport_system_id);
+			System.out.println("tc_number\t"+tcNumberID);
+			System.out.println("transport_system_id\t"+transportSystemID);
 
 			e.printStackTrace();
 		}
@@ -639,14 +641,9 @@ public class LoadTransportersData {
 
 		try {
 
-			int result;
-			this.statement.execute("INSERT INTO transport_systems (transport_type_id, reversible) VALUES("+transport_type_id+","+reversibility+")");
-			ResultSet rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-			rs.next();
-			result=rs.getInt(1);
-			rs.close();
-
+			int result = TransportersAPI.loadTransportSystem(transport_type_id, reversibility, statement);
 			return result;
+			
 		}
 		catch (SQLException e) {
 
@@ -662,25 +659,24 @@ public class LoadTransportersData {
 	 * @param transport_system_id
 	 * @param metaboliteStoichiometry
 	 */
-	public void load_transported_metabolites_direction(int metabolites_id, String direction_id, int transport_system_id, double metaboliteStoichiometry) {
+	public void load_transported_metabolites_direction(int metabolitesID, String directionID, int transportSystemID, double metaboliteStoichiometry) {
 
 		try {
 
-			ResultSet rs = this.statement.executeQuery("SELECT stoichiometry FROM transported_metabolites_directions " +
-					"WHERE metabolite_id='"+metabolites_id+"' " +
-					"AND transport_system_id='"+transport_system_id+"' " +
-					"AND direction_id='"+direction_id+"';");
+			ArrayList<String> result = TransportersAPI.loadTransportedMetabolitesDirection(metabolitesID, directionID, transportSystemID, statement);
+			
+			if(result.size()>0) {
 
-			if(rs.next()) {
-
-				System.err.println("WRONG STOICHIOMETRIES for transport system "+transport_system_id);
+				System.err.println("WRONG STOICHIOMETRIES for transport system "+transportSystemID);
 				//System.out.println("UPDATE transported_metabolites_directions SET stoichiometry ="+metaboliteStoichiometry+" " +
 				//	"WHERE metabolites_id = '"+metabolites_id+"' AND transport_system_id='"+transport_system_id+"' AND direction_id='"+direction_id+"'");
 			}
 			else {
 
-				this.statement.execute("INSERT INTO transported_metabolites_directions (metabolite_id,transport_system_id,direction_id, stoichiometry)" +
-						" VALUES('"+metabolites_id+"','"+transport_system_id+"','"+direction_id+"',"+metaboliteStoichiometry+")");
+				String query = "INSERT INTO transported_metabolites_directions (metabolite_id,transport_system_id,direction_id, stoichiometry)" +
+						" VALUES('"+metabolitesID+"','"+transportSystemID+"','"+directionID+"',"+metaboliteStoichiometry+")";
+				
+				TransportersAPI.executeQuery(query, statement);
 			}
 
 		}
@@ -700,26 +696,20 @@ public class LoadTransportersData {
 
 		try {
 
-			String result;
-			ResultSet rs = this.statement.executeQuery("SELECT id FROM directions WHERE direction='"+direction+"';");
+			String result = "";
+			result = TransportersAPI.getDirection(direction, statement);
 
-			if(rs.next()) { 
-
-				result=rs.getString(1);
+			if(!result.equals("")) { 
 				this.directionMap.put(direction, result);
 				return result;
 			}
 
-			this.statement.execute("INSERT INTO directions (direction) VALUES('"+direction+"')");
-			rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-			rs.next();
-			result=rs.getString(1);
+			result = TransportersAPI.insertDirection(direction, statement);
 			this.directionMap.put(direction, result);
 
 			return result;
 		}
 		catch (SQLException e) {
-
 			e.printStackTrace();
 		}
 		return null;
@@ -739,23 +729,12 @@ public class LoadTransportersData {
 
 		try {
 
-			int result;
-			ResultSet rs = this.statement.executeQuery("SELECT id FROM transport_types WHERE name='"+transportType+"' AND directions='"+directions+"';");
-
-			if(rs.next()) {
-
-				result=rs.getInt(1); 
-			}
-			else {
-
-				this.statement.execute("INSERT INTO transport_types	 (name,directions) VALUES('"+transportType+"','"+directions+"')");
-				rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-				rs.next();
-				result=rs.getInt(1);
-			}
+			int result = TransportersAPI.selectTransportType(transportType, directions, statement);
+			
+			if (result == -1) 
+				result= TransportersAPI.insertTransportType(transportType, directions, statement);
+			
 			this.transportDirectionsMap.put(directions, result);
-
-			rs.close();
 
 			return result;
 		}
@@ -811,63 +790,61 @@ public class LoadTransportersData {
 
 		if(kegg!=null && chebi!= null) {
 
-			ResultSet rs = this.statement.executeQuery("SELECT name, datatype, id FROM metabolites WHERE kegg_miriam='"+kegg+"' AND chebi_miriam = '"+chebi_miriam+"'");
+			ArrayList<String> data = TransportersAPI.getDataFromMetabolites(kegg, chebi_miriam, statement);
+			
+			if(data.size()>0){
 
-			if(rs.next()) {
+				String datatypeInDatabase = data.get(1);
+				int result = Integer.parseInt(data.get(2));
 
-				String datatypeInDatabase = rs.getString(2);
-				int result = rs.getInt(3);
-				rs.close();
-
-				if(datatype.equals(DATATYPE.MANUAL) && datatypeInDatabase.equalsIgnoreCase(DATATYPE.AUTO.toString()))
-					this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';");
+				if(datatype.equals(DATATYPE.MANUAL) && datatypeInDatabase.equalsIgnoreCase(DATATYPE.AUTO.toString())){
+					String query ="UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';";
+					TransportersAPI.executeQuery(query, statement);
+				}				
 
 				return result;
 			}
 
-			rs = this.statement.executeQuery("SELECT name, chebi_miriam, datatype, id FROM metabolites WHERE kegg_miriam='"+kegg+"'");// AND datatype='"+DATATYPE.AUTO+"';");
-
-			if(rs.next()) {
-
-				String nameInDatabase= rs.getString(1);
-				String chebiInDatabase = rs.getString(2);
-				String datatypeInDatabase = rs.getString(3);
-				int result = rs.getInt(4);
+			data = TransportersAPI.getDataFromMetabolites2(kegg, statement);
+			
+			if(data.size()>0){
+			
+				String nameInDatabase= data.get(0);
+				String chebiInDatabase = data.get(1);
+				String datatypeInDatabase = data.get(2);
+				int result = Integer.parseInt(data.get(3));
 
 				if(nameInDatabase.equalsIgnoreCase(name) && chebi.equalsIgnoreCase(chebiInDatabase)) {
 
-					if(datatype.equals(DATATYPE.MANUAL) && datatypeInDatabase.equalsIgnoreCase(DATATYPE.AUTO.toString()))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';");
+					if(datatype.equals(DATATYPE.MANUAL) && datatypeInDatabase.equalsIgnoreCase(DATATYPE.AUTO.toString())){
+						String query ="UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam='"+kegg+"';";
+						TransportersAPI.executeQuery(query, statement);
+					}
 				}
 				else {
 
-					this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
+					String query = "INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
 							"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi_miriam+"','"+
 							DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"','"+
 							DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
-							"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
-					rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-					rs.next();
-					result =  rs.getInt(1);
-					rs.close();
-
+							"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')";
+					
+					result = TransportersAPI.insertIntoMetabolites(query, statement);
+					
 					if(chebi!=null)
 						this.loadOntologies(result, chebi);
 				}
 
 				return result;
 			}
-			rs.close();
 
-			this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
+			String query = "INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
 					"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi_miriam+"','"+
 					DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"','"+
 					DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
-					"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
-			rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-			rs.next();
-			int result =  rs.getInt(1);
-			rs.close();
+					"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')";
+			
+			int result = TransportersAPI.insertIntoMetabolites(query, statement);
 
 			if(chebi!=null)
 				this.loadOntologies(result, chebi);
@@ -877,43 +854,51 @@ public class LoadTransportersData {
 
 		if(kegg!=null && chebi == null) {
 
-			ResultSet rs = this.statement.executeQuery("SELECT name, id, datatype FROM metabolites WHERE kegg_miriam = '"+kegg+"';");
+			ArrayList<String> data = TransportersAPI.getDataFromMetabolites3(kegg_miriam, statement);
+			
+			if(data.size()>0){
 
-			if(rs.next()) {
-
-				String nameInDatabase = rs.getString(1);
-				int result = rs.getInt(2);
-				String datatypeInDatabase = rs.getString(3);
+				String nameInDatabase = data.get(0);
+				int result = Integer.parseInt(data.get(1));
+				String datatypeInDatabase = data.get(2);
 
 				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam = '"+kegg+"';");
+					if(datatype.equals(DATATYPE.MANUAL)){
+						String query = "UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE kegg_miriam = '"+kegg+"';";
+						TransportersAPI.executeQuery(query, statement);
+					}
 
-				rs = this.statement.executeQuery("SELECT metabolite_id, datatype, name FROM synonyms WHERE name = '"+nameInDatabase+"';");
-				if(!rs.next()) {
+				data = TransportersAPI.getSynonyms(nameInDatabase, statement);
+				
+				if(data.size()==0) {
 
-					if(!nameInDatabase.equalsIgnoreCase(name))
-						this.statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+result+",'"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"','"+datatype+"')");
+					if(!nameInDatabase.equalsIgnoreCase(name)){
+						String query = "INSERT INTO synonyms (metabolite_id, name, datatype) "
+								+ "VALUES("+result+",'"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"','"+datatype+"')";
+						
+						TransportersAPI.executeQuery(query, statement);
+					}
 				}
-
-				rs.close();
 				return result;
 			}
 		}
 
 		if(chebi!=null && kegg == null) {
 
-			ResultSet rs = this.statement.executeQuery("SELECT name, id, datatype FROM metabolites WHERE chebi_miriam = '"+chebi+"';");
+			ArrayList<String> data = TransportersAPI.getDataFromMetabolites4(chebi, statement);
+			
+			if(data.size()>0){
 
-			if(rs.next()) {
-
-				String nameInDatabase = rs.getString(1);
-				int result=rs.getInt(2);
-				String datatypeInDatabase = rs.getString(3);
+				String nameInDatabase = data.get(0);
+				int result=Integer.parseInt(data.get(1));
+				String datatypeInDatabase = data.get(2);
 
 				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE chebi_miriam = '"+chebi+"';");
+					if(datatype.equals(DATATYPE.MANUAL)){
+						String query ="UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE chebi_miriam = '"+chebi+"';";
+						
+						TransportersAPI.executeQuery(query, statement);
+					}
 
 				int synonymOriginalID = LoadTransportersData.existsSynonym(nameInDatabase, datatype, databaseType, statement);
 				if(synonymOriginalID < 0) {
@@ -927,26 +912,28 @@ public class LoadTransportersData {
 						System.err.println("two mets with same synonym!!! "+synonymOriginalID+" AND "+result);
 				}
 
-				rs.close();
 				return result;
 			}
-			rs.close();
 		}
 
 		if(name!= null) {
 
-			ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
+			String query = "SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';";
+			
+			ArrayList<String> data = TransportersAPI.getDataFromMetabolites5(query, statement);
 
-			if(rs.next()) {
+			if(data.size()>0) {
 
-				int result = rs.getInt(1);
-				String datatypeInDatabase = rs.getString(2);
+				int result = Integer.parseInt(data.get(0));
+				String datatypeInDatabase = data.get(1);
 
 				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';");
+					if(datatype.equals(DATATYPE.MANUAL)){
+						query = "UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(name,this.databaseType)+"';";
+						TransportersAPI.executeQuery(query, statement);
+					}
+				
 
-				rs.close();
 				return result;
 			}
 			else {
@@ -961,18 +948,21 @@ public class LoadTransportersData {
 
 			kegg_name = kegg_name.toLowerCase();
 
-			ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"';");
+			String query = "SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"';";
 
-			if(rs.next()) {
+			ArrayList<String> data = TransportersAPI.getDataFromMetabolites5(query, statement);
 
-				int result = rs.getInt(1);
-				String datatypeInDatabase = rs.getString(2);
+			if(data.size()>0) {
+
+				int result = Integer.parseInt(data.get(0));
+				String datatypeInDatabase = data.get(1);
 
 				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"';");
-
-				rs.close();
+					if(datatype.equals(DATATYPE.MANUAL)){
+						query = "UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"';";
+						TransportersAPI.executeQuery(query, statement);
+					}
+				
 				return result;
 			}
 			else {
@@ -981,25 +971,26 @@ public class LoadTransportersData {
 				if(synonymOriginalID > 0)
 					return synonymOriginalID;
 			}
-			rs.close();
 		}
 
 		if(chebi_name!=null && !chebi_name.equalsIgnoreCase(name)) {
 
 			chebi_name = chebi_name.toLowerCase();
 
-			ResultSet rs = this.statement.executeQuery("SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"';");
+			String query = "SELECT id, datatype FROM metabolites WHERE name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"';";
 
-			if(rs.next()) {
+			ArrayList<String> data = TransportersAPI.getDataFromMetabolites5(query, statement);
 
-				int result = rs.getInt(1);
-				String datatypeInDatabase = rs.getString(2);
+			if(data.size()>0) {
+
+				int result = Integer.parseInt(data.get(0));
+				String datatypeInDatabase = data.get(1);
 
 				if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
-					if(datatype.equals(DATATYPE.MANUAL))
-						this.statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"';");
-
-				rs.close();
+					if(datatype.equals(DATATYPE.MANUAL)){
+						query = "UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE name = '"+DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+"';";
+						TransportersAPI.executeQuery(query, statement);
+					}
 				return result;
 			}
 			else {
@@ -1008,7 +999,6 @@ public class LoadTransportersData {
 				if(synonymOriginalID > 0)
 					return synonymOriginalID;
 			}
-			rs.close();
 		}
 
 		if(name.matches("\\d{4,9}")) {
@@ -1079,15 +1069,13 @@ public class LoadTransportersData {
 		//		}
 
 
-		this.statement.execute("INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
+		String query = "INSERT INTO metabolites (name,kegg_miriam,chebi_miriam,kegg_name,chebi_name,datatype,kegg_formula,chebi_formula) " +
 				"VALUES('"+DatabaseUtilities.databaseStrConverter(name,this.databaseType).toLowerCase()+"','"+kegg_miriam+"','"+chebi_miriam+"','"+
 				DatabaseUtilities.databaseStrConverter(kegg__name,this.databaseType)+"','"+
 				DatabaseUtilities.databaseStrConverter(chebi_name,this.databaseType)+
-				"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')");
-		ResultSet rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-		rs.next();
-		result =  rs.getInt(1);
-		rs.close();
+				"','"+datatype+"','"+kegg_formula+"','"+chebi_formula+"')";
+
+		result =  TransportersAPI.insertIntoMetabolites(query, statement);
 
 		//		if(kegg!=null)
 		//			this.keggMiriam.put(kegg, result);
@@ -1211,21 +1199,23 @@ public class LoadTransportersData {
 	 */
 	public static int existsSynonym(String name, DATATYPE datatype, DatabaseType databaseType, Statement statement) throws SQLException{
 
-		ResultSet rs = statement.executeQuery("SELECT metabolite_id, datatype, name FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(name,databaseType).toLowerCase()+"';");
+		String query ="SELECT metabolite_id, datatype, name FROM synonyms "
+				+ "WHERE name='"+DatabaseUtilities.databaseStrConverter(name,databaseType).toLowerCase()+"';";
+		
+		ArrayList<String> data = TransportersAPI.existsSynonym(query, statement);
 
-		if(rs.next()) {
+		if(data.size()>0) {
 
-			int result = rs.getInt(1);
-			String datatypeInDatabase = rs.getString(2);
-			rs.close();
+			int result = Integer.parseInt(data.get(0));
+			String datatypeInDatabase = data.get(1);
 
 			if(datatypeInDatabase.equals(DATATYPE.AUTO.toString()))
-				if(datatype.equals(DATATYPE.MANUAL))
-					statement.execute("UPDATE synonyms SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolite_id = "+result+";");
-
+				if(datatype.equals(DATATYPE.MANUAL)){
+					query = "UPDATE synonyms SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolite_id = "+result+";";
+					TransportersAPI.executeQuery(query, statement);
+				}
 			return result;
 		}
-
 		return -1;
 	}
 
@@ -1239,18 +1229,19 @@ public class LoadTransportersData {
 	 */
 	public static void insertSynonym(int metabolite_id, String name, DATATYPE datatype, DatabaseType databaseType, Statement statement) throws SQLException {
 
-		ResultSet rs = statement.executeQuery("SELECT * FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(name,databaseType).toLowerCase()+"';");
+		String query = "SELECT * FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(name,databaseType).toLowerCase()+"';";
+		ArrayList<String> data = TransportersAPI.existsSynonym(query, statement);
 
-		if(rs.next()) {
-
-			if(datatype.equals(DATATYPE.MANUAL))
-				statement.execute("UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolites.id="+metabolite_id);
+		if(data.size()>0) {
+			if(datatype.equals(DATATYPE.MANUAL)){
+				query = "UPDATE metabolites SET datatype='"+DATATYPE.MANUAL+"' WHERE metabolites.id="+metabolite_id+";";
+				TransportersAPI.executeQuery(query, statement);
+			}
 		}
 		else {
-
-			statement.execute("INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+metabolite_id+",'"+DatabaseUtilities.databaseStrConverter(name, databaseType).toLowerCase()+"','"+datatype+"')");
+			query = "INSERT INTO synonyms (metabolite_id, name, datatype) VALUES("+metabolite_id+",'"+DatabaseUtilities.databaseStrConverter(name, databaseType).toLowerCase()+"','"+datatype+"')";
+			TransportersAPI.executeQuery(query, statement);
 		}
-		rs.close();
 	}
 
 
@@ -1264,19 +1255,17 @@ public class LoadTransportersData {
 
 			int result = -1;
 
-			ResultSet rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE name='"+DatabaseUtilities.databaseStrConverter(metabolite,this.databaseType)+"';");
+			String query = "SELECT id FROM metabolites WHERE name='"+DatabaseUtilities.databaseStrConverter(metabolite,this.databaseType)+"';";
+			ArrayList<String> data = TransportersAPI.getMetaboliteIDs(query, statement);
 
-			if(rs.next()) {
-
-				result=rs.getInt(1);
+			if(data.size()>0) {
+				result=Integer.parseInt(data.get(0));
 			}
 			else {
 
-				rs = this.statement.executeQuery("SELECT metabolite_id FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(metabolite,this.databaseType)+"';");
-				rs.next();
-				result=rs.getInt(1);
+				query = "SELECT metabolite_id FROM synonyms WHERE name='"+DatabaseUtilities.databaseStrConverter(metabolite,this.databaseType)+"';";
+				result=TransportersAPI.getMetaboliteID(query, statement);
 			}
-
 			return result;
 		}
 		catch (SQLException e) {e.printStackTrace();}
@@ -1288,22 +1277,10 @@ public class LoadTransportersData {
 	 * @param uniprot_id
 	 * @return
 	 */
-	public Set<String> getTransportTypeID(String uniprot_id) {
+	public Set<String> getTransportTypeID(String uniprotID) {
 
 		try {
-
-			Set<String> result = new TreeSet<String>();
-
-			ResultSet rs = this.statement.executeQuery("SELECT transport_types.id FROM transport_types " +
-					"INNER JOIN transport_systems ON transport_types.id = transport_type_id " +
-					"INNER JOIN tc_numbers_has_transport_systems ON transport_systems.id = tc_numbers_has_transport_systems.transport_system_id " +
-					"INNER JOIN tcdb_registries ON (tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version)" +
-					"WHERE uniprot_id='"+uniprot_id+"' AND latest_version");
-
-			while(rs.next())
-				result.add(rs.getString(1));
-
-			return result;
+			return TransportersAPI.getTransportTypeID(uniprotID, statement);
 		}
 		catch (SQLException e) {e.printStackTrace();}
 		return null;
@@ -1313,21 +1290,10 @@ public class LoadTransportersData {
 	 * @param uniprot_id
 	 * @return
 	 */
-	public Set<String> getMetabolitesID(String uniprot_id){
-
-		Set<String> result = new TreeSet<String>();
+	public Set<String> getMetabolitesID(String uniprotID){
 
 		try {
-
-			ResultSet rs = this.statement.executeQuery("SELECT metabolite_id FROM transported_metabolites_directions " +
-					"INNER JOIN tc_numbers_has_transport_systems ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id " +
-					"INNER JOIN tcdb_registries ON (tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version)" +
-					"WHERE uniprot_id='"+uniprot_id+"' AND latest_version");
-
-			while(rs.next())
-				result.add(rs.getString(1));
-
-			return result;
+			return TransportersAPI.getMetabolitesID(uniprotID, statement);
 		}
 		catch (SQLException e) {e.printStackTrace();}
 		return null;
@@ -1337,22 +1303,11 @@ public class LoadTransportersData {
 	 * @param metabolites_id
 	 * @return
 	 */
-	public Set<String> getTransportTypesID(String metabolites_id){
-		Set<String> result = new TreeSet<String>();
+	public Set<String> getTransportTypesID(String metabolitesID){
+
 		try
 		{
-
-			ResultSet rs = this.statement.executeQuery("SELECT transport_type.id FROM transported_metabolites_direction " +
-					"INNER JOIN transport_system ON transport_system_id=transport_system.id " +
-					"INNER JOIN transport_type ON transport_type_id=transport_type.id " +
-					"WHERE metabolites_id='"+metabolites_id+"'");
-
-			while(rs.next())
-			{
-				result.add(rs.getString(1));
-			}
-
-			return result;
+			return TransportersAPI.getTransportTypesID(metabolitesID, statement);
 		}
 		catch (SQLException e) {e.printStackTrace();}
 		return null;
@@ -1369,48 +1324,42 @@ public class LoadTransportersData {
 
 		try {
 
-			for(int transport_system_id: transporterIds) {
+			for(int transportSystemID: transporterIds) {
 
-				ResultSet rs = this.statement.executeQuery("SELECT reversible FROM transport_systems WHERE id = "+transport_system_id);
-				rs.next();
-				boolean reversibility = rs.getBoolean(1);
-				rs.close();
+				boolean reversibility = TransportersAPI.getReversibility(transportSystemID, statement);
 
-				TransportSystemContainer ts = new TransportSystemContainer(transport_system_id, reversibility);
+				TransportSystemContainer ts = new TransportSystemContainer(transportSystemID, reversibility);
 				List<TransportMetaboliteDirectionStoichiometryContainer> metabolites_data= new ArrayList<TransportMetaboliteDirectionStoichiometryContainer>();
 				Map<String, Integer> metabolite_name_index = new HashMap<>();
 				int counter=0;
+				
+				ArrayList<String[]> data = TransportersAPI.getTmdscData(transportSystemID, statement);
+				String[] list;
 
-				rs = this.statement.executeQuery("SELECT metabolites.name, direction, stoichiometry, reversible, kegg_name, chebi_name, synonyms.name FROM transported_metabolites_directions " +
-						"INNER JOIN metabolites ON metabolites.id = transported_metabolites_directions.metabolite_id " +
-						"INNER JOIN synonyms ON metabolites.id = synonyms.metabolite_id " +
-						"INNER JOIN directions ON directions.id = direction_id " +
-						"INNER JOIN transport_systems ON transport_systems.id = transport_system_id " +
-						"WHERE transport_system_id ="+transport_system_id);
+				for(int i = 0; i < data.size(); i++){
+					list = data.get(i);
 
-				while(rs.next()) {
+					TransportMetaboliteDirectionStoichiometryContainer tmds = new TransportMetaboliteDirectionStoichiometryContainer(list[0]);
+					tmds.setDirection(list[1]);
+					tmds.setStoichiometry(Double.parseDouble(list[2]));
+					tmds.setReversible(Boolean.valueOf(list[3]));
+					tmds.setKegg_name(list[4]);
+					tmds.setChebi_name(list[5]);
 
-					TransportMetaboliteDirectionStoichiometryContainer tmds = new TransportMetaboliteDirectionStoichiometryContainer(rs.getString(1));
-					tmds.setDirection(rs.getString(2));
-					tmds.setStoichiometry(rs.getDouble(3));
-					tmds.setReversible(rs.getBoolean(4));
-					tmds.setKegg_name(rs.getString(5));
-					tmds.setChebi_name(rs.getString(6));
+					if(metabolite_name_index.containsKey(list[0])) {
 
-					if(metabolite_name_index.containsKey(rs.getString(1))) {
-
-						Set<String> synonyms = metabolites_data.get(metabolite_name_index.get(rs.getString(1))).getSynonyms();
-						synonyms.add(rs.getString(7));
-						metabolites_data.get(metabolite_name_index.get(rs.getString(1))).setSynonyms(synonyms);
+						Set<String> synonyms = metabolites_data.get(metabolite_name_index.get(list[0])).getSynonyms();
+						synonyms.add(list[6]);
+						metabolites_data.get(metabolite_name_index.get(list[0])).setSynonyms(synonyms);
 					}
 					else {
 
 						Set<String> synonyms = new HashSet<String>();
-						synonyms.add(rs.getString(7));
+						synonyms.add(list[6]);
 						tmds.setSynonyms(synonyms);
 						metabolites_data.add(counter, tmds);
 
-						metabolite_name_index.put(rs.getString(1), counter);
+						metabolite_name_index.put(list[0], counter);
 					}
 				}
 				ts.setMetabolites(metabolites_data);
@@ -1427,9 +1376,7 @@ public class LoadTransportersData {
 	 * @param metabolites_id
 	 * @return
 	 */
-	public Set<Integer> get_transporter_ids(String metabolites_name, int type_id) {
-
-		Set<Integer> result = new TreeSet<Integer>();
+	public Set<Integer> get_transporter_ids(String metabolitesName, int typeID) {
 
 		try {
 
@@ -1465,27 +1412,9 @@ public class LoadTransportersData {
 			//			while(rs.next())
 			//				result.add(rs.getInt(1));
 
-			metabolites_name = DatabaseUtilities.databaseStrConverter(metabolites_name,this.databaseType);
+			metabolitesName = DatabaseUtilities.databaseStrConverter(metabolitesName,this.databaseType);
 
-			ResultSet rs = this.statement.executeQuery("SELECT transport_systems.id FROM transport_systems " +
-					" INNER JOIN transported_metabolites_directions ON (transport_systems.id = transport_system_id ) " +
-					" INNER JOIN metabolites ON metabolites.id= transported_metabolites_directions.metabolite_id " +
-					" INNER JOIN synonyms ON transported_metabolites_directions.metabolite_id= synonyms.metabolite_id " +
-					" INNER JOIN directions on transported_metabolites_directions.direction_id=directions.id " +
-					" WHERE (" +
-					" UPPER(metabolites.name) = UPPER('"+metabolites_name+"') OR " +
-					" UPPER(synonyms.name) = UPPER('"+metabolites_name+"') OR " +
-					" UPPER(kegg_name) = UPPER('"+metabolites_name+"') OR " +
-					" UPPER(chebi_name) = UPPER('"+metabolites_name+"')" +
-					")" +
-					" AND direction <> 'reactant' " +
-					" AND direction <> 'product' " +
-					" AND transport_type_id = "+type_id );
-
-			while(rs.next())
-				result.add(rs.getInt(1));
-
-			return result;
+			return TransportersAPI.getTransporterIDs(metabolitesName, typeID, statement);
 		}
 		catch (SQLException e) {
 
@@ -1502,8 +1431,6 @@ public class LoadTransportersData {
 	public void loadMetabolitesOntology(String metabolite_chebi_id, int metabolite_id, Map<String, ChebiER> chebi_entity_map, int counter) {
 
 		try {
-
-			ResultSet rs;
 
 			this.local_database_id.put(metabolite_chebi_id, metabolite_id);
 
@@ -1538,18 +1465,17 @@ public class LoadTransportersData {
 								this.local_database_id.get(child) > 0 && this.local_database_id.get(child) != 0 &&
 								this.local_database_id.get(key) != this.local_database_id.get(child)) {
 
-							rs = this.statement.executeQuery("SELECT id FROM metabolites_ontology " +
+							String query = "SELECT id FROM metabolites_ontology " +
 									"WHERE metabolite_id="+local_database_id.get(key)+" AND " +
-									"child_id="+local_database_id.get(child)+"");
+									"child_id="+local_database_id.get(child)+"";
 
-							if(!rs.next()) {
+							String query2 = "SELECT id FROM metabolites_ontology "
+									+ "WHERE metabolite_id="+local_database_id.get(child)+" AND child_id="+local_database_id.get(key)+"";
 
-								//avoid loops
-								rs = this.statement.executeQuery("SELECT id FROM metabolites_ontology WHERE metabolite_id="+local_database_id.get(child)+" AND child_id="+local_database_id.get(key)+"");
-
-								if(!rs.next())
-									this.statement.execute("INSERT INTO metabolites_ontology (metabolite_id, child_id) VALUES("+local_database_id.get(key)+","+local_database_id.get(child)+")");
-							}
+							String query3 = "INSERT INTO metabolites_ontology (metabolite_id, child_id) "
+									+ "VALUES("+local_database_id.get(key)+","+local_database_id.get(child)+")";
+							
+							TransportersAPI.selectIdFromMetabolitesOntology(query, query2, query3, statement);
 						}
 					}
 				}
@@ -1580,11 +1506,13 @@ public class LoadTransportersData {
 	 */
 	private int getMetaboliteID(String metabolite_external_id, Statement statement) throws SQLException{
 
-		ResultSet rs = this.statement.executeQuery("SELECT id FROM metabolites WHERE chebi_miriam='"+ExternalRefSource.CHEBI.getMiriamCode(metabolite_external_id)+"'");
+		String query = "SELECT id FROM metabolites WHERE chebi_miriam='"+ExternalRefSource.CHEBI.getMiriamCode(metabolite_external_id)+"'";
 
-		if(rs.next()) {
+		int result = TransportersAPI.getMetaboliteID(query, statement);
+		
+		if(result != -1) {
 
-			return rs.getInt(1);
+			return result;
 		}
 		ChebiER child_entity = this.getChebiER(metabolite_external_id,0);
 
@@ -1695,20 +1623,15 @@ public class LoadTransportersData {
 
 		try {
 
-			int result;
+			int result = -1;
 
-			ResultSet rs = this.statement.executeQuery("SELECT id FROM general_equation WHERE equation='"+DatabaseUtilities.databaseStrConverter(equation,this.databaseType)+"'");
+			String query = "SELECT id FROM general_equation WHERE equation='"+DatabaseUtilities.databaseStrConverter(equation,this.databaseType)+"'";
+			result = TransportersAPI.loadGeneralEquation(result, query, statement);
+			
+			if (result == -1) {
 
-			if(rs.next()) {
-
-				result=rs.getInt(1);
-			}
-			else {
-
-				this.statement.execute("INSERT INTO general_equation (equation) VALUES('"+DatabaseUtilities.databaseStrConverter(equation,this.databaseType)+"')");
-				rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-				rs.next();
-				result=rs.getInt(1);
+				query ="INSERT INTO general_equation (equation) VALUES('"+DatabaseUtilities.databaseStrConverter(equation,this.databaseType)+"')";
+				result = TransportersAPI.insertIntoGeneralEquation(query, statement);
 			}
 
 			return result;
@@ -1727,7 +1650,8 @@ public class LoadTransportersData {
 
 		try {
 
-			this.statement.execute("UPDATE tcdb_registries SET status='"+DatabaseProgressStatus.PROCESSED+"' WHERE uniprot_id = '" +uniprot_id+"'");
+			String query = "UPDATE tcdb_registries SET status='"+DatabaseProgressStatus.PROCESSED+"' WHERE uniprot_id = '" +uniprot_id+"'";
+			TransportersAPI.executeQuery(query, statement);
 		}
 		catch (SQLException e) {
 
@@ -1742,7 +1666,8 @@ public class LoadTransportersData {
 
 		try {
 
-			this.statement.execute("UPDATE genes SET status='"+DatabaseProgressStatus.PROCESSED+"' WHERE locus_tag = '" +locusTag+"'");
+			String query = "UPDATE genes SET status='"+DatabaseProgressStatus.PROCESSED+"' WHERE locus_tag = '" +locusTag+"'";
+			TransportersAPI.executeQuery(query, statement);
 		}
 		catch (SQLException e) {
 
@@ -1757,19 +1682,11 @@ public class LoadTransportersData {
 
 		Set<String> result = new HashSet<String>();
 
-		ResultSet rs;
 		try {
-
 			this.deleteProcessingGenes();
 
-			rs = this.statement.executeQuery("SELECT locus_tag FROM genes WHERE status='"+DatabaseProgressStatus.PROCESSED+"'");
-
-			while(rs.next()) {
-
-				result.add(rs.getString(1));
-			}
-
-			rs.close();
+			String query = "SELECT locus_tag FROM genes WHERE status='"+DatabaseProgressStatus.PROCESSED+"'";
+			result = TransportersAPI.getLoadedGenes(query, statement);
 		}
 		catch (SQLException e) {
 
@@ -1784,48 +1701,28 @@ public class LoadTransportersData {
 	 */
 	public Set<String> getLoadedTransporters() throws SQLException {
 
-		Set<String> result = new HashSet<String>();
-
-		ResultSet rs;
-
 		this.deleteProcessingRegistries();
 
-		rs = this.statement.executeQuery("SELECT uniprot_id, tc_number  FROM tcdb_registries " +
-				"WHERE status='"+DatabaseProgressStatus.PROCESSED+"'");
-
-		while(rs.next())
-			result.add(rs.getString(1)+"__"+rs.getString(2));
-
-		rs.close();
-		return result;
+		String query = "SELECT uniprot_id, tc_number  FROM tcdb_registries " +
+				"WHERE status='"+DatabaseProgressStatus.PROCESSED+"'";
+		
+		return TransportersAPI.getLoadedTransporters(query, statement);
 	}
 
 	/**
 	 * @param genomeID
 	 * @throws SQLException 
 	 */
-	public int createNewProject(int genome_id) throws SQLException {
+	public int createNewProject(int genomeID) throws SQLException {
 
 		int version = 1;
-		ResultSet rs = this.statement.executeQuery("SELECT id, version FROM projects WHERE latest_version AND organism_id="+genome_id+";");
-
-		if(rs.next()) {
-
-			version = rs.getInt(2)+1;
-			this.statement.execute("UPDATE projects SET latest_version=false WHERE id= "+rs.getString(1));
-		}
-		rs.close();
+		version = TransportersAPI.updateProjectVersion(version, genomeID, statement);
 
 		java.sql.Date sqlToday = new java.sql.Date((new java.util.Date()).getTime());
 
-		this.statement.execute("INSERT INTO projects (organism_id, latest_version, date, version) VALUES ("+genome_id+", true, '"+sqlToday+"', "+version+")");
-		rs = this.statement.executeQuery("SELECT LAST_INSERT_ID()");
-		rs.next();
-
-		int projectID = rs.getInt(1);
-		rs.close();
-
-		return projectID;
+		String query = "INSERT INTO projects (organism_id, latest_version, date, version) VALUES ("+genomeID+", true, '"+sqlToday+"', "+version+")";
+		
+		return TransportersAPI.insertIntoProjects(query, statement);
 	}
 
 	/**
@@ -1837,15 +1734,18 @@ public class LoadTransportersData {
 
 		if(version <0) {
 
-			this.statement.execute("DELETE FROM projects WHERE id = "+project_id);
+			String query = "DELETE FROM projects WHERE id = "+project_id;
+			TransportersAPI.executeQuery(query, statement);
 		}
 		else if(version == 0) {
 
-			this.statement.execute("DELETE FROM projects WHERE id = "+project_id+" AND latest_version");
+			String query = "DELETE FROM projects WHERE id = "+project_id+" AND latest_version";
+			TransportersAPI.executeQuery(query, statement);
 		}
 		else {
 
-			this.statement.execute("DELETE FROM projects WHERE id = "+project_id+ " AND version = "+version);
+			String query = "DELETE FROM projects WHERE id = "+project_id+ " AND version = "+version;
+			TransportersAPI.executeQuery(query, statement);
 		}
 	}
 
@@ -1856,7 +1756,8 @@ public class LoadTransportersData {
 	 */
 	public void deleteGenesFromProject(int project_id) throws SQLException {
 
-		this.statement.execute("DELETE FROM genes WHERE project_id = "+project_id);
+		String query = "DELETE FROM genes WHERE project_id = "+project_id;
+		TransportersAPI.executeQuery(query, statement);
 	}
 
 
@@ -1866,56 +1767,44 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws Exception
 	 */
-	public TracebackAnnotations tracebackReactionAnnotation(TransportReactionCI reaction, int project_id) throws Exception {
+	public TracebackAnnotations tracebackReactionAnnotation(TransportReactionCI reaction, int projectID) throws Exception {
 
 		Map<String, Map<String, Double>> geneProtein = new HashMap<String, Map<String, Double>>();
 		Map<String, String[]> protein_tcnumber = new HashMap<String, String[]>();
 		Map<String, Set<String>> protein_metabolites = new HashMap<String, Set<String>>();
 
-		for(String locus_tag : reaction.getGenesIDs()) {
+		for(String locusTag : reaction.getGenesIDs()) {
 
-			ResultSet rs;
 			try {
 
-				String query = "SELECT genes_has_tcdb_registries.uniprot_id, tc_numbers_has_transport_systems.tc_number, metabolites.name, similarity, equation "+
-						"FROM genes "+
-						"INNER JOIN genes_has_tcdb_registries ON gene_id = genes.id "+
-						"INNER JOIN tcdb_registries ON genes_has_tcdb_registries.uniprot_id = tcdb_registries.uniprot_id AND genes_has_tcdb_registries.version = tcdb_registries.version "+
-						"INNER JOIN tc_numbers_has_transport_systems ON tcdb_registries.tc_number = tc_numbers_has_transport_systems.tc_number AND tcdb_registries.tc_version = tc_numbers_has_transport_systems.tc_version "+
-						"INNER JOIN tc_numbers ON tcdb_registries.tc_number = tc_numbers.tc_number AND tcdb_registries.tc_version = tc_numbers.tc_version "+
-						"INNER JOIN general_equation ON tc_numbers.general_equation_id = general_equation.id "+
-						"INNER JOIN transported_metabolites_directions ON transported_metabolites_directions.transport_system_id = tc_numbers_has_transport_systems.transport_system_id "+
-						"INNER JOIN metabolites ON metabolite_id = metabolites.id "+
-						"WHERE project_id = "+project_id+" AND locus_tag = '"+locus_tag+"';";
+				ArrayList<String[]> data = TransportersAPI.tracebackReactionAnnotation(projectID, locusTag, statement);
+				String[] list;
 
-
-				rs = this.statement.executeQuery(query);
-
-				while(rs.next()) {
+				for(int i = 0; i<data.size(); i++){
+					list = data.get(i);
 
 					Map<String, Double> proteins = new HashMap<String, Double>();
-					if(geneProtein.containsKey(locus_tag)) {
+					if(geneProtein.containsKey(locusTag)) {
 
-						proteins = geneProtein.get(locus_tag);
+						proteins = geneProtein.get(locusTag);
 					}
-					proteins.put(rs.getString(1), rs.getDouble(4));
+					proteins.put(list[0], Double.parseDouble(list[3]));
 
-					geneProtein.put(locus_tag, proteins);
+					geneProtein.put(locusTag, proteins);
 
-					if(!protein_tcnumber.containsKey(rs.getString(1))) {
+					if(!protein_tcnumber.containsKey(list[0])) {
 
-						protein_tcnumber.put(rs.getString(1), new String[] {rs.getString(2), rs.getString(5)});
+						protein_tcnumber.put(list[0], new String[] {list[1], list[4]});
 					}
 
 					Set<String> metabolites = new HashSet<String>();
-					if(protein_metabolites.containsKey(rs.getString(1))) {
+					if(protein_metabolites.containsKey(list[0])) {
 
-						metabolites = protein_metabolites.get(rs.getString(1));
+						metabolites = protein_metabolites.get(list[0]);
 					}
-					metabolites.add(rs.getString(3));
-					protein_metabolites.put(rs.getString(1), metabolites);
+					metabolites.add(list[2]);
+					protein_metabolites.put(list[0], metabolites);
 				}
-				rs.close();
 
 			} catch (SQLException e) {
 
@@ -1952,23 +1841,18 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException 
 	 */
-	public int getProjectID(int genome_id) throws SQLException {
+	public int getProjectID(int genomeID) throws SQLException {
 
-		int project_id;
+		int projectID = -1;
 
-		ResultSet rs = this.statement.executeQuery("SELECT id FROM projects WHERE latest_version AND organism_id="+genome_id+";");
+		projectID = TransportersAPI.getProjectID(projectID, genomeID, statement);
+		
+		if(projectID == -1) {
 
-		if(rs.next()) {
-
-			project_id = rs.getInt(1);
+			projectID = this.createNewProject(genomeID);			
 		}
-		else {
 
-			project_id = this.createNewProject(genome_id);			
-		}
-		rs.close();
-
-		return project_id;
+		return projectID;
 	}
 
 	/**
@@ -1976,20 +1860,9 @@ public class LoadTransportersData {
 	 * @return
 	 * @throws SQLException 
 	 */
-	public Set<Integer> getAllProjectIDs(int genome_id) throws SQLException {
+	public Set<Integer> getAllProjectIDs(int genomeID) throws SQLException {
 
-		Set<Integer> project_ids = new TreeSet<Integer>();
-
-		ResultSet rs = this.statement.executeQuery("SELECT id FROM projects WHERE organism_id="+genome_id+";");
-
-		while(rs.next()) {
-
-			project_ids.add(rs.getInt(1));
-		}
-
-		rs.close();
-
-		return project_ids;
+		return TransportersAPI.getAllProjectIDs(genomeID, statement);
 	}
 
 
@@ -1997,22 +1870,22 @@ public class LoadTransportersData {
 	 * @param gene_id
 	 * @return
 	 */
-	public boolean geneIsNotProcessed(String gene_id) {
+	public boolean geneIsNotProcessed(String geneID) {
 
 		boolean result = true;
 
 		try {
 
-			ResultSet rs = this.statement.executeQuery("SELECT status FROM genes WHERE id = "+gene_id+";");
+			String status = TransportersAPI.getGeneStatus(geneID, statement);
 
-			if(rs.next()) {
+			if(!status.equals("")) {
 
-				if(rs.getString(1).equalsIgnoreCase(DatabaseProgressStatus.PROCESSING.toString())) {
-
+				if(status.equalsIgnoreCase(DatabaseProgressStatus.PROCESSING.toString())) {
+					
+					//probably something missing here
 
 				}
 				result = true;
-				rs.close();
 			}
 			else {
 
@@ -2033,8 +1906,8 @@ public class LoadTransportersData {
 	private void deleteProcessingGenes() {
 
 		try {
-
-			this.statement.execute("DELETE FROM genes WHERE status='"+DatabaseProgressStatus.PROCESSING+"'");
+			String query = "DELETE FROM genes WHERE status='"+DatabaseProgressStatus.PROCESSING+"'";
+			TransportersAPI.executeQuery(query, statement);
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -2048,7 +1921,8 @@ public class LoadTransportersData {
 
 		try {
 
-			this.statement.execute("DELETE FROM tcdb_registries WHERE status='"+DatabaseProgressStatus.PROCESSING+"'");
+			String query = "DELETE FROM tcdb_registries WHERE status='"+DatabaseProgressStatus.PROCESSING+"'";
+			TransportersAPI.executeQuery(query, statement);
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -2060,32 +1934,30 @@ public class LoadTransportersData {
 		this.genes_uniprot = new HashMap<String, Set<String>>();
 		this.uniprot_latest_version = new HashMap<String, Integer>();
 
-		ResultSet rs;
-
 		try {
 
-			rs = this.statement.executeQuery("SELECT gene_id, uniprot_id FROM genes_has_tcdb_registries;");
+			ArrayList<String[]> data = TransportersAPI.selectGeneIdAndUniprotId(statement);
 
-			while(rs.next()) {
-
+			for(int i = 0; i<data.size(); i++){
+				String[] list = data.get(i);
+				
 				Set<String> uni = new HashSet<String>();
 
-				if(this.genes_uniprot.containsKey(rs.getString(1))) {
+				if(this.genes_uniprot.containsKey(list[0])) {
 
-					uni = this.genes_uniprot.get(rs.getString(1));
+					uni = this.genes_uniprot.get(list[0]);
 				}
 
-				uni.add(rs.getString(2));
+				uni.add(list[1]);
 
-				this.genes_uniprot.put(rs.getString(1), uni);
+				this.genes_uniprot.put(list[0], uni);
 			}
 
-			rs = this.statement.executeQuery("SELECT uniprot_id, version FROM tcdb_registries WHERE latest_version;");
-
-
-			while(rs.next()) {
-
-				this.uniprot_latest_version.put(rs.getString(1).toUpperCase(), rs.getInt(2));
+			data = TransportersAPI.getUniprotVersion(statement);
+			
+			for(int i = 0; i<data.size(); i++){
+				String[] list = data.get(i);
+				this.uniprot_latest_version.put(list[0].toUpperCase(), Integer.parseInt(list[1]));
 			}
 
 
@@ -2104,19 +1976,16 @@ public class LoadTransportersData {
 
 		Map<String, TaxonomyContainer> result = new TreeMap<String, TaxonomyContainer>();
 
-		ResultSet rs = this.statement.executeQuery("SELECT uniprot_id, organism, taxonomy FROM tcdb_registries " +
-				" INNER JOIN tc_numbers ON (tcdb_registries.tc_number = tc_numbers.tc_number AND tcdb_registries.tc_version = tc_numbers.tc_version)" +
-				" INNER JOIN taxonomy_data ON (taxonomy_data.id = taxonomy_data_id)" +
-				" WHERE latest_version;");
+		ArrayList<String[]> table = TransportersAPI.getOrganismsTaxonomyScore(statement);
 
+		for(int i = 0; i<table.size(); i++){
+			String[] data = table.get(i);
 
-		while (rs.next()) {
-
-			TaxonomyContainer container = new TaxonomyContainer(rs.getString(2));
+			TaxonomyContainer container = new TaxonomyContainer(data[1]);
 
 			List<NcbiTaxon> list = new ArrayList<NcbiTaxon>();
 
-			String taxonomy = rs.getString(3).replace("[", "").replace("]", "");
+			String taxonomy = data[2].replace("[", "").replace("]", "");
 
 			StringTokenizer st = new StringTokenizer(taxonomy,",");
 
@@ -2127,7 +1996,7 @@ public class LoadTransportersData {
 			}
 
 			container.setTaxonomy(list);
-			result.put(rs.getString(1), container);
+			result.put(data[0], container);
 		}
 		return result;
 	}
