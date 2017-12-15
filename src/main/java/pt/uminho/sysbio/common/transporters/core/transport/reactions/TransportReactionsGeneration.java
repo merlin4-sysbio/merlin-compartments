@@ -487,7 +487,7 @@ public class TransportReactionsGeneration extends Observable {
 				notifyObservers();
 			}
 
-			String filePath = FileUtils.getWorkspaceFolderPath(databaseName);
+			String filePath = FileUtils.getWorkspaceTaxonomyTriageFolderPath(databaseName, taxonomyID);
 			this.metabolitesToBeVerified.removeAll(this.metabolitesNotAnnotated);
 			File fileOut = new File(filePath+"notAnnotated.txt");
 			fileOut.createNewFile();
@@ -501,7 +501,7 @@ public class TransportReactionsGeneration extends Observable {
 			out.close();
 			fstream.close();
 
-			fileOut = new File(filePath+"/verify.txt");
+			fileOut = new File(filePath+"verify.txt");
 			fstream = new FileWriter(fileOut);
 			out = new BufferedWriter(fstream);
 
