@@ -23,7 +23,7 @@ public class ProcessCompartments {
 	private STAIN stain;
 	private boolean hasCellWall=false;
 	private String interiorCompartment;
-	private Set<String> ignoreCompartmentsID;
+	private Set<Integer> ignoreCompartmentsID;
 	private boolean processCompartmentsInitiated = false;
 
 	/**
@@ -57,7 +57,7 @@ public class ProcessCompartments {
 
 		if(!this.isProcessCompartmentsInitiated()) {
 			
-			this.ignoreCompartmentsID = new HashSet<String>();
+			this.ignoreCompartmentsID = new HashSet<>();
 			this.stain = STAIN.gram_positive;
 
 			for(String compartment : existingCompartments) {
@@ -221,7 +221,7 @@ public class ProcessCompartments {
 	 * @return
 	 * @throws Exception 
 	 */
-	public Set<String> parseCompartments(List<String> list, Map<String,String> compartmentsAbb_ids, Map<String, String> idCompartmentAbbIdMap, List<String> ignoreList) throws Exception {
+	public Set<Integer> parseCompartments(List<Integer> list, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap, List<String> ignoreList) throws Exception {
 
 		return ProcessCompartments.parseCompartments(list, compartmentsAbb_ids, idCompartmentAbbIdMap, ignoreList, stain, hasCellWall, ignoreCompartmentsID, interiorCompartment, this.isProcessCompartmentsInitiated());
 	}
@@ -241,14 +241,14 @@ public class ProcessCompartments {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Set<String> parseCompartments(List<String> list, Map<String,String> compartmentsAbb_ids, Map<String, String> idCompartmentAbbIdMap, List<String> ignoreList,
-			STAIN stain, boolean hasCellWall, Set<String> ignoreCompartmentsID, String interiorCompartment, boolean isProcessCompartmentsInitiated) throws Exception {
+	public static Set<Integer> parseCompartments(List<Integer> list, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap, List<String> ignoreList,
+			STAIN stain, boolean hasCellWall, Set<Integer> ignoreCompartmentsID, String interiorCompartment, boolean isProcessCompartmentsInitiated) throws Exception {
 
 		if (isProcessCompartmentsInitiated) {
 
-			Set<String> compartments = new HashSet<String>();
+			Set<Integer> compartments = new HashSet<>();
 
-			for(String compartment: list) {
+			for(int compartment: list) {
 
 				String abb = compartmentsAbb_ids.get(compartment).toLowerCase();
 				
@@ -367,14 +367,14 @@ public class ProcessCompartments {
 	/**
 	 * @return the ignoreCompartmentsID
 	 */
-	public Set<String> getIgnoreCompartmentsID() {
+	public Set<Integer> getIgnoreCompartmentsID() {
 		return ignoreCompartmentsID;
 	}
 
 	/**
 	 * @param ignoreCompartmentsID the ignoreCompartmentsID to set
 	 */
-	public void setIgnoreCompartmentsID(Set<String> ignoreCompartmentsID) {
+	public void setIgnoreCompartmentsID(Set<Integer> ignoreCompartmentsID) {
 		this.ignoreCompartmentsID = ignoreCompartmentsID;
 	}
 
