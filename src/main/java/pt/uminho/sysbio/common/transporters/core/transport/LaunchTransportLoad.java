@@ -87,7 +87,7 @@ public class LaunchTransportLoad extends Observable implements Observer {
 			
 			if(outputTextReactionsfileName!=null) {
 				
-				populateTransportContainer.creatReactionsFiles(transportContainer,path+dba.get_database_name()+"__"+outputTextReactionsfileName);
+				populateTransportContainer.creatReactionsFiles(transportContainer,path+"__"+outputTextReactionsfileName);
 			}
 			if(outputObjectFileName!=null) {
 				

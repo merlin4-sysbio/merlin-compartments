@@ -643,7 +643,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 	public void	creatReactionsFiles(TransportContainer transportContainer, String path) throws IOException {
 
 		//new File(path+"_transport_reactions.log");
-		FileWriter fstream = new FileWriter(path+"_transport_reactions_unvalidated.log");  
+		FileWriter fstream = new FileWriter(path+"transport_reactions_unvalidated.log");  
 		BufferedWriter out = new BufferedWriter(fstream);
 
 		int reactionsCounter=0;
