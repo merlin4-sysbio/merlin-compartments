@@ -774,9 +774,6 @@ public class LoadTransportersData {
 		String kegg_miriam ="";
 		if(kegg!=null) {
 
-			System.out.println("id "+kegg+"|");
-			System.out.println("name "+kegg__name+"|");
-
 			kegg_miriam = kegg;
 			kegg__name=kegg_name;
 			kegg_formula = this.getKeggFormula(ExternalRefSource.KEGG_CPD.getSourceId(kegg), 0);
