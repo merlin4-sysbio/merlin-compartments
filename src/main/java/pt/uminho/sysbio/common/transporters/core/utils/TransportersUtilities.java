@@ -216,6 +216,9 @@ public class TransportersUtilities {
 
 		if(abbreviation.equals("outme") || abbreviation.equals("outmem"))
 			return "outer_membrane";
+		
+		if(abbreviation.equals("innmem"))
+			return "inner_membrane";
 
 		if(abbreviation.equals("cytop"))
 			return "cytoplasmic";
@@ -332,8 +335,11 @@ public class TransportersUtilities {
 		if(compartmentID.equals("periplasmic"))
 			return "perip";
 
-		if(compartmentID.equals("outer_membrane"))
+		if(compartmentID.equals("outer_membrane") || compartmentID.equals("outer membrane"))
 			return "outmem";
+		
+		if(compartmentID.equals("inner_membrane") || compartmentID.equals("inner membrane"))
+			return "innmem";
 
 		if(compartmentID.equals("cytoplasm"))
 			return "cytop";
