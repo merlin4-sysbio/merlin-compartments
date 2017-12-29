@@ -16,14 +16,6 @@ import org.jsoup.nodes.Document;
  * @author Oscar Dias
  *
  */
-/**
- * @author davidelagoa
- *
- */
-/**
- * @author davidelagoa
- *
- */
 public class ReadLocTree implements CompartmentsInterface {
 
 	private static int normalization=100;
@@ -87,14 +79,73 @@ public class ReadLocTree implements CompartmentsInterface {
 		
 		LocTreeResult locTR = null;
 		
+		boolean oldParser = false;
 		
-
-		while ((inputLine = in.readLine()) != null && !this.cancel.get() && !inputLine.contains("Mouse click")) {
-			
+		if((inputLine = in.readLine()) !=null){
 			Document doc = Jsoup.parse(inputLine);
 			String str = doc.body().text();
 			
-			if (!flag){							//reads the order of the information
+			if(str.contains("#")){
+				oldParser = true;
+				protID = 0;
+				scr = 1;
+				loc = 2;
+				geneOnto = 3;
+			}
+		}
+		
+		System.out.println("parser " + oldParser);
+	
+		while ((inputLine = in.readLine()) != null && !this.cancel.get() && !inputLine.contains("Mouse click")) {
+			
+			String str = inputLine;
+			
+			if(!oldParser){
+				Document doc = Jsoup.parse(inputLine);
+				str = doc.body().text();
+			}
+			
+			if(oldParser && !str.contains("#")){
+				
+				String[] locT = str.split("\\t");
+				
+				System.out.println("tamanho " + locT.length);
+				
+				String localizationString = locT[loc];
+
+				if(!typePlant) {
+
+					if (localizationString.equals("chloroplast") || 
+							localizationString.equals("plastid"))
+						localizationString = "mitochondrion";
+
+					if (localizationString.equals("chloroplast membrane") || 
+							localizationString.equals("plastid membrane"))
+						localizationString = "mitochondrion membrane";
+				}
+
+				if(compartmentLists.containsKey(locT[protID])) {
+
+					locTR = (LocTreeResult) compartmentLists.get(locT[protID]);
+					locTR.addCompartment(localizationString, new Double(locT[scr]));
+				}
+				else {
+
+					locTR = new LocTreeResult(locT[protID], new Double(locT[scr]), localizationString, locT[geneOnto]);
+
+
+					if(acc>0 && annType>0) {
+
+						locTR.setAnnotationType(locT[annType]);
+						locTR.setExpectedAccuracy(locT[acc]);
+					}
+				}
+
+				compartmentLists.put(locT[protID], locTR);
+				
+			}
+			
+			if (!flag && !oldParser){							//reads the order of the information
 				if (str.contains("Details")){
 					
 					if (!header)
@@ -152,8 +203,15 @@ public class ReadLocTree implements CompartmentsInterface {
 						
 					if(count == geneOnto) 
 						geneOntologyTerms = str;
-					if(count == annType) 
-						annotationType = str;
+					if(count == annType){
+						if(str.contains(";")){
+							geneOntologyTerms.concat(str);
+							count --;
+						}
+						else{
+							annotationType = str;
+						}
+					}
 					
 					count ++;
 				
@@ -183,7 +241,14 @@ public class ReadLocTree implements CompartmentsInterface {
 				}
 			}
 			
-		}
+			
+				
+				
+				
+				
+				
+				
+			}
 
 // ###############################################	old parser
 	
