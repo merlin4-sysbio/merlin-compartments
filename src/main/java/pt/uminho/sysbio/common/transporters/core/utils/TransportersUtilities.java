@@ -290,7 +290,6 @@ public class TransportersUtilities {
 		}
 		else {
 
-			System.out.println("returning\t"+ abbreviation);
 			return abbreviation;
 
 		}
@@ -402,9 +401,7 @@ public class TransportersUtilities {
 		//		}
 		else {
 
-			System.out.println("returning\t"+ compartmentID);
 			return compartmentID;
-
 		}
 	}
 
