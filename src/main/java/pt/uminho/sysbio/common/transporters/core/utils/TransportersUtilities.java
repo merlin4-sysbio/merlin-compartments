@@ -121,12 +121,9 @@ public class TransportersUtilities {
 		for(String gene:geneComparments.keySet()){
 
 			Set<String> compSet = new HashSet<String>(geneComparments.get(gene).getSecondary_location().keySet());
-			System.out.print(gene + "\tsec: " + compSet);
 
 			GeneCompartments geneCompartment = geneComparments.get(gene); 
 			compSet.add(geneCompartment.getPrimary_location());
-
-			System.out.println("\t"+geneCompartment.getPrimary_location()+"\tall: " +compSet);
 
 			for(String compartment: compSet){
 
@@ -293,7 +290,6 @@ public class TransportersUtilities {
 		}
 		else {
 
-			System.out.println("returning\t"+ abbreviation);
 			return abbreviation;
 
 		}
@@ -405,9 +401,7 @@ public class TransportersUtilities {
 		//		}
 		else {
 
-			System.out.println("returning\t"+ compartmentID);
 			return compartmentID;
-
 		}
 	}
 
