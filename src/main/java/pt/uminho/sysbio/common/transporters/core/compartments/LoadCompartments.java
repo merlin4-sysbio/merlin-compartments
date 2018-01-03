@@ -36,11 +36,15 @@ public class LoadCompartments {
 				
 				if(nComp>=0) {
 					
-					String name = compartment.getA();
+					String abb = compartment.getA();
 					
-					String abbreviation = TransportersUtilities.parseAbbreviation(compartment.getA());
+					System.out.println("abb " + abb);
 					
-					TransportersAPI.insertIntoCompartments(idLT, name, abbreviation, nComp, statement);
+					String name = TransportersUtilities.parseAbbreviation(compartment.getA());
+					
+					System.out.println("NAME "+ name);
+					
+					TransportersAPI.insertIntoCompartments(idLT, name, abb, nComp, statement);
 				}
 			}
 		} 
