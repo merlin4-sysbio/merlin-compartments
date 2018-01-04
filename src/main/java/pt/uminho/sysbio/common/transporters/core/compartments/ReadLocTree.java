@@ -71,7 +71,7 @@ public class ReadLocTree implements CompartmentsInterface {
 		
 		String proteinID = null, localization = null, geneOntologyTerms = null, accuracy = null, annotationType = null;
 		
-		double score = 0.0;
+		String score = null;
 		
 		int count = 0;
 
@@ -94,8 +94,6 @@ public class ReadLocTree implements CompartmentsInterface {
 			}
 		}
 		
-		System.out.println("parser " + oldParser);
-	
 		while ((inputLine = in.readLine()) != null && !this.cancel.get() && !inputLine.contains("Mouse click")) {
 			
 			String str = inputLine;
@@ -105,11 +103,11 @@ public class ReadLocTree implements CompartmentsInterface {
 				str = doc.body().text();
 			}
 			
+//			System.out.println(str);
+			
 			if(oldParser && !str.contains("#")){
 				
 				String[] locT = str.split("\\t");
-				
-				System.out.println("tamanho " + locT.length);
 				
 				String localizationString = locT[loc];
 
@@ -146,6 +144,7 @@ public class ReadLocTree implements CompartmentsInterface {
 			}
 			
 			if (!flag && !oldParser){							//reads the order of the information
+				
 				if (str.contains("Details")){
 					
 					if (!header)
@@ -174,19 +173,36 @@ public class ReadLocTree implements CompartmentsInterface {
 					annType = count;
 			
 				count++;
+				
+//				System.out.println(protID);
+//				System.out.println(scr);
+//				System.out.println(acc);
+//				System.out.println(loc);
+//				System.out.println(geneOnto);
+//				System.out.println(annType);
 			}
 			
 			if (flag){
 				
+//				System.out.println();
+//				System.out.println("NOVA");				
+//				System.out.println(str);
+//				System.out.println(!str.contains("Details"));
+//				System.out.println(!str.equals(""));
+//				System.out.println(count);
+				
 				if(!str.contains("Details") && str != null && !str.equals("")){
 					
-					if(count == protID) 
+					if(count == protID)
 						proteinID = str;
+					
 					if(count == scr) 
-						score = Double.parseDouble(str);
-					if(count == acc) 
+						score = str;
+//						score = Double.parseDouble(str);
+					
+					else if(count == acc) 
 						accuracy = str;
-					if(count == loc){
+					else if(count == loc){
 						localization = str;
 						
 						if(!typePlant) {
@@ -201,9 +217,9 @@ public class ReadLocTree implements CompartmentsInterface {
 						}
 					}
 						
-					if(count == geneOnto) 
+					else if(count == geneOnto) 
 						geneOntologyTerms = str;
-					if(count == annType){
+					else if(count == annType){
 						if(str.contains(";")){
 							geneOntologyTerms.concat(str);
 							count --;
@@ -217,18 +233,30 @@ public class ReadLocTree implements CompartmentsInterface {
 				
 					if (count == 7){
 						
-						if(compartmentLists.containsKey(proteinID)) {
-							locTR = (LocTreeResult) compartmentLists.get(proteinID);
-							locTR.addCompartment(localization, score);
+						if(!proteinID.isEmpty() && !score.isEmpty() && !localization.isEmpty() 
+								&& !annotationType.isEmpty() && !geneOntologyTerms.isEmpty() && !accuracy.isEmpty()){
+
+
+							try {
+
+								if(compartmentLists.containsKey(proteinID)) {
+									locTR = (LocTreeResult) compartmentLists.get(proteinID);
+									locTR.addCompartment(localization, Double.parseDouble(score));
+								}
+								else {
+
+									locTR = new LocTreeResult(proteinID, Double.parseDouble(score), localization, geneOntologyTerms);
+									locTR.setAnnotationType(annotationType);
+									locTR.setExpectedAccuracy(accuracy);
+								}
+
+								compartmentLists.put(proteinID, locTR);
+							} catch (Exception e) {
+
+							}
 						}
-						else {
-	
-							locTR = new LocTreeResult(proteinID, score, localization, geneOntologyTerms);
-							locTR.setAnnotationType(annotationType);
-							locTR.setExpectedAccuracy(accuracy);
-						}
-					
-						compartmentLists.put(proteinID, locTR);
+						
+						
 						locTR = null;
 						count = 1;
 						proteinID = null;
@@ -240,15 +268,7 @@ public class ReadLocTree implements CompartmentsInterface {
 					}
 				}
 			}
-			
-			
-				
-				
-				
-				
-				
-				
-			}
+		}
 
 // ###############################################	old parser
 	
@@ -315,9 +335,6 @@ public class ReadLocTree implements CompartmentsInterface {
 		
 		return null;
 	}
-
-	
-	
 
 	/**
 	 * 
