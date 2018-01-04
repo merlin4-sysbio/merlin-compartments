@@ -121,12 +121,9 @@ public class TransportersUtilities {
 		for(String gene:geneComparments.keySet()){
 
 			Set<String> compSet = new HashSet<String>(geneComparments.get(gene).getSecondary_location().keySet());
-			System.out.print(gene + "\tsec: " + compSet);
 
 			GeneCompartments geneCompartment = geneComparments.get(gene); 
 			compSet.add(geneCompartment.getPrimary_location());
-
-			System.out.println("\t"+geneCompartment.getPrimary_location()+"\tall: " +compSet);
 
 			for(String compartment: compSet){
 
@@ -216,6 +213,9 @@ public class TransportersUtilities {
 
 		if(abbreviation.equals("outme") || abbreviation.equals("outmem"))
 			return "outer_membrane";
+		
+		if(abbreviation.equals("innmem"))
+			return "inner_membrane";
 
 		if(abbreviation.equals("cytop"))
 			return "cytoplasmic";
@@ -290,7 +290,6 @@ public class TransportersUtilities {
 		}
 		else {
 
-			System.out.println("returning\t"+ abbreviation);
 			return abbreviation;
 
 		}
@@ -332,8 +331,11 @@ public class TransportersUtilities {
 		if(compartmentID.equals("periplasmic"))
 			return "perip";
 
-		if(compartmentID.equals("outer_membrane"))
+		if(compartmentID.equals("outer_membrane") || compartmentID.equals("outer membrane"))
 			return "outmem";
+		
+		if(compartmentID.equals("inner_membrane") || compartmentID.equals("inner membrane"))
+			return "innmem";
 
 		if(compartmentID.equals("cytoplasm"))
 			return "cytop";
@@ -399,9 +401,7 @@ public class TransportersUtilities {
 		//		}
 		else {
 
-			System.out.println("returning\t"+ compartmentID);
 			return compartmentID;
-
 		}
 	}
 
