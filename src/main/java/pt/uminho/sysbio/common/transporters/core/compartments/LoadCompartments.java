@@ -58,7 +58,7 @@ public class LoadCompartments {
 	 * @throws SQLException
 	 */
 	public static Map<String, GeneCompartments> getBestCompartmenForGene(double threshold, int knn, int projectID, Statement statement) throws SQLException {
-
+		
 		Map<String, GeneCompartments> compartments = new HashMap<String, GeneCompartments>();
 
 		ArrayList<String[]> result = TransportersAPI.getBestCompartmenForGene(projectID, statement);
@@ -73,8 +73,6 @@ public class LoadCompartments {
 				String abbreviation = list[3];		
 				String name = list[4];				
 
-				
-				
 				if(!abbreviation.contains("_")) {
 					
 					if(compartments.keySet().contains(geneID)) {
