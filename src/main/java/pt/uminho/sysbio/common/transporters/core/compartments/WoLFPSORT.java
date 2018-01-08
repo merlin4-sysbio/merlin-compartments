@@ -15,7 +15,7 @@ import jp.cbrc.togo.WoLFPsort;
 
 public class WoLFPSORT implements CompartmentsInterface{
 
-	private int normalization=32;
+	private int normalization = 32;
 	private AtomicBoolean cancel;
 
 	/**
@@ -279,7 +279,7 @@ public class WoLFPSORT implements CompartmentsInterface{
 	 */
 	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, int projectID,  Statement statement) throws SQLException  {
 
-		return LoadCompartments.getBestCompartmenForGene(threshold,this.normalization, projectID, statement);
+		return LoadCompartments.getBestCompartmenForGene(threshold, this.normalization, projectID, statement);
 	}
 
 	@Override
