@@ -11,8 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import jp.cbrc.togo.WoLFPsort;
-
 public class WoLFPSORT implements CompartmentsInterface{
 
 	private int normalization = 32;
@@ -53,16 +51,16 @@ public class WoLFPSORT implements CompartmentsInterface{
 		args[2]=type;
 //		for(String a : args)
 //			System.out.print(a+" ");
-
-		try {
-			WoLFPsort.main(args);
-		} catch (Exception e) {
-			System.err.println("Exception caught");
-			throw e;
-		} catch (Error er) {
-			System.err.println("Error caught");
-			throw er;
-		}
+//
+//		try {
+//			WoLFPsort.main(args);
+//		} catch (Exception e) {
+//			System.err.println("Exception caught");
+//			throw e;
+//		} catch (Error er) {
+//			System.err.println("Error caught");
+//			throw er;
+//		}
 		return true;
 	}
 

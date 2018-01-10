@@ -6,6 +6,7 @@ package pt.uminho.sysbio.common.transporters.core.transport.reactions.containerA
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -90,20 +91,12 @@ public class ProteinFamiliesSet implements Serializable{
 
 		this.setMax_score_value(this.getMax_score_value()/score_sum);
 
-		//NumberFormat percent = NumberFormat.getPercentInstance();
-		//percent = new DecimalFormat("###.##%");			
-		//String score_percent = percent.format(max_score);
 		this.setTc_families_above_half(null);
 		
 		if(this.getMax_score_value()<0.5) {
 			
 			this.setTc_families_above_half(this.collect_unitl_greater_than(0.5,this.getPercentages(scores, score_sum)));
 		}
-
-		//		String score;
-		//		DecimalFormat formatter = new DecimalFormat("#.##");
-		//		score = formatter.format(max_score).replace(",",".");
-		//		System.out.print("\t"+this.max_score_family+"\t"+score+"\t"+this.tc_families_abov_half+"\t"+this.getPercentages(scores, score_sum));
 
 	}
 
@@ -138,7 +131,10 @@ public class ProteinFamiliesSet implements Serializable{
 	private Map<String, Double> getPercentages(Map<String,Double> data, double sum){
 		Map<String, Double> result = new HashMap<String,Double>();
 		String score;
-		DecimalFormat formatter = new DecimalFormat("#.##");
+		DecimalFormatSymbols separator = new DecimalFormatSymbols();
+		separator.setDecimalSeparator('.');
+		DecimalFormat formatter = new DecimalFormat("#.##", separator);
+		
 		for(String key:data.keySet())
 		{
 			score = formatter.format(data.get(key)/sum);

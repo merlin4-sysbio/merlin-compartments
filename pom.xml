@@ -92,11 +92,11 @@
 			<version>${pt.uminho.sysbio.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>jp.cbrc.togo</groupId>
-			<artifactId>WoLFPSORT</artifactId>
-			<version>1.0</version>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>jp.cbrc.togo</groupId> -->
+<!-- 			<artifactId>WoLFPSORT</artifactId> -->
+<!-- 			<version>1.0</version> -->
+<!-- 		</dependency> -->
 		<dependency>
 			<groupId>biosynth.core</groupId>
 			<artifactId>graphapi</artifactId>
