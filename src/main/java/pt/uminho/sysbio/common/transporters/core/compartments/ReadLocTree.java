@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import pt.uminho.sysbio.common.transporters.core.utils.RetrieveRemoteResults;
+
 /**
  * @author Oscar Dias
  *
@@ -403,7 +405,7 @@ public class ReadLocTree implements CompartmentsInterface {
 	@Override
 	public Map<String, CompartmentResult> addGeneInformation(String link) throws Exception {
 		
-		BufferedReader data = RemoteCompartmentsResults.retrieveDataFromURL(link);
+		BufferedReader data = RetrieveRemoteResults.retrieveDataFromURL(link);
 
 		Map<String, CompartmentResult> compartmentLists = this.readLocTreeFile(data); 
 

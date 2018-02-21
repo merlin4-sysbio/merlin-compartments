@@ -1,12 +1,14 @@
-package pt.uminho.sysbio.common.transporters.core.compartments;
+package pt.uminho.sysbio.common.transporters.core.utils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.SocketException;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -14,23 +16,43 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509TrustManager;
 
-public class RemoteCompartmentsResults {
+public class RetrieveRemoteResults {
+	
+	private final static int LIMIT = 5;
 	
 	/**
-	 * Method to retrieve information from loctree results link.
+	 * Method to retrieve information from web pages.
 	 * @param url
+	 * @throws InterruptedException 
 	 */
-	public static BufferedReader retrieveDataFromURL(String link){
+	public static BufferedReader retrieveDataFromURL(String link) throws InterruptedException{
 
 		BufferedReader in = null;
-		
-		try{
-			doTrustToCertificates();
-			URL url = new URL(link);
-			in = new BufferedReader(new InputStreamReader(url.openStream()));
-		}
-		catch(Exception e){
-			e.printStackTrace();
+		boolean go = false;
+		int errorCounter = 0;
+
+		while(!go && errorCounter < LIMIT){
+
+			try{
+				
+				doTrustToCertificates();
+				URL url = new URL(link);
+				in = new BufferedReader(new InputStreamReader(url.openStream()));
+
+				go = true;
+			}
+			catch(SocketException e){
+
+				go = false;
+				errorCounter ++;
+				TimeUnit.SECONDS.sleep(10);
+			}
+			catch(Exception e){
+				
+				in = null;
+				go = true;
+				e.printStackTrace();
+			}
 		}
 		return in;
 	}
