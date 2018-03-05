@@ -122,10 +122,6 @@ public class AnnotateTransporters {
 						tcnumber=key;
 					}
 				}
-				else {
-
-					System.out.println(recordEntries.keySet());
-				}
 				
 				String description="";
 				if(recordEntries.get(tcnumber)[2]!=null){description=recordEntries.get(tcnumber)[0];}

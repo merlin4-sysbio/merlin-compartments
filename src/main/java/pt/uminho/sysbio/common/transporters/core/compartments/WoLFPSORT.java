@@ -11,11 +11,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import jp.cbrc.togo.WoLFPsort;
-
 public class WoLFPSORT implements CompartmentsInterface{
 
-	private int normalization=32;
+	private int normalization = 32;
 	private AtomicBoolean cancel;
 
 	/**
@@ -53,16 +51,16 @@ public class WoLFPSORT implements CompartmentsInterface{
 		args[2]=type;
 //		for(String a : args)
 //			System.out.print(a+" ");
-
-		try {
-			WoLFPsort.main(args);
-		} catch (Exception e) {
-			System.err.println("Exception caught");
-			throw e;
-		} catch (Error er) {
-			System.err.println("Error caught");
-			throw er;
-		}
+//
+//		try {
+//			WoLFPsort.main(args);
+//		} catch (Exception e) {
+//			System.err.println("Exception caught");
+//			throw e;
+//		} catch (Error er) {
+//			System.err.println("Error caught");
+//			throw er;
+//		}
 		return true;
 	}
 
@@ -77,26 +75,30 @@ public class WoLFPSORT implements CompartmentsInterface{
 		String inputLine;
 		
 		while ((inputLine = in.readLine()) != null && !this.cancel.get()) {
-
+			
 			Document doc = Jsoup.parse(inputLine);
 			String str = doc.body().text();
 			
 			if(!str.isEmpty()){
-	   
 
-				String[] line = str.split("\\s+");
-				for(int i = 0; i<line.length; i++){
-				}
+				String[] line = str.split(" details ");
 				
 				String locusTag = line[0].trim();
 				
+				String[] comp = line[1].split(", ");
+				
 				WoLFPSORT_Result WoLFPSORTResult = new WoLFPSORT_Result(locusTag);
 				
-				for(int i = 2; i<line.length-1; i+=2){
-					double score = Double.valueOf(line[i+1].replaceAll(",", ""));
-					WoLFPSORTResult.addCompartment(line[i].replaceAll(":", ""), score);
+				for(int i = 0; i<comp.length; i++){
+					
+					String[] score = comp[i].split(": ");
+					
+					if(score.length == 2){
+						
+						String[] value = score[1].split("\\s+");
+						WoLFPSORTResult.addCompartment(score[0], Double.valueOf(value[0].trim()));
+					}
 				}
-				
 				compartmentLists.put(locusTag, WoLFPSORTResult);
 			}
 		}
@@ -279,7 +281,7 @@ public class WoLFPSORT implements CompartmentsInterface{
 	 */
 	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, int projectID,  Statement statement) throws SQLException  {
 
-		return LoadCompartments.getBestCompartmenForGene(threshold,this.normalization, projectID, statement);
+		return LoadCompartments.getBestCompartmenForGene(threshold, this.normalization, projectID, statement);
 	}
 
 	@Override

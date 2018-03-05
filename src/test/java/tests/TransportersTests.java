@@ -188,7 +188,7 @@ public class TransportersTests {
 //	@Test
 	public void connectToUrl() throws Exception{
 	     doTrustToCertificates();//  
-	     URL url = new URL("https://wolfpsort.hgc.jp/results/aSN3d14e056647f7cefede942f6edf1b754.html");
+	     URL url = new URL("http://www.tcdb.org/search/result.php?acc=q04162");
 	     HttpURLConnection conn = (HttpURLConnection)url.openConnection(); 
 	     System.out.println("ResponseCode ="+conn.getResponseCode());
 	     
