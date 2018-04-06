@@ -557,7 +557,7 @@ public class TransportersUtilities {
 		for (String query : transmembraneGenes.keySet()){
 
 			double helicesDependentSimilarity = threshold;
-
+			
 			if(transmembraneGenes.get(query)>limit) {
 				// FIXME passar parametros para configuracao
 				helicesDependentSimilarity=(1-((transmembraneGenes.get(query)/2-2)*0.1))*threshold;
@@ -568,6 +568,7 @@ public class TransportersUtilities {
 					ret.put(query, min);	
 			}	
 		}
+		
 		return ret;
 	}
 
