@@ -1019,18 +1019,18 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		ArrayList<String[]> result = TransportersAPI.geneHasTcdbRegestries(stmt);
 	
-		Map<String, Map<String, Integer>> transportType = new HashMap<>();
+		Map<String, Map<String, Double>> transportType = new HashMap<>();
 
 		for(int i=0; i<result.size(); i++){
 			
 			String[] list = result.get(i);
 
-			Map<String, Integer>  similarities = new HashMap<>();
+			Map<String, Double>  similarities = new HashMap<>();
 
 			if(transportType.containsKey(list[0]))
 				similarities = transportType.get(list[0]);
-
-			similarities.put(list[1], Integer.parseInt(list[2]));
+			
+			similarities.put(list[1], Double.parseDouble(list[2]));
 			transportType.put(list[0], similarities);
 		}
 
