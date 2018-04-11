@@ -291,7 +291,7 @@ public class ProcessCompartments {
 
 					compartments.add(compartment);
 				}
-
+				
 				if(ignoreList.contains(abb.toLowerCase())) {
 
 					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
