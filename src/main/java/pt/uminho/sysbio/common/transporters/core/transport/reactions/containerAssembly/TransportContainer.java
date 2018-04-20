@@ -14,8 +14,8 @@ import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.Metabolit
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionTypeEnum;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
+import pt.uminho.ceb.biosystems.mew.utilities.ExternalRefSource;
 import pt.uminho.ceb.biosystems.mew.utilities.datastructures.map.MapUtils;
-import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
 
 public class TransportContainer extends Container {
 

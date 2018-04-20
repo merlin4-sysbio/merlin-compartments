@@ -21,7 +21,7 @@ import org.biojava.nbio.core.sequence.io.GenericFastaHeaderParser;
 import org.biojava.nbio.core.sequence.io.ProteinSequenceCreator;
 import org.biojava.nbio.core.sequence.template.AbstractSequence;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
+import pt.uminho.ceb.biosystems.mew.utilities.ExternalRefSource;
 import pt.uminho.sysbio.common.database.connector.databaseAPI.TransportersAPI;
 import pt.uminho.sysbio.common.transporters.core.compartments.GeneCompartments;
 import pt.uminho.sysbio.common.transporters.core.transport.reactions.containerAssembly.TransportContainer;
