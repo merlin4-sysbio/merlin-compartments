@@ -33,6 +33,8 @@ import pt.uminho.sysbio.merlin.utilities.DatabaseProgressStatus;
 
 public class TransportersUtilities {
 
+	public static String DEFAULT_MEMBRANE = "cytmem";
+	
 	//separar compartimentos e nais tarde separar compartimentos para outro projeto
 
 
