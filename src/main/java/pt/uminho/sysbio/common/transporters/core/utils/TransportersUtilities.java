@@ -7,8 +7,11 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -353,6 +356,9 @@ public class TransportersUtilities {
 
 		else if(compartmentID.equals("vesicles_of_secretory_system"))
 			return "ves";
+		
+		else if(compartmentID.equals("vesicles_of_secretory_system membrane"))
+			return "vesmem";
 
 		else if(compartmentID.equals("endoplasmic reticulum")) 
 			return "E.R.";
@@ -380,6 +386,9 @@ public class TransportersUtilities {
 
 		else if(compartmentID.equals("chloroplast membrane"))
 			return "chlomem";
+		
+		else if(compartmentID.equals("lysosome membrane"))
+			return "lysomem";
 
 		else if(compartmentID.equals("lysosome"))
 			return "lyso";
@@ -415,7 +424,7 @@ public class TransportersUtilities {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Set<String> getOutsideMembranes(String compartmentID) throws Exception {
+	public static Set<String> getOutsideMembranes(String compartmentID, STAIN stain) throws Exception {
 
 		Set<String> list = new HashSet<String>();
 
@@ -427,7 +436,7 @@ public class TransportersUtilities {
 		}
 
 		list.add("cytop");
-		list.add(TransportersUtilities.getOutsideMembrane(compartmentID));
+		list.add(TransportersUtilities.getOutsideMembrane(compartmentID, stain));
 
 		return list;
 	}
@@ -436,18 +445,53 @@ public class TransportersUtilities {
 	 * @param compartmentID
 	 * @return
 	 */
-	public static String getOutsideMembrane(String compartmentID) {
-
-		if(compartmentID.equalsIgnoreCase("unkn"))
-			return ("unknown");
-		else if(compartmentID.equalsIgnoreCase("cytmem"))
+	public static String getOutsideMembrane(String compartmentID, STAIN stain) {
+		
+		List<String> compartments = new ArrayList<String>(
+			    Arrays.asList("unkn", "pla", "plas", "outme", "plasmem", "outmem", "cellw", "cellwall"));
+		
+		if(compartments.contains(compartmentID))
 			return ("EXTR");
+		
+		else if(compartmentID.equalsIgnoreCase("cytmem")) {
+			
+			if (stain.equals(STAIN.gram_negative))
+				return ("PERIP");
+			else
+				return ("EXTR");
+		}
 
-		else if(compartmentID.equalsIgnoreCase("cellw") && compartmentID.equalsIgnoreCase("cellwall"))
-			return ("EXTR");
+		return ("CYTOP");
 
-		else if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("plasmem"))
-			return ("EXTR");
+	}
+	
+	/**
+	 * @param compartmentID
+	 * @return
+	 */
+	public static String getInsideMembrane(String compartmentID) {
+
+		//pode acontecer entrar aqui um extr??
+		
+		//interior compartment default ou escolhido pelo user??
+		
+		//innmem??
+		
+		//ves
+		
+		if(compartmentID.equalsIgnoreCase("unkn"))//perip???  //outmem??
+			return ("CYTOP"); 
+		
+		else if(compartmentID.equalsIgnoreCase("cytop") || compartmentID.equalsIgnoreCase("cytmem") || 
+				compartmentID.equalsIgnoreCase("cytomem") || compartmentID.equalsIgnoreCase("cytopmem"))
+			return ("CYTOP");
+
+		else if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas") || 
+				compartmentID.equalsIgnoreCase("plasmem"))
+			return ("CYTOP");		//return (interiorCompartment.toUpperCase());
+		
+		else if(compartmentID.equalsIgnoreCase("cellw") || compartmentID.equalsIgnoreCase("cellwall"))
+			return ("CYTOP");		//return (interiorCompartment.toUpperCase());
 
 		else if(compartmentID.equalsIgnoreCase("golmem") || compartmentID.equalsIgnoreCase("golgmem"))
 			return ("GOLG");
@@ -464,14 +508,21 @@ public class TransportersUtilities {
 		else if(compartmentID.equalsIgnoreCase("nucmem") || compartmentID.equalsIgnoreCase("nuclmem"))
 			return ("NUC");
 
-		else if(compartmentID.equalsIgnoreCase("cytmem") || compartmentID.equalsIgnoreCase("cytomem") || compartmentID.equalsIgnoreCase("cytopmem"))
-			return ("EXTR");
-
-		else if(compartmentID.equalsIgnoreCase("csk") || compartmentID.equalsIgnoreCase("cysk"))
-			return ("EXTR");
+		else if(compartmentID.equalsIgnoreCase("csk") || compartmentID.equalsIgnoreCase("cysk") ||
+				compartmentID.equalsIgnoreCase("cskmem") || compartmentID.equalsIgnoreCase("cyskmem") )
+			return ("CYSK"); 
 
 		else if(compartmentID.equalsIgnoreCase("poxmem") || compartmentID.equalsIgnoreCase("permem"))
 			return ("POX");
+		
+		else if(compartmentID.equalsIgnoreCase("lysomem"))
+			return ("LYSO");
+		
+		else if(compartmentID.equalsIgnoreCase("vesmem"))
+			return ("VES");
+		
+		else if(compartmentID.equalsIgnoreCase("chlomem"))
+			return ("CHLO");
 
 		return compartmentID;
 
