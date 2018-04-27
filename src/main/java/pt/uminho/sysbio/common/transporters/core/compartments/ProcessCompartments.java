@@ -31,7 +31,7 @@ public class ProcessCompartments {
 	public ProcessCompartments() {
 
 	}
-	
+
 	/**
 	 * @param interiorCompartment
 	 */
@@ -56,12 +56,12 @@ public class ProcessCompartments {
 	public void initProcessCompartments(Set<String> existingCompartments) {
 
 		if(!this.isProcessCompartmentsInitiated()) {
-			
+
 			this.ignoreCompartmentsID = new HashSet<>();
 			this.stain = STAIN.gram_positive;
 
 			for(String compartment : existingCompartments) {
-				
+
 				if(compartment.equalsIgnoreCase("perip") || compartment.equalsIgnoreCase("periplasm") ) {
 
 					this.kingdom = KINGDOM.Bacteria;
@@ -87,61 +87,67 @@ public class ProcessCompartments {
 
 	/**
 	 * @param metaboliteMap
-	 * @param compartmentID
+	 * @param compartment
 	 * @return
 	 * @throws Exception 
 	 */
-	public String processTransportCompartments(String localisation, String compartmentID) throws Exception {
+	public String processTransportCompartments(String localisation, String compartment) throws Exception {
 
 		try {
+
 			if (this.isProcessCompartmentsInitiated()) {
 
 				if (localisation.equalsIgnoreCase("out")) {
+					
+					return TransportersUtilities.getOutsideMembrane(compartment, this.stain);
 
-					if (compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("outme")
-							|| compartmentID.equalsIgnoreCase("plasmem") || compartmentID.equalsIgnoreCase("outmem") || compartmentID.equalsIgnoreCase("cellw")) {
-
-						return ("extr".toUpperCase());
-					}
-					else if (compartmentID.equalsIgnoreCase("cytmem")) {
-
-						if (this.stain.equals(STAIN.gram_negative))
-							return ("perip".toUpperCase());
-						else
-							return ("extr".toUpperCase());
-					} 
-					else {
-
-						return (interiorCompartment.toUpperCase());
-					}
+//					if (compartment.equalsIgnoreCase("plas") || compartment.equalsIgnoreCase("pla") || compartment.equalsIgnoreCase("outme")
+//							|| compartment.equalsIgnoreCase("plasmem") || compartment.equalsIgnoreCase("outmem") || compartment.equalsIgnoreCase("cellw")) {
+//
+//						return ("extr".toUpperCase());
+//					}
+//					else if (compartment.equalsIgnoreCase("cytmem")) {
+//
+//						if (this.stain.equals(STAIN.gram_negative))
+//							return ("perip".toUpperCase());
+//						else {
+//							return ("extr".toUpperCase());
+//						} 
+//					}
+//					else {
+//						
+//						return ("extr".toUpperCase());
+//					}
 				} 
 				else {
 
-					if (compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plasmem") 
-							|| compartmentID.equalsIgnoreCase("cellw")) {
-						
-						return (interiorCompartment.toUpperCase());
-					}
-					else if (compartmentID.equalsIgnoreCase("outme") || compartmentID.equalsIgnoreCase("outmem")) {
-						
-						return ("perip".toUpperCase());
-					}
-					else if (compartmentID.contains("mem")) {
-						
-						return TransportersUtilities.getOutsideMembrane(compartmentID.toLowerCase());
-					}
-					else {
-						
-						return (compartmentID.toUpperCase());
-					}
+					return TransportersUtilities.getInsideMembrane(compartment);
+					
+//					if (compartment.equalsIgnoreCase("plas") || compartment.equalsIgnoreCase("pla") || compartment.equalsIgnoreCase("plasmem") 
+//							|| compartment.equalsIgnoreCase("cellw")) {
+//
+//						return (interiorCompartment.toUpperCase());
+//					}
+//					else if (compartment.equalsIgnoreCase("outme") || compartment.equalsIgnoreCase("outmem")) {
+//
+//						return ("perip".toUpperCase());
+//					}
+//					else if (compartment.contains("mem")) {
+//
+//						return TransportersUtilities.getOutsideMembrane(compartment.toLowerCase());
+//					}
+//					else {
+//
+//						return (compartment.toUpperCase());
+//					}
 				}
 			} else {
 
 				throw new Exception("Compartments processing not initiated!");
 			} 
 		} catch (Exception e) {
-			
-			System.out.println(localisation+" "+compartmentID);
+
+			System.out.println(localisation+" "+compartment);
 			throw e;
 		}
 	}
@@ -156,7 +162,7 @@ public class ProcessCompartments {
 
 		return this.autoSetInteriorCompartment(stmt);
 	}
-	
+
 	/**
 	 * @param statement
 	 * @return
@@ -166,11 +172,11 @@ public class ProcessCompartments {
 
 		try {
 			this.interiorCompartment = CompartmentsAPI.getCompartmentAbbreviation(this.interiorCompartment, statement);
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
-			}
-		
+		}
+
 		return interiorCompartment;
 	}
 
@@ -183,12 +189,12 @@ public class ProcessCompartments {
 
 		Statement stmt;
 		int compartmentID = -1;
-		
+
 		try {
 			stmt = connection.createStatement();
-			
+
 			String abbreviation;
-			
+
 			if(compartment.length()>3) {
 
 				abbreviation=compartment.substring(0,3).toUpperCase();
@@ -200,16 +206,16 @@ public class ProcessCompartments {
 				while(abbreviation.length()<4)
 					abbreviation=abbreviation.concat("_");
 			}
-			
+
 			abbreviation=abbreviation.toUpperCase();
-			
+
 			compartmentID = CompartmentsAPI.selectCompartmentID(compartment, abbreviation, stmt);
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 
-	return compartmentID;
+		return compartmentID;
 
 	}
 
@@ -225,7 +231,7 @@ public class ProcessCompartments {
 
 		return ProcessCompartments.parseCompartments(list, compartmentsAbb_ids, idCompartmentAbbIdMap, ignoreList, stain, hasCellWall, ignoreCompartmentsID, interiorCompartment, this.isProcessCompartmentsInitiated());
 	}
-	
+
 	/**
 	 * Static method for parsing compartmtents for metabolic reactions
 	 * 
@@ -251,7 +257,7 @@ public class ProcessCompartments {
 			for(int compartment: list) {
 
 				String abb = compartmentsAbb_ids.get(compartment).toLowerCase();
-				
+
 				if(abb.equalsIgnoreCase("cytmem")) {
 
 					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
@@ -263,7 +269,7 @@ public class ProcessCompartments {
 							compartments.add(idCompartmentAbbIdMap.get("extr"));
 				}
 				else if(abb.equalsIgnoreCase("cellw")) {
-					
+
 					compartments.add(idCompartmentAbbIdMap.get("extr"));
 				}
 				else if(abb.equalsIgnoreCase("outme")) {
@@ -278,7 +284,7 @@ public class ProcessCompartments {
 				} 
 				else if (abb.contains("me")) {
 
-					for(String newAbb : TransportersUtilities.getOutsideMembranes(abb)) 
+					for(String newAbb : TransportersUtilities.getOutsideMembranes(abb, stain)) 
 						compartments.add(idCompartmentAbbIdMap.get(newAbb.toLowerCase()));
 				}
 				else if(abb.equalsIgnoreCase("unkn")) {
@@ -289,14 +295,14 @@ public class ProcessCompartments {
 
 					compartments.add(compartment);
 				}
-
+				
 				if(ignoreList.contains(abb.toLowerCase())) {
 
 					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
 					ignoreCompartmentsID.add(compartment);
 				} 
 			}
-			
+
 			return compartments;
 		}
 		else {
@@ -405,9 +411,8 @@ public class ProcessCompartments {
 	 * @param processCompartmentsInitiated the processCompartmentsInitiated to set
 	 */
 	public void setProcessCompartmentsInitiated(boolean processCompartmentsInitiated) {
-		
+
 		this.processCompartmentsInitiated = processCompartmentsInitiated;
 	}
-
 
 }
