@@ -99,7 +99,7 @@ public class ProcessCompartments {
 
 				if (localisation.equalsIgnoreCase("out")) {
 					
-					return TransportersUtilities.getOutsideMembrane(compartment, this.stain);
+					return TransportersUtilities.getOutsideMembrane(compartment.toLowerCase(), this.stain);
 
 //					if (compartment.equalsIgnoreCase("plas") || compartment.equalsIgnoreCase("pla") || compartment.equalsIgnoreCase("outme")
 //							|| compartment.equalsIgnoreCase("plasmem") || compartment.equalsIgnoreCase("outmem") || compartment.equalsIgnoreCase("cellw")) {
@@ -121,7 +121,7 @@ public class ProcessCompartments {
 				} 
 				else {
 
-					return TransportersUtilities.getInsideMembrane(compartment);
+					return TransportersUtilities.getInsideMembrane(compartment.toLowerCase(), this.stain);
 					
 //					if (compartment.equalsIgnoreCase("plas") || compartment.equalsIgnoreCase("pla") || compartment.equalsIgnoreCase("plasmem") 
 //							|| compartment.equalsIgnoreCase("cellw")) {

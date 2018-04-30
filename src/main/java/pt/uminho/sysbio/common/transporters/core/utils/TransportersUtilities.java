@@ -442,18 +442,18 @@ public class TransportersUtilities {
 	}
 
 	/**
-	 * @param compartmentID
+	 * @param compartment
 	 * @return
 	 */
-	public static String getOutsideMembrane(String compartmentID, STAIN stain) {
+	public static String getOutsideMembrane(String compartment, STAIN stain) {
 		
 		List<String> compartments = new ArrayList<String>(
-			    Arrays.asList("unkn", "pla", "plas", "outme", "plasmem", "outmem", "cellw", "cellwall"));
+			    Arrays.asList("unkn", "pla", "plas", "outme", "plasmem", "outmem", "cellw", "cellwall", "extr"));
 		
-		if(compartments.contains(compartmentID))
+		if(compartments.contains(compartment))
 			return ("EXTR");
 		
-		else if(compartmentID.equalsIgnoreCase("cytmem")) {
+		else if(compartment.equalsIgnoreCase("cytmem")) {
 			
 			if (stain.equals(STAIN.gram_negative))
 				return ("PERIP");
@@ -469,7 +469,7 @@ public class TransportersUtilities {
 	 * @param compartmentID
 	 * @return
 	 */
-	public static String getInsideMembrane(String compartmentID) {
+	public static String getInsideMembrane(String compartmentID, STAIN stain) {
 
 		//pode acontecer entrar aqui um extr??
 		
@@ -478,6 +478,14 @@ public class TransportersUtilities {
 		//innmem??
 		
 		//ves
+		
+		if(compartmentID.equalsIgnoreCase("extr") || compartmentID.equalsIgnoreCase("outmem") || compartmentID.equalsIgnoreCase("outme")) {//perip???  //outmem??
+			
+			if (stain.equals(STAIN.gram_negative))
+				return ("PERIP");
+			else
+				return ("CYTOP");
+		}
 		
 		if(compartmentID.equalsIgnoreCase("unkn"))//perip???  //outmem??
 			return ("CYTOP"); 
