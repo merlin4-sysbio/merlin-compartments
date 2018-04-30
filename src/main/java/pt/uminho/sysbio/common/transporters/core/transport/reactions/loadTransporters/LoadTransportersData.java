@@ -17,7 +17,7 @@ import java.util.TreeSet;
 
 import javax.xml.ws.WebServiceException;
 
-import pt.uminho.sysbio.common.bioapis.externalAPI.ExternalRefSource;
+import pt.uminho.ceb.biosystems.mew.utilities.ExternalRefSource;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiAPIInterface;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.chebi.ChebiER;
 import pt.uminho.sysbio.common.bioapis.externalAPI.ebi.uniprot.MyNcbiTaxon;
