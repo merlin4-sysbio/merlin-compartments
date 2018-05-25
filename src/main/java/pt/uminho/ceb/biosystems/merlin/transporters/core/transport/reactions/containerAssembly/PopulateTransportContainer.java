@@ -35,9 +35,9 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.Transporte
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Enumerators.DatabaseType;
 import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.parseTransporters.MetaboliteTaxonomyScores;
+import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.validation.chemestry.BalanceValidator;
-import pt.uminho.ceb.biosystems.mew.utilities.ExternalRefSource;
 
 /**
  * @author ODias

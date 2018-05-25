@@ -32,7 +32,7 @@ import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.con
 import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;
 import pt.uminho.ceb.biosystems.merlin.transporters.core.utils.Enumerators.STAIN;
 import pt.uminho.ceb.biosystems.merlin.utilities.DatabaseProgressStatus;
-import pt.uminho.ceb.biosystems.mew.utilities.ExternalRefSource;
+import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
 
 public class TransportersUtilities {
 

@@ -23,11 +23,11 @@ import biosynth.core.algorithm.graph.Dijkstra;
 import biosynth.core.components.representation.basic.graph.Graph;
 import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.ebi.chebi.ChebiAPIInterface;
 import pt.uminho.ceb.biosystems.merlin.transporters.core.utils.TransportersUtilities;
+import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.MetaboliteCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.ReactionTypeEnum;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
-import pt.uminho.ceb.biosystems.mew.utilities.ExternalRefSource;
 
 /**
  * @author ODias
