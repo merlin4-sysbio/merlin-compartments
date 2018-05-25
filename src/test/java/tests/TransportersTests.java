@@ -28,15 +28,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import pt.uminho.sysbio.common.database.connector.datatypes.Connection;
-import pt.uminho.sysbio.common.database.connector.datatypes.DatabaseAccess;
-import pt.uminho.sysbio.common.database.connector.datatypes.MySQLDatabaseAccess;
-import pt.uminho.sysbio.common.transporters.core.compartments.CompartmentResult;
-import pt.uminho.sysbio.common.transporters.core.compartments.ReadPSort3;
-import pt.uminho.sysbio.common.transporters.core.compartments.WoLFPSORT;
-import pt.uminho.sysbio.common.transporters.core.transport.MIRIAM_Data;
-import pt.uminho.sysbio.common.transporters.core.transport.reactions.TransportReactionsGeneration;
-import pt.uminho.sysbio.common.transporters.core.transport.reactions.loadTransporters.LoadTransportersData;
+import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
+import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.DatabaseAccess;
+import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.MySQLDatabaseAccess;
+import pt.uminho.ceb.biosystems.merlin.transporters.core.compartments.CompartmentResult;
+import pt.uminho.ceb.biosystems.merlin.transporters.core.compartments.ReadPSort3;
+import pt.uminho.ceb.biosystems.merlin.transporters.core.compartments.WoLFPSORT;
+import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.MIRIAM_Data;
+import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.TransportReactionsGeneration;
+import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.loadTransporters.LoadTransportersData;
 
 
 public class TransportersTests {
