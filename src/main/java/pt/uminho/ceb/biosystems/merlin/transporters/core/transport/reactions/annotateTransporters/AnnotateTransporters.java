@@ -78,6 +78,7 @@ public class AnnotateTransporters {
 		} catch (Exception e) {
 			
 			File file = new File(output);
+			file.getParentFile().mkdirs();
 			file.createNewFile();
 			fstream = new FileWriter(output);
 		}
