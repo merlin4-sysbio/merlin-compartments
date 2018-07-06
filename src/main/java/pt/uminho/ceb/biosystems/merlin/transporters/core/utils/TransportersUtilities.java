@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.con
 import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;
 import pt.uminho.ceb.biosystems.merlin.transporters.core.utils.Enumerators.STAIN;
 import pt.uminho.ceb.biosystems.merlin.utilities.DatabaseProgressStatus;
-import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
+import pt.uminho.ceb.biosystems.merlin.utilities.external.ExternalRefSource;
 
 public class TransportersUtilities {
 
@@ -95,30 +96,36 @@ public class TransportersUtilities {
 	 * @throws Exception
 	 */
 	public static Map<String, AbstractSequence<?>> convertTcdbToMap(String url) throws Exception {
-
+		
 		InputStream tcdbInputStream = (new URL(url)).openStream();
 		BufferedReader br= new BufferedReader(new InputStreamReader(tcdbInputStream));
 		StringBuilder sb = new StringBuilder();
 		String line;
-
+		
 		while ((line = br.readLine()) != null)
-			sb.append(line+"\n");
-
-		String theString = sb.toString().replace("</p>", "").replace("<p>", "").replace(">gnl|TC-DB|xxxxxx 3.A.1.205.14 \ndsfgdfg", "");
+			sb.append(line.concat("\n"));
+		
+		String theString = sb.toString().replace("</p>", "").replace("<p>", "");
 		byte[] bytes = theString.getBytes("utf-8");
 		tcdbInputStream =  new ByteArrayInputStream(bytes);
-
+		
 		FastaReader<ProteinSequence,AminoAcidCompound> fastaReader = new FastaReader<ProteinSequence,AminoAcidCompound>(
 				tcdbInputStream, 
 				//tcdbFile,
 				new GenericFastaHeaderParser<ProteinSequence,AminoAcidCompound>(), 
 				new ProteinSequenceCreator(AminoAcidCompoundSet.getAminoAcidCompoundSet()));
-
+		
 		Map<String, AbstractSequence<?>> tcdb  =  new HashMap<>();
 		tcdb.putAll(fastaReader.process());
+		
 		return tcdb;
 	}
+	
 
+	/**
+	 * @param geneComparments
+	 * @return
+	 */
 	static public Map<String, Set<String>> compartmentGenes(Map<String,GeneCompartments> geneComparments){
 
 		Map<String, Set<String>> compartmentGenes = new HashMap<String, Set<String>>();

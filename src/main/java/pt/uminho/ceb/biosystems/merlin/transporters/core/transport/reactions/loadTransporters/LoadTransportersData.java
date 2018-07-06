@@ -36,7 +36,7 @@ import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.par
 import pt.uminho.ceb.biosystems.merlin.transporters.core.utils.GeneProteinAnnotation;
 import pt.uminho.ceb.biosystems.merlin.transporters.core.utils.TracebackAnnotations;
 import pt.uminho.ceb.biosystems.merlin.utilities.DatabaseProgressStatus;
-import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
+import pt.uminho.ceb.biosystems.merlin.utilities.external.ExternalRefSource;
 import uk.ac.ebi.kraken.interfaces.uniprot.NcbiTaxon;
 
 /**
