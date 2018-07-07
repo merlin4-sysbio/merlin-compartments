@@ -104,7 +104,7 @@ public class TransportersUtilities {
 		while ((line = br.readLine()) != null)
 			sb.append(line.concat("\n"));
 		
-		String theString = sb.toString();//.replace("</p>", "").replace("<p>", "").replace(">gnl|TC-DB|xxxxxx 3.A.1.205.14 \ndsfgdfg", "");
+		String theString = sb.toString().replace("</p>", "").replace("<p>", "");
 		byte[] bytes = theString.getBytes("utf-8");
 		tcdbInputStream =  new ByteArrayInputStream(bytes);
 		
@@ -116,6 +116,7 @@ public class TransportersUtilities {
 		
 		Map<String, AbstractSequence<?>> tcdb  =  new HashMap<>();
 		tcdb.putAll(fastaReader.process());
+		
 		return tcdb;
 	}
 	
