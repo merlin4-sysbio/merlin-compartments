@@ -16,7 +16,7 @@ import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.ncbi.EntrezLink.KINGD
 import pt.uminho.ceb.biosystems.merlin.transporters.core.compartments.GeneCompartments;
 import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.containerAssembly.TransportContainer;
 import pt.uminho.ceb.biosystems.merlin.transporters.core.transport.reactions.containerAssembly.TransportReactionCI;
-import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
+import pt.uminho.ceb.biosystems.merlin.utilities.external.ExternalRefSource;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.StoichiometryValueCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.io.exceptions.ReactionAlreadyExistsException;
 

@@ -17,7 +17,7 @@ import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.kegg.KeggAPI;
 import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.kegg.datastructures.KeggCompoundER;
 import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.sbml_semantics.SemanticSbmlAPI;
 import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.sbml_semantics.SemanticSbmlSearchQueryResult;
-import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
+import pt.uminho.ceb.biosystems.merlin.utilities.external.ExternalRefSource;
 import uk.ac.ebi.chebi.webapps.chebiWS.model.ChebiWebServiceFault_Exception;
 
 /**

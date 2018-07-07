@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import pt.uminho.ceb.biosystems.merlin.utilities.External.ExternalRefSource;
+import pt.uminho.ceb.biosystems.merlin.utilities.external.ExternalRefSource;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.Container;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.CompartmentCI;
 import pt.uminho.ceb.biosystems.mew.biocomponents.container.components.GeneCI;
