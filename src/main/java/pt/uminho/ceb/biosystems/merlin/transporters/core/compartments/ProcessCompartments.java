@@ -249,66 +249,83 @@ public class ProcessCompartments {
 	 */
 	public static Set<Integer> parseCompartments(List<Integer> list, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap, List<String> ignoreList,
 			STAIN stain, boolean hasCellWall, Set<Integer> ignoreCompartmentsID, String interiorCompartment, boolean isProcessCompartmentsInitiated) throws Exception {
+		
+//		System.out.println("isProcessCompartmentsInitiated---->"+isProcessCompartmentsInitiated);
+		Set<Integer> compartments = new HashSet<>();
 
 		if (isProcessCompartmentsInitiated) {
+			
+//			System.out.println("ListaCOmpartments----->"+list);
+//			System.out.println("idCompartmentAbbIdMap----->"+idCompartmentAbbIdMap);
+			try {
 
-			Set<Integer> compartments = new HashSet<>();
+				for(int compartment: list) {
+					
+					String abb = compartmentsAbb_ids.get(compartment).toLowerCase();
+					
+//					if(!abb.equals("in") && !abb.equals("out"))
+//						abb = "in";
+					
+//					System.out.println("ABB----->"+abb);
 
-			for(int compartment: list) {
+					if(abb.equalsIgnoreCase("cytmem")) {
 
-				String abb = compartmentsAbb_ids.get(compartment).toLowerCase();
+						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
 
-				if(abb.equalsIgnoreCase("cytmem")) {
+						if(stain.equals(STAIN.gram_negative))
+							compartments.add(idCompartmentAbbIdMap.get("perip"));
+						else
+							if(!hasCellWall)
+								compartments.add(idCompartmentAbbIdMap.get("extr"));
+					}
+					else if(abb.equalsIgnoreCase("cellw")) {
 
-					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
+						compartments.add(idCompartmentAbbIdMap.get("extr"));
+					}
+					else if(abb.equalsIgnoreCase("outme")) {
 
-					if(stain.equals(STAIN.gram_negative))
 						compartments.add(idCompartmentAbbIdMap.get("perip"));
-					else
-						if(!hasCellWall)
-							compartments.add(idCompartmentAbbIdMap.get("extr"));
+						compartments.add(idCompartmentAbbIdMap.get("extr"));
+					}
+					else if(abb.equalsIgnoreCase("pla") || abb.equalsIgnoreCase("plas")) {
+
+						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
+						compartments.add(idCompartmentAbbIdMap.get("extr"));
+					} 
+					else if (abb.contains("me")) {
+
+						for(String newAbb : TransportersUtilities.getOutsideMembranes(abb, stain)) 
+							compartments.add(idCompartmentAbbIdMap.get(newAbb.toLowerCase()));
+					}
+					else if(abb.equalsIgnoreCase("unkn")) {
+
+						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
+					} 
+					else {
+
+						compartments.add(compartment);
+					}
+					
+					if(ignoreList.contains(abb.toLowerCase())) {
+
+						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
+						ignoreCompartmentsID.add(compartment);
+					} 
 				}
-				else if(abb.equalsIgnoreCase("cellw")) {
 
-					compartments.add(idCompartmentAbbIdMap.get("extr"));
-				}
-				else if(abb.equalsIgnoreCase("outme")) {
-
-					compartments.add(idCompartmentAbbIdMap.get("perip"));
-					compartments.add(idCompartmentAbbIdMap.get("extr"));
-				}
-				else if(abb.equalsIgnoreCase("pla") || abb.equalsIgnoreCase("plas")) {
-
-					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
-					compartments.add(idCompartmentAbbIdMap.get("extr"));
-				} 
-				else if (abb.contains("me")) {
-
-					for(String newAbb : TransportersUtilities.getOutsideMembranes(abb, stain)) 
-						compartments.add(idCompartmentAbbIdMap.get(newAbb.toLowerCase()));
-				}
-				else if(abb.equalsIgnoreCase("unkn")) {
-
-					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
-				} 
-				else {
-
-					compartments.add(compartment);
-				}
+//				System.out.println("compartments----->"+compartments);
 				
-				if(ignoreList.contains(abb.toLowerCase())) {
-
-					compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
-					ignoreCompartmentsID.add(compartment);
-				} 
+				return compartments;
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-
-			return compartments;
 		}
 		else {
-
+		
 			throw new Exception("Compartments processing not initiated!");
 		}
+		return compartments;
 	}
 
 	/**

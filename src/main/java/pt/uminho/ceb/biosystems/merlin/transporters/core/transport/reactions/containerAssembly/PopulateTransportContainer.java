@@ -297,10 +297,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		Map<Integer, MetaboliteTaxonomyScores> temp = new HashMap<Integer, MetaboliteTaxonomyScores>();
 		int counter = 0;
 
-		//logger.debug("getMetabolitesGeneScore project id {}", this.project_id);
+		logger.debug("getMetabolitesGeneScore project id {}", this.project_id);
 
 		if (this.dbType.equals(DatabaseType.MYSQL)){
-			//		System.out.println("CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");");
 			String query = "CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");";
 
 			ArrayList<String[]> result = TransportersAPI.getMetabolitesGeneScore(query, stmt);
@@ -331,6 +330,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 				}
 			}
 		}
+		
 		return temp;
 	}
 
@@ -968,11 +968,9 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		
 		ArrayList<String> list = new ArrayList<>();
 
-		
 		for (String metaboliteID : result.keySet()){
 			
 			list = result.get(metaboliteID);
-			
 			String geneID = list.get(0);
 			double similarity_score_sum = Double.parseDouble(list.get(1)), taxonomy_score_sum = Double.parseDouble(list.get(2));
 			int frequency = Integer.parseInt(list.get(3));
@@ -980,7 +978,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			double taxonomyScore = (taxonomy_score_sum*(1-(this.minimalFrequency-func_getFrequency(frequency, this.minimalFrequency))*this.beta)/(this.originTaxonomy*frequency));
 
 			double final_score = frequencyScore*this.alpha+(1-this.alpha)*taxonomyScore;
-
+			
 			Map<String, Double> metaboliteScore = new HashMap<>();
 			if(procedure_data.containsKey(geneID))
 				metaboliteScore = procedure_data.get(geneID); 
@@ -989,7 +987,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 			procedure_data.put(geneID, metaboliteScore);
 		}
 
-		//logger.debug("Procedure procedure_getMetabolitesGeneScore {} ", procedure_data.keySet().toString());
+		logger.debug("Procedure procedure_getMetabolitesGeneScore {} ", procedure_data.keySet().toString());
 
 		return procedure_data;
 	}
