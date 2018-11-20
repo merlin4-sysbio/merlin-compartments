@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -301,13 +302,13 @@ public class PopulateTransportContainer extends Observable implements Observer {
 
 		if (this.dbType.equals(DatabaseType.MYSQL)){
 			String query = "CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");";
-
+			
 			ArrayList<String[]> result = TransportersAPI.getMetabolitesGeneScore(query, stmt);
 			
 			for(int i = 0; i<result.size(); i++){
 				
 				String[] list = result.get(i);
-
+				
 				MetaboliteTaxonomyScores data = new MetaboliteTaxonomyScores(list[1], list[0], Double.parseDouble(list[2]));
 				counter ++;
 				temp.put(counter, data);
@@ -606,7 +607,7 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		this.querySize.set(new Integer(this.genesReactions.keySet().size()));
 		setChanged();
 		notifyObservers();
-		System.out.println(genesReactions);
+//		System.out.println(genesReactions);
 		LoadTransportContainer ltc = new LoadTransportContainer(this.genesReactions, this.cancel, this.genesLocusTag, this.genesMetabolitesTransportTypeMap, 
 				this.selectedGenesMetabolites, this.rejectedGenesMetabolites, this.genesProteins, this.transportMetabolites, this.metabolites_ontology, 
 				this.metabolitesFormula, saveOnlyReactionsWithKEGGmetabolites, this.geneProcessingCounter, this.graph, this.kegg_miriam, this.chebi_miriam, this.ignoreSymportMetabolites);
