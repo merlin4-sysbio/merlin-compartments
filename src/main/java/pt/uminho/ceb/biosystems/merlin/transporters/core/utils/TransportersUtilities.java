@@ -336,7 +336,7 @@ public class TransportersUtilities {
 		if(compartmentID.equals("unknown"))
 			return "unkn";
 
-		if(compartmentID.equals("plasma membrane"))
+		if(compartmentID.equals("plasma membrane") || compartmentID.equals("plasma_membrane"))
 			return "plasmem";
 
 		if(compartmentID.equals("periplasmic"))
@@ -454,12 +454,15 @@ public class TransportersUtilities {
 	public static String getOutsideMembrane(String compartment, STAIN stain) {
 		
 		List<String> compartments = new ArrayList<String>(
-			    Arrays.asList("unkn", "pla", "plas", "outme", "plasmem", "outmem", "cellw", "cellwall", "extr"));
+			    Arrays.asList("unkn", "outme", "outmem", "cellw", "cellwall", "extr"));
+		
+		List<String> cytMemComp = new ArrayList<String>(
+			    Arrays.asList("cytmem", "pla", "plas","plasmem"));
 		
 		if(compartments.contains(compartment))
 			return ("EXTR");
 		
-		else if(compartment.equalsIgnoreCase("cytmem")) {
+		else if(cytMemComp.contains(compartment)) {
 			
 			if (stain.equals(STAIN.gram_negative))
 				return ("PERIP");
@@ -557,7 +560,7 @@ public class TransportersUtilities {
 		if(compartmentID.equalsIgnoreCase("unkn"))
 			return "unknown";
 
-		if(compartmentID.equalsIgnoreCase("cytmem"))
+		if(compartmentID.equalsIgnoreCase("cytmem") || compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("plasmem"))
 			if(stain.equals(STAIN.gram_negative))
 				return "perip";
 			else
@@ -574,9 +577,6 @@ public class TransportersUtilities {
 
 		if(compartmentID.equalsIgnoreCase("cytop"))
 			return "cytmem";
-
-		if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas") || compartmentID.equalsIgnoreCase("plasmem"))
-			return "extr";
 
 		else if(compartmentID.equalsIgnoreCase("gol") || compartmentID.equalsIgnoreCase("golg"))
 			return "golmem";
