@@ -303,6 +303,8 @@ public class PopulateTransportContainer extends Observable implements Observer {
 		if (this.dbType.equals(DatabaseType.MYSQL)){
 			String query = "CALL getMetaboliteTaxonomyScores("+this.originTaxonomy+","+this.minimalFrequency+","+this.alpha+","+this.beta+","+this.project_id+");";
 			
+			System.out.println(query);
+			
 			ArrayList<String[]> result = TransportersAPI.getMetabolitesGeneScore(query, stmt);
 			
 			for(int i = 0; i<result.size(); i++){
