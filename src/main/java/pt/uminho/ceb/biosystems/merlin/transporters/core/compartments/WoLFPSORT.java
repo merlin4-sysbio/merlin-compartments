@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import pt.uminho.sysbio.common.transporters.core.utils.RetrieveRemoteResults;
+
 public class WoLFPSORT implements CompartmentsInterface{
 
 	private int normalization = 32;
@@ -314,7 +316,7 @@ public class WoLFPSORT implements CompartmentsInterface{
 		
 		try {
 			
-			BufferedReader data = RemoteCompartmentsResults.retrieveDataFromURL(link);
+			BufferedReader data = RetrieveRemoteResults.retrieveDataFromURL(link);
 			results = this.readWoLFPSORTFile(data);
 			
 		} catch (Exception e) {
