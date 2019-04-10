@@ -13,7 +13,7 @@ import org.jsoup.nodes.Document;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsInterface;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.RetrieveRemoteResults;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.GeneCompartments;
+import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 
 public class WoLFPSORT implements ICompartmentsInterface{
@@ -284,7 +284,7 @@ public class WoLFPSORT implements ICompartmentsInterface{
 	/* (non-Javadoc)
 	 * @see compartments.CompartmentsInterface#getBestCompartmentsForGene(double)
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException  {
+	public Map<String,AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException  {
 
 		return LoadCompartments.getBestCompartmenForGene(threshold, this.normalization, statement);
 	}

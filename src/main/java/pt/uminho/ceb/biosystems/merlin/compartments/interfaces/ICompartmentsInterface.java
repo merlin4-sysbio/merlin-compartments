@@ -9,7 +9,7 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.GeneCompartments;
+import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 
 
@@ -41,7 +41,7 @@ public abstract interface ICompartmentsInterface {
 	 * @param project_id
 	 * @return
 	 */
-	public Map<String,GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException;
+	public Map<String,AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException;
 
 	/**
 	 * @param string

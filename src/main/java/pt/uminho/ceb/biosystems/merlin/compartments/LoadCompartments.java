@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.GeneCompartments;
+import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
 import pt.uminho.ceb.biosystems.merlin.utilities.Pair;
 
@@ -57,9 +57,9 @@ public class LoadCompartments {
 	 * @return
 	 * @throws SQLException
 	 */
-	public static Map<String, GeneCompartments> getBestCompartmenForGene(double threshold, int knn, Statement statement) throws SQLException {
+	public static Map<String, AnnotationCompartmentsGenes> getBestCompartmenForGene(double threshold, int knn, Statement statement) throws SQLException {
 		
-		Map<String, GeneCompartments> compartments = new HashMap<String, GeneCompartments>();
+		Map<String, AnnotationCompartmentsGenes> compartments = new HashMap<String, AnnotationCompartmentsGenes>();
 
 		ArrayList<String[]> result = CompartmentsAPI.getBestCompartmenForGene(statement);
 		
@@ -78,7 +78,7 @@ public class LoadCompartments {
 					
 					if(compartments.keySet().contains(geneID)) {
 						
-						GeneCompartments geneCompartment = compartments.get(geneID);
+						AnnotationCompartmentsGenes geneCompartment = compartments.get(geneID);
 						score=(score)/(knn)*100;
 						
 						if((geneCompartment.getPrimary_score()-score)<=threshold) {
@@ -91,7 +91,7 @@ public class LoadCompartments {
 					else {
 						
 						score = (score)/(knn)*100;
-						GeneCompartments geneCompartments = new GeneCompartments(geneID, gene, name, abbreviation, score);
+						AnnotationCompartmentsGenes geneCompartments = new AnnotationCompartmentsGenes(geneID, gene, name, abbreviation, score);
 						compartments.put(geneID, geneCompartments);
 					}
 				}

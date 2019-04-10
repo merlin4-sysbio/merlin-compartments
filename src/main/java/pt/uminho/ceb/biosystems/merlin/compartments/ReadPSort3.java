@@ -14,8 +14,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsInterface;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.GeneCompartments;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.PSort3Result;
+import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
+import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsPSort3Result;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 
 /**
@@ -120,7 +120,7 @@ public class ReadPSort3 implements ICompartmentsInterface{
 					//String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
 					String locus_tag = line[seqID_index].split(" ")[0];
 					
-					PSort3Result pSort3Result = new PSort3Result(locus_tag);
+					AnnotationCompartmentsPSort3Result pSort3Result = new AnnotationCompartmentsPSort3Result(locus_tag);
 					
 					boolean unknown=true;
 
@@ -218,7 +218,7 @@ public class ReadPSort3 implements ICompartmentsInterface{
 
 						if(returnFinalLocalisation) {
 
-							pSort3Result = new PSort3Result(locus_tag);
+							pSort3Result = new AnnotationCompartmentsPSort3Result(locus_tag);
 							String out;
 							if(line[final_Localization_index].trim().equalsIgnoreCase("Cytoplasmic")){out = "cytop";}
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("CytoplasmicMembrane")){out = "cytmem";}
@@ -280,7 +280,7 @@ public class ReadPSort3 implements ICompartmentsInterface{
 	}
 
 	@Override
-	public Map<String, GeneCompartments> getBestCompartmentsByGene(double threshold, Statement statement)
+	public Map<String, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement)
 			throws SQLException {
 		
 		return LoadCompartments.getBestCompartmenForGene(threshold, ReadPSort3.normalization, statement);

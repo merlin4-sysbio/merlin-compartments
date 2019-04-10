@@ -17,7 +17,7 @@ import es.uvigo.ei.aibench.workbench.Workbench;
 import pt.uminho.ceb.biosystems.merlin.aibench.datatypes.ProjectGUI;
 import pt.uminho.ceb.biosystems.merlin.aibench.utilities.MerlinUtils;
 import pt.uminho.ceb.biosystems.merlin.core.datatypes.IntegrateCompartmentsData;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.GeneCompartments;
+import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.process.services.ProjectServices;
@@ -63,7 +63,7 @@ public class IntegrateCompartmentstoDatabase implements Observer {
 	};
 
 	@Port(direction=Direction.INPUT, name="geneCompartments", order=6)
-	public void setGeneCompartments(Map<String, GeneCompartments> geneCompartments){
+	public void setGeneCompartments(Map<String, AnnotationCompartmentsGenes> geneCompartments){
 
 		this.cancel = new AtomicBoolean(false);
 		this.startTime = GregorianCalendar.getInstance().getTimeInMillis();
