@@ -1,4 +1,4 @@
-package pt.uminho.ceb.biosystems.merlin.compartments;
+package pt.uminho.ceb.biosystems.merlin.compartments.processes;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -14,7 +14,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509TrustManager;
 
-public class RemoteCompartmentsResults {
+public class CompartmentsRetrievalProcesses {
 	
 	/**
 	 * Method to retrieve information from loctree results link.

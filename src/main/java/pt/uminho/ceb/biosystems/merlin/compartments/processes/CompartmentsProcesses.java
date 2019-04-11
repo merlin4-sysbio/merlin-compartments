@@ -1,23 +1,19 @@
-package pt.uminho.ceb.biosystems.merlin.compartments;
+package pt.uminho.ceb.biosystems.merlin.compartments.processes;
 
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
-import pt.uminho.ceb.biosystems.merlin.compartments.utils.Enumerators.STAIN;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
-import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
-import pt.uminho.ceb.biosystems.merlin.utils.TransportersUtilities;
+import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
+import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsEnumerators.STAIN;
 
 /**
  * @author ODias
  *
  */
-public class ProcessCompartments {
+public class CompartmentsProcesses {
 
 	private KINGDOM kingdom;
 	private STAIN stain;
@@ -28,14 +24,14 @@ public class ProcessCompartments {
 
 	/**
 	 */
-	public ProcessCompartments() {
+	public CompartmentsProcesses() {
 
 	}
 
 	/**
 	 * @param interiorCompartment
 	 */
-	public ProcessCompartments(String interiorCompartment) {
+	public CompartmentsProcesses(String interiorCompartment) {
 
 		this.interiorCompartment = interiorCompartment;
 	}
@@ -45,7 +41,7 @@ public class ProcessCompartments {
 	/**
 	 * @param existingCompartments
 	 */
-	public ProcessCompartments(Set<String> existingCompartments) {
+	public CompartmentsProcesses(Set<String> existingCompartments) {
 
 		this.initProcessCompartments(existingCompartments);
 	}
@@ -97,16 +93,11 @@ public class ProcessCompartments {
 
 			if (this.isProcessCompartmentsInitiated()) {
 
-				if (localisation.equalsIgnoreCase("out")) {
-					
-					return TransportersUtilities.getOutsideMembrane(compartment.toLowerCase(), this.stain);
+				if (localisation.equalsIgnoreCase("out"))					
+					return CompartmentsUtilities.getOutsideMembrane(compartment.toLowerCase(), this.stain);
+				else
 
-				} 
-				else {
-
-					return TransportersUtilities.getInsideMembrane(compartment.toLowerCase(), this.stain);
-					
-				}
+					return CompartmentsUtilities.getInsideMembrane(compartment.toLowerCase(), this.stain);
 			} else {
 
 				throw new Exception("Compartments processing not initiated!");
@@ -118,72 +109,7 @@ public class ProcessCompartments {
 		}
 	}
 
-	/**
-	 * @return
-	 * @throws SQLException 
-	 */
-	public String autoSetInteriorCompartment(Connection connection) throws SQLException {
-
-		Statement stmt = connection.createStatement();
-
-		return this.autoSetInteriorCompartment(stmt);
-	}
-
-	/**
-	 * @param statement
-	 * @return
-	 * @throws SQLException
-	 */
-	public String autoSetInteriorCompartment(Statement statement){
-
-		try {
-			this.interiorCompartment = CompartmentsAPI.getCompartmentAbbreviation(this.interiorCompartment, statement);
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		return interiorCompartment;
-	}
-
-
-	/**
-	 * @param compartment
-	 * @throws SQLException
-	 */
-	public int getCompartmentID(String compartment, Connection connection) {
-
-		Statement stmt;
-		int compartmentID = -1;
-
-		try {
-			stmt = connection.createStatement();
-
-			String abbreviation;
-
-			if(compartment.length()>3) {
-
-				abbreviation=compartment.substring(0,3).toUpperCase();
-			}
-			else {
-
-				abbreviation=compartment.toUpperCase().concat("_");
-
-				while(abbreviation.length()<4)
-					abbreviation=abbreviation.concat("_");
-			}
-
-			abbreviation=abbreviation.toUpperCase();
-
-			compartmentID = CompartmentsAPI.selectCompartmentID(compartment, abbreviation, stmt);
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		return compartmentID;
-
-	}
+	
 
 	/**
 	 * @param list
@@ -195,7 +121,7 @@ public class ProcessCompartments {
 	 */
 	public Set<Integer> parseCompartments(List<Integer> list, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap, List<String> ignoreList) throws Exception {
 
-		return ProcessCompartments.parseCompartments(list, compartmentsAbb_ids, idCompartmentAbbIdMap, ignoreList, stain, hasCellWall, ignoreCompartmentsID, interiorCompartment, this.isProcessCompartmentsInitiated());
+		return CompartmentsProcesses.parseCompartments(list, compartmentsAbb_ids, idCompartmentAbbIdMap, ignoreList, stain, hasCellWall, ignoreCompartmentsID, interiorCompartment, this.isProcessCompartmentsInitiated());
 	}
 
 	/**
@@ -216,24 +142,16 @@ public class ProcessCompartments {
 	public static Set<Integer> parseCompartments(List<Integer> list, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap, List<String> ignoreList,
 			STAIN stain, boolean hasCellWall, Set<Integer> ignoreCompartmentsID, String interiorCompartment, boolean isProcessCompartmentsInitiated) throws Exception {
 		
-//		System.out.println("isProcessCompartmentsInitiated---->"+isProcessCompartmentsInitiated);
 		Set<Integer> compartments = new HashSet<>();
 
 		if (isProcessCompartmentsInitiated) {
 			
-//			System.out.println("ListaCOmpartments----->"+list);
-//			System.out.println("idCompartmentAbbIdMap----->"+idCompartmentAbbIdMap);
 			try {
 
 				for(int compartment: list) {
 					
 					String abb = compartmentsAbb_ids.get(compartment).toLowerCase();
 					
-//					if(!abb.equals("in") && !abb.equals("out"))
-//						abb = "in";
-					
-//					System.out.println("ABB----->"+abb);
-
 					if(abb.equalsIgnoreCase("cytmem")) {
 
 						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
@@ -260,7 +178,7 @@ public class ProcessCompartments {
 					} 
 					else if (abb.contains("me")) {
 
-						for(String newAbb : TransportersUtilities.getOutsideMembranes(abb, stain)) 
+						for(String newAbb : CompartmentsUtilities.getOutsideMembranes(abb, stain)) 
 							compartments.add(idCompartmentAbbIdMap.get(newAbb.toLowerCase()));
 					}
 					else if(abb.equalsIgnoreCase("unkn")) {
@@ -302,7 +220,7 @@ public class ProcessCompartments {
 	public String getOutside(String compartmentID) throws Exception {
 
 		if(this.isProcessCompartmentsInitiated())
-			return TransportersUtilities.getOutside(this.stain, compartmentID);
+			return CompartmentsUtilities.getOutside(this.stain, compartmentID);
 		else
 			throw new Exception("Compartments processing not initiated!");
 	}

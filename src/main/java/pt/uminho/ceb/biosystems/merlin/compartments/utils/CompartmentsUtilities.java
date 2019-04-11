@@ -6,10 +6,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import pt.uminho.ceb.biosystems.merlin.compartments.utils.Enumerators.STAIN;
+import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsEnumerators.STAIN;
 
 public class CompartmentsUtilities {
 
+	public static String DEFAULT_MEMBRANE = "cytmem";
+	
 		/**
 		 * @param abbreviation
 		 * @return

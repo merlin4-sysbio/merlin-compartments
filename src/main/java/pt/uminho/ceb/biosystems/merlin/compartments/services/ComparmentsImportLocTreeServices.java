@@ -1,4 +1,4 @@
-package pt.uminho.ceb.biosystems.merlin.compartments;
+package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,18 +12,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsInterface;
+import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
+import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsLocTree;
+import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsServices;
+import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsInitializationProcesses;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.RetrieveRemoteResults;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsLocTreeResult;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 
 /**
  * @author Oscar Dias
  *
  */
-public class ReadLocTree implements ICompartmentsInterface {
+public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 
 	private static int normalization=100;
 	private AtomicBoolean cancel;
@@ -32,7 +33,7 @@ public class ReadLocTree implements ICompartmentsInterface {
 	/**
 	 * @param organismType
 	 */
-	public ReadLocTree() {
+	public ComparmentsImportLocTreeServices() {
 
 		this.cancel = new AtomicBoolean(false);
 	}
@@ -84,7 +85,7 @@ public class ReadLocTree implements ICompartmentsInterface {
 
 		boolean header = true, flag = false;
 		
-		AnnotationCompartmentsLocTreeResult locTR = null;
+		AnnotationCompartmentsLocTree locTR = null;
 		
 		boolean oldParser = false;
 		
@@ -131,13 +132,13 @@ public class ReadLocTree implements ICompartmentsInterface {
 
 				if(compartmentLists.containsKey(locT[protID])) {
 
-					locTR = (AnnotationCompartmentsLocTreeResult) compartmentLists.get(locT[protID]);
+					locTR = (AnnotationCompartmentsLocTree) compartmentLists.get(locT[protID]);
 					String abbreviation = CompartmentsUtilities.getAbbreviation(localizationString);
 					locTR.addCompartment(abbreviation, Double.parseDouble(locT[scr]));
 				}
 				else {
 
-					locTR = new AnnotationCompartmentsLocTreeResult(locT[protID], Double.parseDouble(locT[scr]), localizationString, locT[geneOnto]);
+					locTR = new AnnotationCompartmentsLocTree(locT[protID], Double.parseDouble(locT[scr]), localizationString, locT[geneOnto]);
 
 
 					if(acc>0 && annType>0) {
@@ -248,12 +249,12 @@ public class ReadLocTree implements ICompartmentsInterface {
 							try {
 
 								if(compartmentLists.containsKey(proteinID)) {
-									locTR = (AnnotationCompartmentsLocTreeResult) compartmentLists.get(proteinID);
+									locTR = (AnnotationCompartmentsLocTree) compartmentLists.get(proteinID);
 									locTR.addCompartment(localization, Double.parseDouble(score));
 								}
 								else {
 
-									locTR = new AnnotationCompartmentsLocTreeResult(proteinID, Double.parseDouble(score), localization, geneOntologyTerms);
+									locTR = new AnnotationCompartmentsLocTree(proteinID, Double.parseDouble(score), localization, geneOntologyTerms);
 									locTR.setAnnotationType(annotationType);
 									locTR.setExpectedAccuracy(accuracy);
 								}
@@ -382,7 +383,7 @@ public class ReadLocTree implements ICompartmentsInterface {
 	@Override
 	public Map<String, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException {
 
-		return LoadCompartments.getBestCompartmenForGene(threshold, ReadLocTree.normalization, statement);
+		return CompartmentsInitializationProcesses.getBestCompartmenForGene(threshold, ComparmentsImportLocTreeServices.normalization, statement);
 	}
 
 	/**
@@ -396,7 +397,7 @@ public class ReadLocTree implements ICompartmentsInterface {
 	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results, Statement statement) throws Exception {
 
 		for(ICompartmentResult locTreeResult : results.values())
-			LoadCompartments.loadData(locTreeResult.getGeneID(), locTreeResult.getCompartments(), statement);
+			CompartmentsInitializationProcesses.loadData(locTreeResult.getGeneID(), locTreeResult.getCompartments(), statement);
 
 	}
 

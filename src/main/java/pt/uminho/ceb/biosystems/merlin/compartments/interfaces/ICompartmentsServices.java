@@ -9,7 +9,7 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
+import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 
 
@@ -18,7 +18,7 @@ import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
  * @author ODias
  *
  */
-public abstract interface ICompartmentsInterface {
+public abstract interface ICompartmentsServices {
 	
 	/**
 	 * @return

@@ -1,6 +1,6 @@
-package pt.uminho.ceb.biosystems.merlin.utils;
+package pt.uminho.ceb.biosystems.merlin.compartments.utils;
 
-public class Enumerators {
+public class CompartmentsEnumerators {
 
 	/**
 	 * @author ODias

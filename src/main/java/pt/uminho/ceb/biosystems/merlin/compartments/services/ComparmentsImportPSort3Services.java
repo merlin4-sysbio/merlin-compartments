@@ -1,7 +1,7 @@
 /**
  * 
  */
-package pt.uminho.ceb.biosystems.merlin.compartments;
+package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,16 +13,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsInterface;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsPSort3Result;
+import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
+import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsPSort3;
+import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsServices;
+import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsInitializationProcesses;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 
 /**
  * @author ODias
  *
  */
-public class ReadPSort3 implements ICompartmentsInterface{
+public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 
 	private static int normalization=10;
 	private AtomicBoolean cancel;
@@ -43,7 +44,7 @@ public class ReadPSort3 implements ICompartmentsInterface{
 	/**
 	 * 
 	 */
-	public ReadPSort3() {
+	public ComparmentsImportPSort3Services() {
 
 		this.cancel = new AtomicBoolean(false);
 	}
@@ -120,7 +121,7 @@ public class ReadPSort3 implements ICompartmentsInterface{
 					//String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
 					String locus_tag = line[seqID_index].split(" ")[0];
 					
-					AnnotationCompartmentsPSort3Result pSort3Result = new AnnotationCompartmentsPSort3Result(locus_tag);
+					AnnotationCompartmentsPSort3 pSort3Result = new AnnotationCompartmentsPSort3(locus_tag);
 					
 					boolean unknown=true;
 
@@ -218,7 +219,7 @@ public class ReadPSort3 implements ICompartmentsInterface{
 
 						if(returnFinalLocalisation) {
 
-							pSort3Result = new AnnotationCompartmentsPSort3Result(locus_tag);
+							pSort3Result = new AnnotationCompartmentsPSort3(locus_tag);
 							String out;
 							if(line[final_Localization_index].trim().equalsIgnoreCase("Cytoplasmic")){out = "cytop";}
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("CytoplasmicMembrane")){out = "cytmem";}
@@ -276,14 +277,14 @@ public class ReadPSort3 implements ICompartmentsInterface{
 			throws Exception {
 		
 		for(ICompartmentResult pSORT3Result : results.values())
-			LoadCompartments.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), statement);
+			CompartmentsInitializationProcesses.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), statement);
 	}
 
 	@Override
 	public Map<String, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement)
 			throws SQLException {
 		
-		return LoadCompartments.getBestCompartmenForGene(threshold, ReadPSort3.normalization, statement);
+		return CompartmentsInitializationProcesses.getBestCompartmenForGene(threshold, ComparmentsImportPSort3Services.normalization, statement);
 	}
 
 	@Override

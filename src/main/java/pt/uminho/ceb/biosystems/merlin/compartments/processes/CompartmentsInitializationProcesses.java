@@ -1,4 +1,4 @@
-package pt.uminho.ceb.biosystems.merlin.compartments;
+package pt.uminho.ceb.biosystems.merlin.compartments.processes;
 
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.compartments.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
 import pt.uminho.ceb.biosystems.merlin.utilities.Pair;
 
-public class LoadCompartments {
+public class CompartmentsInitializationProcesses {
 
 
 	/**
@@ -26,7 +26,7 @@ public class LoadCompartments {
 
 		try {
 			
-			LoadCompartments.initCompartments(statement);
+			CompartmentsInitializationProcesses.initCompartments(statement);
 			
 			String idLT = CompartmentsAPI.getIdentifierLocusTag(locust_tag, statement);
 			

@@ -1,4 +1,4 @@
-package pt.uminho.ceb.biosystems.merlin.compartments;
+package pt.uminho.ceb.biosystems.merlin.compartments.datatype;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -8,12 +8,11 @@ import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 import pt.uminho.ceb.biosystems.merlin.utilities.Pair;
 
 
-/**
- * @author ODias
- *
- */
-public class WoLFPSORT_Result implements Serializable, ICompartmentResult {
+public class AnnotationCompartmentsPSort3 implements Serializable, ICompartmentResult {
 
+	/**
+	 * 
+	 */
 	private static final long serialVersionUID = 1L;
 	private String geneID;
 	private List<Pair<String, Double>> compartments;
@@ -21,7 +20,7 @@ public class WoLFPSORT_Result implements Serializable, ICompartmentResult {
 	/**
 	 * @param geneID
 	 */
-	public WoLFPSORT_Result(String geneID) {
+	public AnnotationCompartmentsPSort3(String geneID) {
 		this.setGeneID(geneID);
 		this.setCompartments(new ArrayList<Pair<String, Double>>());
 	}
@@ -30,8 +29,8 @@ public class WoLFPSORT_Result implements Serializable, ICompartmentResult {
 	 * @param compartmentID
 	 * @param score
 	 */
-	public void addCompartment(String compartmentID, double score){
-		this.compartments.add(new Pair<String, Double>(compartmentID,score));
+	public void addCompartment(String compartmentAbbreviation, double score){
+		this.compartments.add(new Pair<String, Double>(compartmentAbbreviation,score));
 	}
 
 	/**
@@ -67,10 +66,10 @@ public class WoLFPSORT_Result implements Serializable, ICompartmentResult {
 	 */
 	@Override
 	public String toString() {
-		return "WoLFPSORT_Result ["
+		return "PSort3Result ["
 				+ (this.geneID != null ? "geneID=" + this.geneID + ", " : "")
 				+ (this.compartments != null ? "compartments=" + this.compartments : "")
 				+ "]";
 	}
-
+	
 }
