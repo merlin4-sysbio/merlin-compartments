@@ -57,9 +57,9 @@ public class CompartmentsInitializationProcesses {
 	 * @return
 	 * @throws SQLException
 	 */
-	public static Map<String, AnnotationCompartmentsGenes> getBestCompartmenForGene(double threshold, int knn, Statement statement) throws SQLException {
+	public static Map<Integer, AnnotationCompartmentsGenes> getBestCompartmenForGene(double threshold, int knn, Statement statement) throws SQLException {
 		
-		Map<String, AnnotationCompartmentsGenes> compartments = new HashMap<String, AnnotationCompartmentsGenes>();
+		Map<Integer, AnnotationCompartmentsGenes> compartments = new HashMap<>();
 
 		ArrayList<String[]> result = CompartmentsAPI.getBestCompartmenForGene(statement);
 		
@@ -68,7 +68,7 @@ public class CompartmentsInitializationProcesses {
 			for(int i=0; i<result.size(); i++){
 				String[] list = result.get(i);
 				
-				String geneID = list[0];
+				int geneID = Integer.parseInt(list[0]);
 				String gene = list[1];
 				score = Double.parseDouble(list[2]);  
 				String abbreviation = list[3];		

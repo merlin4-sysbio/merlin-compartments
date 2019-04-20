@@ -381,7 +381,7 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 	 * @throws SQLException
 	 */
 	@Override
-	public Map<String, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException {
+	public Map<Integer, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException {
 
 		return CompartmentsInitializationProcesses.getBestCompartmenForGene(threshold, ComparmentsImportLocTreeServices.normalization, statement);
 	}

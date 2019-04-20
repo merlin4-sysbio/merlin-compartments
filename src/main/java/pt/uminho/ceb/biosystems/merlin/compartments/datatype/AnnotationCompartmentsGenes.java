@@ -17,7 +17,8 @@ public class AnnotationCompartmentsGenes implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = -1;
-	private String geneID, gene;
+	private int geneID;
+	private String gene;
 	private boolean dualLocalisation;
 	private String primary_location, primary_location_abb;
 	private Map<String,Double> secondary_location;
@@ -37,7 +38,7 @@ public class AnnotationCompartmentsGenes implements Serializable{
 	 * @param primary_location_abb
 	 * @param primary_score
 	 */
-	public AnnotationCompartmentsGenes(String geneID, String gene, String primary_location, String primary_location_abb, double primary_score) {
+	public AnnotationCompartmentsGenes(int geneID, String gene, String primary_location, String primary_location_abb, double primary_score) {
 		super();
 		this.setPrimary_location_abb(primary_location_abb);
 		this.setGene(gene);
@@ -64,14 +65,14 @@ public class AnnotationCompartmentsGenes implements Serializable{
 	/**
 	 * @return the geneID
 	 */
-	public String getGeneID() {
+	public int getGeneID() {
 		return geneID;
 	}
 
 	/**
 	 * @param geneID the geneID to set
 	 */
-	public void setGeneID(String geneID) {
+	public void setGeneID(int geneID) {
 		this.geneID = geneID;
 	}
 
@@ -173,28 +174,14 @@ public class AnnotationCompartmentsGenes implements Serializable{
 		this.primary_score = primary_score;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
-		return "GeneCompartments ["
-				+ (geneID != null ? "geneID=" + geneID + ", " : "")
-				+ (gene != null ? "gene=" + gene + ", " : "")
-				+ "dualLocalisation="
-				+ dualLocalisation
-				+ ", "
-				+ (primary_location != null ? "primary_location="
-						+ primary_location + ", " : "")
-				+ (primary_location_abb != null ? "primary_location_abb="
-						+ primary_location_abb + ", " : "")
-				+ (secondary_location != null ? "secondary_location="
-						+ secondary_location + ", " : "")
-				+ (secondary_location_abb != null ? "secondary_location_abb="
-						+ secondary_location_abb + ", " : "")
-				+ "primary_score=" + primary_score + "]";
+		return "AnnotationCompartmentsGenes [geneID=" + geneID + ", gene=" + gene + ", dualLocalisation="
+				+ dualLocalisation + ", primary_location=" + primary_location + ", primary_location_abb="
+				+ primary_location_abb + ", secondary_location=" + secondary_location + ", secondary_location_abb="
+				+ secondary_location_abb + ", primary_score=" + primary_score + "]";
 	}
-	
+
 	
 
 }

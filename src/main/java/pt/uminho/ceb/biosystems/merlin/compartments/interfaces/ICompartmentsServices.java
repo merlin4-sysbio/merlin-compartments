@@ -41,7 +41,7 @@ public abstract interface ICompartmentsServices {
 	 * @param project_id
 	 * @return
 	 */
-	public Map<String,AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException;
+	public Map<Integer,AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException;
 
 	/**
 	 * @param string

@@ -86,19 +86,19 @@ public class CompartmentsAnnotationServices {
 		try {
 			Statement statement = connection.createStatement();
 
-			Map<String, AnnotationCompartmentsGenes> geneCompartments = runCompartmentsInterface(threshold, statement);
+			Map<Integer, AnnotationCompartmentsGenes> geneCompartments = runCompartmentsInterface(threshold, statement);
 			
 			if(geneCompartments != null){
 
 //				int g = 0;
 
-				List<String> collection = new ArrayList<>(geneCompartments.keySet());
+				List<Integer> collection = new ArrayList<>(geneCompartments.keySet());
 
 				Collections.sort(collection);
 
 				Map<String, String> allLocusTag = CompartmentsAPI.getAllLocusTag(statement);
 
-				for(String query : collection) {
+				for(int query : collection) {
 					
 					AnnotationCompartmentsGenes geneCompartment = geneCompartments.get(query);
 //					String id = geneCompartment.getGeneID();
@@ -107,6 +107,7 @@ public class CompartmentsAnnotationServices {
 					ql.add("");
 //					this.ids.put(g, id);
 
+					@SuppressWarnings("unlikely-arg-type")
 					String locusTag = allLocusTag.get(query);
 					
 					if(locusTag != null){
@@ -154,7 +155,7 @@ public class CompartmentsAnnotationServices {
 		return qrt;
 	}
 
-	public static WorkspaceDataTable[] getRowInfo(String id, Connection connection) {
+	public static WorkspaceDataTable[] getRowInfo(int id, Connection connection) {
 
 		WorkspaceDataTable[] results = new WorkspaceDataTable[1];
 
@@ -247,9 +248,9 @@ public class CompartmentsAnnotationServices {
 		}
 	}
 	
-	public static Map<String, AnnotationCompartmentsGenes> runCompartmentsInterface(double threshold, Statement statement){
+	public static Map<Integer, AnnotationCompartmentsGenes> runCompartmentsInterface(double threshold, Statement statement){
 		
-		Map<String, AnnotationCompartmentsGenes> geneCompartments = null;
+		Map<Integer, AnnotationCompartmentsGenes> geneCompartments = null;
 		
 		try {
 			

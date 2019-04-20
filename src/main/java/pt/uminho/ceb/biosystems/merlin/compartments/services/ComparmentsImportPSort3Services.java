@@ -281,7 +281,7 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 	}
 
 	@Override
-	public Map<String, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement)
+	public Map<Integer, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement)
 			throws SQLException {
 		
 		return CompartmentsInitializationProcesses.getBestCompartmenForGene(threshold, ComparmentsImportPSort3Services.normalization, statement);
