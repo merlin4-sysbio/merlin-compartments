@@ -27,6 +27,7 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 
 	private static int normalization=10;
 	private AtomicBoolean cancel;
+	private boolean typePlant;
 
 
 //	/**
@@ -289,7 +290,21 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 
 	@Override
 	public void setPlant(boolean typePlant) {
-		// TODO Auto-generated method stub
 		
+		this.setTypePlant(typePlant);
+	}
+
+	/**
+	 * @return the typePlant
+	 */
+	public boolean isTypePlant() {
+		return typePlant;
+	}
+
+	/**
+	 * @param typePlant the typePlant to set
+	 */
+	public void setTypePlant(boolean typePlant) {
+		this.typePlant = typePlant;
 	}
 }

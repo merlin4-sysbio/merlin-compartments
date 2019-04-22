@@ -25,21 +25,21 @@ public class CompartmentsInitializationProcesses {
 	public static void loadData(String locust_tag, List<Pair<String, Double>> probabilities, Statement statement){
 
 		try {
-			
+
 			CompartmentsInitializationProcesses.initCompartments(statement);
-			
+
 			String idLT = CompartmentsAPI.getIdentifierLocusTag(locust_tag, statement);
-			
+
 			for(Pair<String, Double> compartment: probabilities) {
-				
+
 				Double nComp = compartment.getB();
-				
+
 				if(nComp>=0) {
-					
+
 					String abb = compartment.getA();
-					
+
 					String name = CompartmentsUtilities.parseAbbreviation(compartment.getA());
-					
+
 					CompartmentsAPI.insertIntoCompartments(idLT, name, abb, nComp, statement);
 				}
 			}
@@ -58,45 +58,46 @@ public class CompartmentsInitializationProcesses {
 	 * @throws SQLException
 	 */
 	public static Map<Integer, AnnotationCompartmentsGenes> getBestCompartmenForGene(double threshold, int knn, Statement statement) throws SQLException {
-		
+
 		Map<Integer, AnnotationCompartmentsGenes> compartments = new HashMap<>();
 
 		ArrayList<String[]> result = CompartmentsAPI.getBestCompartmenForGene(statement);
-		
-			double score;
-			
-			for(int i=0; i<result.size(); i++){
-				String[] list = result.get(i);
-				
-				int geneID = Integer.parseInt(list[0]);
-				String gene = list[1];
-				score = Double.parseDouble(list[2]);  
-				String abbreviation = list[3];		
-				String name = list[4];				
 
-				if(!abbreviation.contains("_")) {
-					
-					if(compartments.keySet().contains(geneID)) {
-						
-						AnnotationCompartmentsGenes geneCompartment = compartments.get(geneID);
-						score=(score)/(knn)*100;
-						
-						if((geneCompartment.getPrimary_score()-score)<=threshold) {
-							
-							geneCompartment.setDualLocalisation(true);
-							geneCompartment.addSecondaryLocation(name, abbreviation, score);
-							compartments.put(geneID, geneCompartment);
-						}
-					}
-					else {
-						
-						score = (score)/(knn)*100;
-						AnnotationCompartmentsGenes geneCompartments = new AnnotationCompartmentsGenes(geneID, gene, name, abbreviation, score);
-						compartments.put(geneID, geneCompartments);
+		double score;
+
+		for(int i=0; i<result.size(); i++) {
+
+			String[] list = result.get(i);
+
+			int geneID = Integer.parseInt(list[0]);
+			String gene = list[1];
+			score = Double.parseDouble(list[2]);  
+			String abbreviation = list[3];		
+			String name = list[4];				
+
+			if(!abbreviation.contains("_")) {
+
+				if(compartments.keySet().contains(geneID)) {
+
+					AnnotationCompartmentsGenes geneCompartment = compartments.get(geneID);
+					score=(score)/(knn)*100;
+
+					if((geneCompartment.getPrimary_score()-score)<=threshold) {
+
+						geneCompartment.setDualLocalisation(true);
+						geneCompartment.addSecondaryLocation(name, abbreviation, score);
+						compartments.put(geneID, geneCompartment);
 					}
 				}
+				else {
+
+					score = (score)/(knn)*100;
+					AnnotationCompartmentsGenes geneCompartments = new AnnotationCompartmentsGenes(geneID, gene, name, abbreviation, score);
+					compartments.put(geneID, geneCompartments);
+				}
 			}
-			return compartments;
+		}
+		return compartments;
 	}
 
 	/**
