@@ -1,14 +1,15 @@
 package pt.uminho.ceb.biosystems.merlin.compartments.processes;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,25 +27,24 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
-import pt.uminho.ceb.biosystems.merlin.utilities.TimeLeftProgress;
 import pt.uminho.ceb.biosystems.merlin.utilities.containers.capsules.DatabaseReactionContainer;
 
 /**
  * @author ODias
  *
  */
-public class CompartmentsAnnotationIntegrationProcesses extends Observable implements IIntegrateData {
+public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateData, PropertyChangeListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(CompartmentsAnnotationIntegrationProcesses.class);
 
 	private Connection connection;
 	private Map<String,AnnotationCompartmentsGenes> geneCompartments;
-	private long startTime;
-	private TimeLeftProgress progress;
 	private AtomicBoolean cancel;
 	private CompartmentsProcesses processCompartments;
 	private AtomicInteger processingTotal;
 	private AtomicInteger processingCounter;
+
+	private PropertyChangeSupport changes;
 
 
 	/**
@@ -53,11 +53,11 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 	 */
 	public CompartmentsAnnotationIntegrationProcesses(Connection connection, Map<String,AnnotationCompartmentsGenes> geneCompartments) {
 
-			this.connection = connection;
-			this.geneCompartments = geneCompartments;
-			this.startTime = GregorianCalendar.getInstance().getTimeInMillis();
-			this.cancel = new AtomicBoolean(false);
-			this.processCompartments = new CompartmentsProcesses();
+		this.changes = new PropertyChangeSupport(this);
+		this.connection = connection;
+		this.geneCompartments = geneCompartments;
+		this.cancel = new AtomicBoolean(false);
+		this.processCompartments = new CompartmentsProcesses();
 	}
 
 	/**
@@ -125,10 +125,7 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 					this.processCompartments.initProcessCompartments(compartmentsDatabaseIDs.keySet());
 				}
 
-				this.processingCounter.incrementAndGet();
-				this.progress.setTime((GregorianCalendar.getInstance().getTimeInMillis()-this.startTime), this.processingCounter.get(), this.processingTotal.get());
-				setChanged();
-				notifyObservers();
+				this.changes.firePropertyChange("sequencesCounter", this.processingCounter.get(), this.processingCounter.incrementAndGet());
 			}
 			statement.close();
 			return true;
@@ -177,7 +174,7 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 				for(String idReaction: enzymesReactions.get(ecnumber)) {
 
 					DatabaseReactionContainer reaction = new DatabaseReactionContainer(reactionsMap.get(idReaction));
-					
+
 					//reactions are in model if they were assigned to model by user
 					boolean inModelFromCompartment =  reaction.isInModel();
 
@@ -205,10 +202,7 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 					}
 				}
 
-				this.processingCounter.incrementAndGet();
-				this.progress.setTime((GregorianCalendar.getInstance().getTimeInMillis()-this.startTime), this.processingCounter.get(), this.processingTotal.get(), "enzymatic reactions");
-				setChanged();
-				notifyObservers();
+				this.changes.firePropertyChange("sequencesCounter", this.processingCounter.get(), this.processingCounter.incrementAndGet());
 			}
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -245,17 +239,14 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 
 				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				
+
 				logger.trace("reaction {} is in model {}", reactionsMap.get(idReaction).getName(), reactionsMap.get(idReaction).isInModel());
 
 				int idCompartment = idCompartmentAbbIdMap.get(this.processCompartments.getInteriorCompartment().toLowerCase());
 
 				ModelDatabaseLoadingServices.loadReaction(idCompartment, reactionsMap.get(idReaction).isInModel(), reactionsMap.get(idReaction), null, statement, false);
 
-				this.processingCounter.incrementAndGet();
-				this.progress.setTime((GregorianCalendar.getInstance().getTimeInMillis()-this.startTime), this.processingCounter.get(), this.processingTotal.get(), "other reactions");
-				setChanged();
-				notifyObservers();
+				this.changes.firePropertyChange("sequencesCounter", this.processingCounter.get(), this.processingCounter.incrementAndGet());
 
 			}
 			statement.close();
@@ -315,7 +306,7 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		Map<String, Set<Integer>> transportProteinsCompartments = CompartmentsAPI.getTransportProteinsCompartments(statement);
-		
+
 
 		result = ProjectAPI.getReactionIdAndPathwayID(statement);
 
@@ -334,14 +325,14 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 		for(String transporter : transportProteins_reactions.keySet()) {
 
 			for(String idReaction: transportProteins_reactions.get(transporter)) {
-				
+
 				DatabaseReactionContainer transportReaction = new DatabaseReactionContainer(reactionsMap.get(idReaction));
-				
+
 				Set<Integer> tpcCompartments = new HashSet<>();
 				int tpcCompartmentsSize = 1;
 
 				if(transportProteinsCompartments.containsKey(transporter)) {
-					
+
 					tpcCompartments = transportProteinsCompartments.get(transporter);
 					tpcCompartmentsSize = transportProteinsCompartments.get(transporter).size();
 
@@ -351,28 +342,28 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 
 
 				String originalEquation = transportReaction.getEquation();
-				
+
 				List<Integer> originalIDCompartments = transportReaction.getCompartment_idcompartment();
 
 				for(int idCompartment: tpcCompartments) {
 
 					String abb = idCompartmentMap.get(idCompartment);
-					
-//					String newAbb = abb;
-					
-//					if(abb.toLowerCase().contains("me"))
-//						newAbb = TransportersUtilities.getOutsideMembrane(abb.toLowerCase(),  this.processCompartments.getStain());
-					
+
+					//					String newAbb = abb;
+
+					//					if(abb.toLowerCase().contains("me"))
+					//						newAbb = TransportersUtilities.getOutsideMembrane(abb.toLowerCase(),  this.processCompartments.getStain());
+
 					if(reactionReversibility.contains(idReaction) && abb.equalsIgnoreCase("extr")) {
-						
+
 						if(this.processCompartments.getInteriorCompartment().equalsIgnoreCase("cyto"))
 							abb = "PLAS";
 						else
 							abb = "outme";
 					}
-					
+
 					if(abb.toLowerCase().contains("me") || abb.toLowerCase().contains("pla")) {
-						
+
 						boolean inModelFromCompartment = transportReaction.isInModel();
 
 						if(ignoreList.contains(abb.toLowerCase())) 
@@ -380,7 +371,7 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 
 						String equation = originalEquation.replace("(out)","("+this.processCompartments.processTransportCompartments("out", abb )+")").replace("(in)",
 								"("+this.processCompartments.processTransportCompartments("in", abb )+")");
-						
+
 						transportReaction.setEquation(equation);
 
 						//////////////////////////////////////////////////////////////////
@@ -407,7 +398,7 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 						ModelDatabaseLoadingServices.loadReaction(idCompartment, inModelFromCompartment, transportReaction, null, statement, true);
 					}
 					else if(abb.equalsIgnoreCase("cytop") || tpcCompartmentsSize==1){
-						
+
 						String newAbb = CompartmentsUtilities.DEFAULT_MEMBRANE;
 
 						boolean inModel = false;
@@ -457,7 +448,7 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 		int idCompartment = idCompartmentAbbIdMap.get(CompartmentsUtilities.DEFAULT_MEMBRANE.toString());
 
 		for(String idReaction: reactionsIDs) {
-			
+
 			DatabaseReactionContainer transportReaction = new DatabaseReactionContainer(reactionsMap.get(idReaction));
 
 			String originalEquation = transportReaction.getEquation();
@@ -536,11 +527,24 @@ public class CompartmentsAnnotationIntegrationProcesses extends Observable imple
 	}
 
 	/**
-	 * @param progress
+	 * @param l
 	 */
-	public void setTimeLeftProgress(TimeLeftProgress progress) {
+	public void addPropertyChangeListener(PropertyChangeListener l) {
+		changes.addPropertyChangeListener(l);
+	}
 
-		this.progress = progress;
+	/**
+	 * @param l
+	 */
+	public void removePropertyChangeListener(PropertyChangeListener l) {
+		changes.removePropertyChangeListener(l);
+	}
+
+
+	@Override
+	public void propertyChange(PropertyChangeEvent evt) {
+
+		this.changes.firePropertyChange(evt.getPropertyName(), evt.getOldValue(), evt.getNewValue());				
 	}
 
 }
