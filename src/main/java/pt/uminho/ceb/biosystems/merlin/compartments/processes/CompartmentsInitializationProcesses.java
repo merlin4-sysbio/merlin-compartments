@@ -11,7 +11,7 @@ import java.util.TreeMap;
 import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
-import pt.uminho.ceb.biosystems.merlin.utilities.Pair;
+import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 
 public class CompartmentsInitializationProcesses {
 

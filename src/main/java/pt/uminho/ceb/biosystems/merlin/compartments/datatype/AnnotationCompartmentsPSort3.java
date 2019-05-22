@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
-import pt.uminho.ceb.biosystems.merlin.utilities.Pair;
+import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 
 
 public class AnnotationCompartmentsPSort3 implements Serializable, ICompartmentResult {

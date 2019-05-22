@@ -6,8 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import pt.uminho.ceb.biosystems.merlin.bioapis.externalAPI.ncbi.EntrezLink.KINGDOM;
-import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsEnumerators.STAIN;
+import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
 
 /**
  * @author ODias
