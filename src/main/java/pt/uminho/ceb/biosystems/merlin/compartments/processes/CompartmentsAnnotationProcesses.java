@@ -76,7 +76,7 @@ public class CompartmentsAnnotationProcesses {
 		results[0] = new WorkspaceDataTable(columnsNames, "compartments");
 
 		for(List<String> list : dataList.get("compartments"))				
-			results[0].addLine((ArrayList<String>) list);
+			results[0].addLine((List<String>) list);
 			
 		return results;
 	}
