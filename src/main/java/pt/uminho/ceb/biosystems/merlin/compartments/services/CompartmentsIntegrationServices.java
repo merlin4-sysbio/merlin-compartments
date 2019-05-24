@@ -15,6 +15,7 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.Compartmen
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
+import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
 import pt.uminho.ceb.biosystems.merlin.utilities.containers.capsules.DatabaseReactionContainer;
 
@@ -129,10 +130,12 @@ public class CompartmentsIntegrationServices {
 
 		String idGene = ModelDatabaseLoadingServices.loadGene(locusTag, sequence_id, geneName, direction, left_end, right_end, statement, informationType);
 
+		boolean isCompartmentalisedModel = ProjectServices.isCompartmentalisedModel();
+		
 		if (! ecNumbers.isEmpty())			
-			enzymesReactions = ModelAPI.loadEnzymeGetReactions(idGene, ecNumbers, proteinName, statement, integratePartial, integrateFull, insertProductNames);
+			enzymesReactions = ModelAPI.loadEnzymeGetReactions(idGene, ecNumbers, proteinName, statement, integratePartial, integrateFull, insertProductNames, isCompartmentalisedModel);
 
-		if(ProjectAPI.isCompartmentalisedModel(statement) && !ModelAPI.isGeneCompartmentLoaded(idGene, statement)) {
+		if(isCompartmentalisedModel && !ModelAPI.isGeneCompartmentLoaded(idGene, statement)) {
 
 			if(genesCompartments!=null && !genesCompartments.isEmpty()) {
 
