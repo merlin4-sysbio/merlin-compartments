@@ -103,7 +103,7 @@ public class CompartmentsIntegrationServices {
 	}
 	
 	
-
+	@Deprecated
 	/**
 	 * @param locusTag
 	 * @param sequence_id
@@ -130,7 +130,7 @@ public class CompartmentsIntegrationServices {
 
 		String idGene = ModelDatabaseLoadingServices.loadGene(locusTag, sequence_id, geneName, direction, left_end, right_end, statement, informationType);
 
-		boolean isCompartmentalisedModel = ProjectServices.isCompartmentalisedModel();
+		boolean isCompartmentalisedModel = ProjectServices.isCompartmentalisedModel(null); 
 		
 		if (! ecNumbers.isEmpty())			
 			enzymesReactions = ModelAPI.loadEnzymeGetReactions(idGene, ecNumbers, proteinName, statement, integratePartial, integrateFull, insertProductNames, isCompartmentalisedModel);
