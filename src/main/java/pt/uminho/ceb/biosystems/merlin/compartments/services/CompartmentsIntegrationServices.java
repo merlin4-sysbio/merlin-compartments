@@ -9,15 +9,14 @@ import java.util.Set;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsProcesses;
+import pt.uminho.ceb.biosystems.merlin.core.containers.model.ReactionContainer;
 import pt.uminho.ceb.biosystems.merlin.core.datatypes.Workspace;
 import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.InformationType;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
-import pt.uminho.ceb.biosystems.merlin.utilities.containers.capsules.DatabaseReactionContainer;
 
 public class CompartmentsIntegrationServices {
 
@@ -126,7 +125,7 @@ public class CompartmentsIntegrationServices {
 	public static boolean loadGeneAnnotation(String locusTag, String  sequence_id, String geneName, String direction, String left_end, String right_end, Set<String> ecNumbers, String proteinName, Statement statement,
 			boolean integratePartial, boolean integrateFull, boolean insertProductNames, Workspace project, InformationType informationType, Map<String, AnnotationCompartmentsGenes> genesCompartments) throws Exception {
 
-		Map<String, List<String>> enzymesReactions = null;
+		Map<String, List<Integer>> enzymesReactions = null;
 
 		String idGene = ModelDatabaseLoadingServices.loadGene(locusTag, sequence_id, geneName, direction, left_end, right_end, statement, informationType);
 
@@ -162,12 +161,12 @@ public class CompartmentsIntegrationServices {
 
 			for(String ecNumber : enzymesReactions.keySet()) {
 				//Compartmentalize reactions
-				List<String> idReactions = enzymesReactions.get(ecNumber);
-				for(String idReaction : idReactions) {
+				List<Integer> idReactions = enzymesReactions.get(ecNumber);
+				for(Integer idReaction : idReactions) {
 
 					Map<String, Object> subMap = ModelAPI.getDatabaseReactionContainer(idReaction, statement);
 
-					DatabaseReactionContainer databaseReactionContainer = ModelDatabaseLoadingServices.getDatabaseReactionContainer(idReaction, subMap, statement);
+					ReactionContainer databaseReactionContainer = ModelDatabaseLoadingServices.getDatabaseReactionContainer(idReaction, subMap, statement);
 					List<Integer> enzymeCompartments = ModelAPI.getEnzymeCompartments(ecNumber, statement);
 					if(compartmentsAbb_ids.size()>0)
 						processCompartments.setProcessCompartmentsInitiated(true);
