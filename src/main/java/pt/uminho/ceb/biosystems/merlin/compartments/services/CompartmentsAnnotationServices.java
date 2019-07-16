@@ -17,6 +17,7 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.Compartmen
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.HomologyAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
+import pt.uminho.ceb.biosystems.merlin.services.CompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 import pt.uminho.ceb.biosystems.merlin.utilities.Utilities;
 
@@ -181,7 +182,8 @@ public class CompartmentsAnnotationServices {
 	 * @param statement
 	 * @throws Exception
 	 */
-	public static void loadPredictions(String projectLineage, String tool, Map<String, ICompartmentResult> results, Statement statement) throws Exception {
+	public static void loadPredictions(String databaseName, String projectLineage, String tool, Map<String, ICompartmentResult> results,
+			Statement statement) throws Exception {
 
 		try {
 
@@ -199,7 +201,7 @@ public class CompartmentsAnnotationServices {
 				compartmentsInterface = new ComparmentsImportLocTreeServices();
 				((ComparmentsImportLocTreeServices) compartmentsInterface).setPlant(type);
 
-				if(ProjectServices.areCompartmentsPredicted(statement))
+				if(CompartmentsServices.areCompartmentsPredicted(databaseName))
 					go = false;
 				else
 					go = compartmentsInterface.getCompartments(null);
@@ -213,7 +215,7 @@ public class CompartmentsAnnotationServices {
 				if(compartmentsTool.equals(CompartmentsTool.WoLFPSORT))
 					compartmentsInterface = new ComparmentsImportWolfPsortServices();
 
-				if(ProjectServices.areCompartmentsPredicted(statement))
+				if(CompartmentsServices.areCompartmentsPredicted(databaseName))
 					go=false;
 				else							
 					go = compartmentsInterface.getCompartments(null);
