@@ -28,6 +28,7 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.HomologyAP
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
 import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 
@@ -45,7 +46,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	private CompartmentsProcesses processCompartments;
 	private AtomicInteger processingTotal;
 	private AtomicInteger processingCounter;
-
+	private String worksapceName;
 	private PropertyChangeSupport changes;
 
 
@@ -53,8 +54,9 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	 * @param project
 	 * @param threshold
 	 */
-	public CompartmentsAnnotationIntegrationProcesses(Connection connection, Map<String,AnnotationCompartmentsGenes> geneCompartments) {
+	public CompartmentsAnnotationIntegrationProcesses(String workspaceName, Connection connection, Map<String,AnnotationCompartmentsGenes> geneCompartments) {
 
+		this.worksapceName = workspaceName;
 		this.changes = new PropertyChangeSupport(this);
 		this.connection = connection;
 		this.geneCompartments = geneCompartments;
@@ -93,7 +95,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			Statement statement = this.connection.createStatement();
 			this.processingTotal.set(this.geneCompartments.size());
 
-			Map<String, String> sequenceID_geneID = HomologyAPI.getSequenceID(statement);
+			Map<Integer, String> sequenceID_geneID = ModelGenesServices.getQueriesByGeneId(this.worksapceName);
 
 			Map<String,String> compartmentsDatabaseIDs = new HashMap<String,String>();
 
@@ -132,7 +134,9 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			statement.close();
 			return true;
 		}
-		catch (SQLException e) {e.printStackTrace();}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 		return false;
 
 	}
@@ -408,7 +412,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 						//////////////////////////////////////////////////////////////////
 
-						
+
 						String compartment = this.processCompartments.processTransportCompartments(idCompartmentMap.get(transportReaction.getLocalisation().getCompartmentID()), newAbb );
 
 						if(!idCompartmentAbbIdMap.containsKey(compartment.toLowerCase())) {
@@ -455,16 +459,16 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 			//////////////////////////////////////////////////////////////////
 
-				String compartment = this.processCompartments.processTransportCompartments(idCompartmentMap.get(transportReaction.getLocalisation().getCompartmentID()), newAbb);
+			String compartment = this.processCompartments.processTransportCompartments(idCompartmentMap.get(transportReaction.getLocalisation().getCompartmentID()), newAbb);
 
-				if(!idCompartmentAbbIdMap.containsKey(compartment.toLowerCase())) {
+			if(!idCompartmentAbbIdMap.containsKey(compartment.toLowerCase())) {
 
-					String query = "INSERT INTO compartment (name, abbreviation) VALUES('"+compartment+"','"+compartment+"')";
+				String query = "INSERT INTO compartment (name, abbreviation) VALUES('"+compartment+"','"+compartment+"')";
 
-					idCompartmentAbbIdMap.put(compartment.toLowerCase(), ProjectAPI.executeAndGetLastInsertID(query, statement));
-				}
+				idCompartmentAbbIdMap.put(compartment.toLowerCase(), ProjectAPI.executeAndGetLastInsertID(query, statement));
+			}
 
-				transportReaction.setLocalisation(idCompartmentAbbIdMap.get(compartment.toLowerCase()));
+			transportReaction.setLocalisation(idCompartmentAbbIdMap.get(compartment.toLowerCase()));
 
 			//////////////////////////////////////////////////////////////////
 			ModelDatabaseLoadingServices.loadReaction(idCompartment, inModel, transportReaction, null, statement, true);
@@ -475,10 +479,10 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		statement.close();
 		return true;
 	}
-	
+
 	public void processCompoundsCompartments() {
-		
-		
+
+
 	}
 
 	/**
