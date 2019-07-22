@@ -9,13 +9,14 @@ import java.util.Set;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsProcesses;
-import pt.uminho.ceb.biosystems.merlin.core.containers.model.ReactionInformationContainer;
+import pt.uminho.ceb.biosystems.merlin.core.containers.model.ReactionContainer;
 import pt.uminho.ceb.biosystems.merlin.core.datatypes.Workspace;
 import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.InformationType;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelReactionsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
 
 public class CompartmentsIntegrationServices {
@@ -162,17 +163,17 @@ public class CompartmentsIntegrationServices {
 			for(String ecNumber : enzymesReactions.keySet()) {
 				//Compartmentalize reactions
 				List<Integer> idReactions = enzymesReactions.get(ecNumber);
+
 				for(int idReaction : idReactions) {
 
-					Map<String, Object> subMap = ModelAPI.getDatabaseReactionContainer(idReaction, statement);
+					ReactionContainer reactionContainer = ModelReactionsServices.getReaction(idReaction, null);
 
-					ReactionInformationContainer databaseReactionContainer = ModelDatabaseLoadingServices.getDatabaseReactionContainer(idReaction, subMap, statement);
 					List<Integer> enzymeCompartments = ModelAPI.getEnzymeCompartments(ecNumber, statement);
 					if(compartmentsAbb_ids.size()>0)
 						processCompartments.setProcessCompartmentsInitiated(true);
 					Set<Integer> parsedCompartments = processCompartments.parseCompartments(enzymeCompartments, compartmentsAbb_ids,idCompartmentAbbIdMap, null);
 
-					boolean inModelFromCompartment = databaseReactionContainer.isInModel();
+					boolean inModelFromCompartment = reactionContainer.isInModel();
 					//all enzyme compartments are assigned to the reactions
 					for(int idCompartment: parsedCompartments) {
 
@@ -181,7 +182,7 @@ public class CompartmentsIntegrationServices {
 							if(processCompartments.getIgnoreCompartmentsID().contains(idCompartment))
 								inModelFromCompartment = false;
 
-							ModelDatabaseLoadingServices.loadReaction(idCompartment, inModelFromCompartment, databaseReactionContainer, ecNumber, statement, false);
+							ModelDatabaseLoadingServices.loadReaction(idCompartment, inModelFromCompartment, reactionContainer, ecNumber, statement, false);
 						}
 					}
 				}

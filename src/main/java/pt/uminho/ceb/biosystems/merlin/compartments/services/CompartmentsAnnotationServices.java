@@ -18,41 +18,10 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.HomologyAP
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
+import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.utilities.Utilities;
 
 public class CompartmentsAnnotationServices {
-
-
-	/* (non-Javadoc)
-	 * @see datatypes.metabolic_regulatory.Entity#getStats()
-	 */
-	public static List<Integer> getStats(Connection connection) {
-		
-		ArrayList<Integer> result = new ArrayList<>();
-
-		int num = 0, num_comp = 0;
-
-		try {
-			
-			Statement stmt = connection.createStatement();
-			
-			num = HomologyAPI.getNumberOfGenes(stmt);
-			
-			num_comp = CompartmentsAPI.getNumberOfCompartments(stmt);
-
-			result.add(num);
-			result.add(num_comp);
-			
-			stmt.close();
-
-		}
-		catch (SQLException e) {
-		
-			e.printStackTrace();
-		}
-		
-		return result;
-	}
 
 	/**
 	 * @param threshold
@@ -138,41 +107,6 @@ public class CompartmentsAnnotationServices {
 
 		return dataTable;
 	}
-
-	public static Map<String,List<List<String>>> getRowInfo(int id, Connection connection) {
-
-		Map<String,List<List<String>>> results = new  HashMap<>();
-
-		Statement stmt;
-
-		try {
-
-			stmt = connection.createStatement();
-
-			List<String[]> data = ProjectAPI.getRowInfo(id, stmt);
-			
-			List<List<String>> resultLists = new ArrayList<List<String>>();
-
-			for(int i=0; i<data.size(); i++){
-				String[] list = data.get(i);
-				
-				ArrayList<String> resultsList = new ArrayList<>();
-
-				resultsList.add(list[0]);
-				Double score = Double.parseDouble(list[1])/10;
-				resultsList.add(score.toString());
-				resultLists.add(resultsList);
-			}
-			
-			results.put("compartments", resultLists);
-			stmt.close();
-		} 
-		catch (SQLException ex) {
-
-			ex.printStackTrace();
-		}
-		return results;
-	}
 	
 	/**
 	 * @param projectLineage
@@ -181,7 +115,8 @@ public class CompartmentsAnnotationServices {
 	 * @param statement
 	 * @throws Exception
 	 */
-	public static void loadPredictions(String projectLineage, String tool, Map<String, ICompartmentResult> results, Statement statement) throws Exception {
+	public static void loadPredictions(String databaseName, String projectLineage, String tool, Map<String, ICompartmentResult> results,
+			Statement statement) throws Exception {
 
 		try {
 
@@ -199,7 +134,7 @@ public class CompartmentsAnnotationServices {
 				compartmentsInterface = new ComparmentsImportLocTreeServices();
 				((ComparmentsImportLocTreeServices) compartmentsInterface).setPlant(type);
 
-				if(ProjectServices.areCompartmentsPredicted(statement))
+				if(AnnotationCompartmentsServices.areCompartmentsPredicted(databaseName))
 					go = false;
 				else
 					go = compartmentsInterface.getCompartments(null);
@@ -213,7 +148,7 @@ public class CompartmentsAnnotationServices {
 				if(compartmentsTool.equals(CompartmentsTool.WoLFPSORT))
 					compartmentsInterface = new ComparmentsImportWolfPsortServices();
 
-				if(ProjectServices.areCompartmentsPredicted(statement))
+				if(AnnotationCompartmentsServices.areCompartmentsPredicted(databaseName))
 					go=false;
 				else							
 					go = compartmentsInterface.getCompartments(null);

@@ -10,7 +10,7 @@ import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsEnumerator
 
 public class CompartmentsUtilities {
 
-	public static String DEFAULT_MEMBRANE = "cytmem";
+	public static String DEFAULT_MEMBRANE = "plas"; //if this fails, implement a system of alternative membrane, like 'cytmem', it was the previous default, but sometimes it failed
 	
 		/**
 		 * @param abbreviation
@@ -48,7 +48,7 @@ public class CompartmentsUtilities {
 			if(abbreviation.equals("innmem"))
 				return "inner_membrane";
 
-			if(abbreviation.equals("cytop"))
+			if(abbreviation.equals("cytop") || abbreviation.equals("cyto"))
 				return "cytoplasmic";
 
 			if(abbreviation.equals("pla") || abbreviation.equals("plas") || abbreviation.equals("plasmem"))
@@ -168,7 +168,7 @@ public class CompartmentsUtilities {
 			if(compartmentID.equals("inner_membrane") || compartmentID.equals("inner membrane"))
 				return "innmem";
 
-			if(compartmentID.equals("cytoplasm"))
+			if(compartmentID.equals("cytoplasm") || compartmentID.equals("cytoplasmic"))
 				return "cytop";
 
 			else if(compartmentID.equals("golgi apparatus") || compartmentID.equals("golgi"))
@@ -194,9 +194,6 @@ public class CompartmentsUtilities {
 
 			else if(compartmentID.equals("nucleus"))
 				return "nuc";
-
-			else if(compartmentID.equals("cytoplasm"))
-				return "cyto";
 
 			else if(compartmentID.equals("cytoskeleton"))
 				return "cysk";
@@ -303,7 +300,8 @@ public class CompartmentsUtilities {
 				return ("CYTOP"); 
 			
 			else if(compartmentID.equalsIgnoreCase("cytop") || compartmentID.equalsIgnoreCase("cytmem") || 
-					compartmentID.equalsIgnoreCase("cytomem") || compartmentID.equalsIgnoreCase("cytopmem"))
+					compartmentID.equalsIgnoreCase("cytomem") || compartmentID.equalsIgnoreCase("cytopmem") ||
+					compartmentID.equalsIgnoreCase("cyto"))
 				return ("CYTOP");
 
 			else if(compartmentID.equalsIgnoreCase("pla") || compartmentID.equalsIgnoreCase("plas") || 
@@ -409,7 +407,7 @@ public class CompartmentsUtilities {
 				return "permem";
 
 			else
-				return "cyto";
+				return "cytop";
 
 		}
 }
