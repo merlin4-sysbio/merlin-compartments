@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -117,7 +118,7 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 					}
 				}
 				else {
-
+					
 					
 					//String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
 					String locus_tag = line[seqID_index].split(" ")[0];
