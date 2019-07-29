@@ -28,6 +28,7 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelReactionsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
 import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 
@@ -45,7 +46,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	private CompartmentsProcesses processCompartments;
 	private AtomicInteger processingTotal;
 	private AtomicInteger processingCounter;
-	private String worksapceName;
+	private String workspaceName;
 	private PropertyChangeSupport changes;
 
 
@@ -55,7 +56,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	 */
 	public CompartmentsAnnotationIntegrationProcesses(String workspaceName, Connection connection, Map<String,AnnotationCompartmentsGenes> geneCompartments) {
 
-		this.worksapceName = workspaceName;
+		this.workspaceName = workspaceName;
 		this.changes = new PropertyChangeSupport(this);
 		this.connection = connection;
 		this.geneCompartments = geneCompartments;
@@ -94,7 +95,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			Statement statement = this.connection.createStatement();
 			this.processingTotal.set(this.geneCompartments.size());
 
-			Map<Integer, String> sequenceID_geneID = ModelGenesServices.getQueriesByGeneId(this.worksapceName);
+			Map<Integer, String> sequenceID_geneID = ModelGenesServices.getQueriesByGeneId(this.workspaceName);
 
 			Map<String,String> compartmentsDatabaseIDs = new HashMap<String,String>();
 
@@ -160,7 +161,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			Map<Integer,String> compartmentsAbb_ids = ModelAPI.getIdCompartmentAbbMap(statement);
 			Map<String,Integer> idCompartmentAbbIdMap = ModelAPI.getCompartmentAbbIdMap(statement);
 
-			Map<String, List<Integer>> enzymesReactions = CompartmentsAPI.getEnzymesReactions2(statement);
+			Map<String, List<Integer>> enzymesReactions = ModelReactionsServices.getEnzymesReactions2(this.workspaceName);
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
