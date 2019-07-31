@@ -124,7 +124,7 @@ public class CompartmentsIntegrationServices {
 	 * @throws Exception
 	 */
 	public static boolean loadGeneAnnotation(String locusTag, String  sequence_id, String geneName, String direction, String left_end, String right_end, Set<String> ecNumbers, String proteinName, Statement statement,
-			boolean integratePartial, boolean integrateFull, boolean insertProductNames, Workspace project, InformationType informationType, Map<String, AnnotationCompartmentsGenes> genesCompartments) throws Exception {
+			boolean integratePartial, boolean integrateFull, boolean insertProductNames, Workspace project, InformationType informationType, Map<String, AnnotationCompartmentsGenes> genesCompartments, String databaseName) throws Exception {
 
 		Map<String, List<Integer>> enzymesReactions = null;
 
@@ -166,7 +166,7 @@ public class CompartmentsIntegrationServices {
 
 				for(int idReaction : idReactions) {
 
-					ReactionContainer reactionContainer = ModelReactionsServices.getReaction(idReaction, null);
+					ReactionContainer reactionContainer = ModelReactionsServices.getReaction(databaseName, idReaction);
 
 					List<Integer> enzymeCompartments = ModelAPI.getEnzymeCompartments(ecNumber, statement);
 					if(compartmentsAbb_ids.size()>0)
