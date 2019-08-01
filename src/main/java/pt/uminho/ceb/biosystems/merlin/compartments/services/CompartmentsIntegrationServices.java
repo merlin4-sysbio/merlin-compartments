@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.bytebuddy.asm.Advice.This;
 import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsProcesses;
 import pt.uminho.ceb.biosystems.merlin.core.containers.model.ReactionContainer;
@@ -105,95 +106,95 @@ public class CompartmentsIntegrationServices {
 	}
 	
 	
-	@Deprecated
-	/**
-	 * @param locusTag
-	 * @param sequence_id
-	 * @param geneName
-	 * @param direction
-	 * @param left_end
-	 * @param right_end
-	 * @param ecNumbers
-	 * @param proteinName
-	 * @param statement
-	 * @param integratePartial
-	 * @param integrateFull
-	 * @param insertProductNames
-	 * @param project
-	 * @param informationType
-	 * @param genesCompartments
-	 * @return
-	 * @throws Exception
-	 */
-	public static boolean loadGeneAnnotation(String databaseName, String locusTag, String  sequence_id, String geneName, String direction, String left_end, String right_end, Set<String> ecNumbers, String proteinName, Statement statement,
-			boolean integratePartial, boolean integrateFull, boolean insertProductNames, Workspace project, InformationType informationType, Map<String, AnnotationCompartmentsGenes> genesCompartments) throws Exception {
-
-
-		Map<String, List<Integer>> enzymesReactions = null;
-
-		String idGene = ModelDatabaseLoadingServices.loadGene(locusTag, sequence_id, geneName, direction, left_end, right_end, statement, informationType);
-
-		boolean isCompartmentalisedModel = ProjectServices.isCompartmentalisedModel(null); 
-		
-		if (! ecNumbers.isEmpty())			
-			enzymesReactions = ModelEnzymesServices.loadEnzymeGetReactions(databaseName, idGene, ecNumbers, proteinName, statement, integratePartial, integrateFull, insertProductNames, isCompartmentalisedModel);
-
-		if(isCompartmentalisedModel && !ModelAPI.isGeneCompartmentLoaded(idGene, statement)) {
-
-			if(genesCompartments!=null && !genesCompartments.isEmpty()) {
-
-				AnnotationCompartmentsGenes geneCompartments = genesCompartments.get(locusTag);
-
-				Map<String, String> compartmentsDatabaseIDs = new HashMap<>();
-				String primaryCompartment = geneCompartments.getPrimary_location();
-				String primaryCompartmentAbb = geneCompartments.getPrimary_location_abb();
-				double scorePrimaryCompartment = geneCompartments.getPrimary_score();
-				Map<String, Double> secondaryCompartments = geneCompartments.getSecondary_location();
-				Map<String, String> secondaryCompartmentsAbb = geneCompartments.getSecondary_location_abb();
-
-				compartmentsDatabaseIDs = ModelAPI.getCompartmentsDatabaseIDs(primaryCompartment, primaryCompartmentAbb, secondaryCompartments, secondaryCompartmentsAbb, compartmentsDatabaseIDs, statement);
-				//associate gene to compartments
-
-				ModelAPI.loadGenesCompartments(idGene, compartmentsDatabaseIDs, statement, primaryCompartment, scorePrimaryCompartment, secondaryCompartments);
-			}
-
-			Map<Integer,String> compartmentsAbb_ids = ModelAPI.getIdCompartmentAbbMap(statement);
-			Map<String,Integer> idCompartmentAbbIdMap = ModelAPI.getCompartmentAbbIdMap(statement);
-
-			CompartmentsProcesses processCompartments = new CompartmentsProcesses();
-			CompartmentsIntegrationServices.autoSetInteriorCompartment(processCompartments.getInteriorCompartment(), statement);
-
-			for(String ecNumber : enzymesReactions.keySet()) {
-				//Compartmentalize reactions
-				List<Integer> idReactions = enzymesReactions.get(ecNumber);
-
-				for(int idReaction : idReactions) {
-
-					ReactionContainer reactionContainer = ModelReactionsServices.getReaction(databaseName, idReaction);
-
-					List<Integer> enzymeCompartments = ModelAPI.getEnzymeCompartments(ecNumber, statement);
-					if(compartmentsAbb_ids.size()>0)
-						processCompartments.setProcessCompartmentsInitiated(true);
-					Set<Integer> parsedCompartments = processCompartments.parseCompartments(enzymeCompartments, compartmentsAbb_ids,idCompartmentAbbIdMap, null);
-
-					boolean inModelFromCompartment = reactionContainer.isInModel();
-					//all enzyme compartments are assigned to the reactions
-					for(int idCompartment: parsedCompartments) {
-
-						if(idCompartment>0) {
-
-							if(processCompartments.getIgnoreCompartmentsID().contains(idCompartment))
-								inModelFromCompartment = false;
-
-							ModelDatabaseLoadingServices.loadReaction(idCompartment, inModelFromCompartment, reactionContainer, ecNumber, statement, false);
-						}
-					}
-				}
-			}
-		}
-
-		return true;
-	}
+//	@Deprecated
+//	/**
+//	 * @param locusTag
+//	 * @param sequence_id
+//	 * @param geneName
+//	 * @param direction
+//	 * @param left_end
+//	 * @param right_end
+//	 * @param ecNumbers
+//	 * @param proteinName
+//	 * @param statement
+//	 * @param integratePartial
+//	 * @param integrateFull
+//	 * @param insertProductNames
+//	 * @param project
+//	 * @param informationType
+//	 * @param genesCompartments
+//	 * @return
+//	 * @throws Exception
+//	 */
+//	public static boolean loadGeneAnnotation(String databaseName, String locusTag, String  sequence_id, String geneName, String direction, String left_end, String right_end, Set<String> ecNumbers, String proteinName, Statement statement,
+//			boolean integratePartial, boolean integrateFull, boolean insertProductNames, Workspace project, InformationType informationType, Map<String, AnnotationCompartmentsGenes> genesCompartments) throws Exception {
+//
+//
+//		Map<String, List<Integer>> enzymesReactions = null;
+//
+//		String idGene = ModelDatabaseLoadingServices.loadGene(locusTag, sequence_id, geneName, direction, left_end, right_end, statement, informationType);
+//
+//		boolean isCompartmentalisedModel = ProjectServices.isCompartmentalisedModel(null); 
+//		
+//		if (! ecNumbers.isEmpty())			
+//			enzymesReactions = ModelEnzymesServices.loadEnzymeGetReactions(databaseName, idGene, ecNumbers, proteinName, statement, integratePartial, integrateFull, insertProductNames, isCompartmentalisedModel);
+//
+//		if(isCompartmentalisedModel && !ModelAPI.isGeneCompartmentLoaded(idGene, statement)) {
+//
+//			if(genesCompartments!=null && !genesCompartments.isEmpty()) {
+//
+//				AnnotationCompartmentsGenes geneCompartments = genesCompartments.get(locusTag);
+//
+//				Map<String, String> compartmentsDatabaseIDs = new HashMap<>();
+//				String primaryCompartment = geneCompartments.getPrimary_location();
+//				String primaryCompartmentAbb = geneCompartments.getPrimary_location_abb();
+//				double scorePrimaryCompartment = geneCompartments.getPrimary_score();
+//				Map<String, Double> secondaryCompartments = geneCompartments.getSecondary_location();
+//				Map<String, String> secondaryCompartmentsAbb = geneCompartments.getSecondary_location_abb();
+//
+//				compartmentsDatabaseIDs = ModelAPI.getCompartmentsDatabaseIDs(primaryCompartment, primaryCompartmentAbb, secondaryCompartments, secondaryCompartmentsAbb, compartmentsDatabaseIDs, statement);
+//				//associate gene to compartments
+//
+//				ModelGenesServices.loadGenesCompartments(databaseName, idGene, compartmentsDatabaseIDs, statement, primaryCompartment, scorePrimaryCompartment, secondaryCompartments);
+//			}
+//
+//			Map<Integer,String> compartmentsAbb_ids = ModelAPI.getIdCompartmentAbbMap(statement);
+//			Map<String,Integer> idCompartmentAbbIdMap = ModelAPI.getCompartmentAbbIdMap(statement);
+//
+//			CompartmentsProcesses processCompartments = new CompartmentsProcesses();
+//			CompartmentsIntegrationServices.autoSetInteriorCompartment(processCompartments.getInteriorCompartment(), statement);
+//
+//			for(String ecNumber : enzymesReactions.keySet()) {
+//				//Compartmentalize reactions
+//				List<Integer> idReactions = enzymesReactions.get(ecNumber);
+//
+//				for(int idReaction : idReactions) {
+//
+//					ReactionContainer reactionContainer = ModelReactionsServices.getReaction(databaseName, idReaction);
+//
+//					List<Integer> enzymeCompartments = ModelAPI.getEnzymeCompartments(ecNumber, statement);
+//					if(compartmentsAbb_ids.size()>0)
+//						processCompartments.setProcessCompartmentsInitiated(true);
+//					Set<Integer> parsedCompartments = processCompartments.parseCompartments(enzymeCompartments, compartmentsAbb_ids,idCompartmentAbbIdMap, null);
+//
+//					boolean inModelFromCompartment = reactionContainer.isInModel();
+//					//all enzyme compartments are assigned to the reactions
+//					for(int idCompartment: parsedCompartments) {
+//
+//						if(idCompartment>0) {
+//
+//							if(processCompartments.getIgnoreCompartmentsID().contains(idCompartment))
+//								inModelFromCompartment = false;
+//
+//							ModelDatabaseLoadingServices.loadReaction(idCompartment, inModelFromCompartment, reactionContainer, ecNumber, statement, false);
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		return true;
+//	}
 	
 
 }
