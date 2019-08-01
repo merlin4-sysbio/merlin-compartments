@@ -173,16 +173,17 @@ public class CompartmentsIntegrationServices {
 						processCompartments.setProcessCompartmentsInitiated(true);
 					Set<Integer> parsedCompartments = processCompartments.parseCompartments(enzymeCompartments, compartmentsAbb_ids,idCompartmentAbbIdMap, null);
 
-					boolean inModelFromCompartment = reactionContainer.isInModel();
 					//all enzyme compartments are assigned to the reactions
 					for(int idCompartment: parsedCompartments) {
 
 						if(idCompartment>0) {
 
 							if(processCompartments.getIgnoreCompartmentsID().contains(idCompartment))
-								inModelFromCompartment = false;
+								reactionContainer.setInModel(false);
+							
+							reactionContainer.setLocalisation(idCompartment);
 
-							ModelDatabaseLoadingServices.loadReaction(idCompartment, inModelFromCompartment, reactionContainer, ecNumber, statement, false);
+							ModelDatabaseLoadingServices.loadReaction(databaseName, reactionContainer, ecNumber, statement, false);
 						}
 					}
 				}
