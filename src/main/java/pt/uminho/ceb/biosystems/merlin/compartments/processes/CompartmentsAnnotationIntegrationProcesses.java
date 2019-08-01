@@ -97,7 +97,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 			Map<Integer, String> sequenceID_geneID = ModelGenesServices.getQueriesByGeneId(this.workspaceName);
 
-			Map<String,String> compartmentsDatabaseIDs = new HashMap<String,String>();
+			Map<String,Integer> compartmentsDatabaseIDs = new HashMap<>();
 
 			for(String sequence_id :this.geneCompartments.keySet()) {
 
@@ -117,14 +117,14 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 					compartmentsDatabaseIDs.putAll(ModelAPI.getCompartmentsDatabaseIDs(primaryCompartment, primaryCompartmentAbb, secondaryCompartments, secondaryCompartmentsAbb, compartmentsDatabaseIDs, statement));
 
-					String idGene = null;
+					Integer idGene = null;
 					if(sequenceID_geneID.containsKey(geneCompartments.getGene()))
-						idGene = sequenceID_geneID.get(geneCompartments.getGene());
+						idGene = Integer.valueOf(sequenceID_geneID.get(geneCompartments.getGene()));
 
 					if(idGene==null)
 						logger.trace("Gene {} not found!", sequence_id);
 					else						
-						ModelAPI.loadGenesCompartments(idGene, compartmentsDatabaseIDs, statement, primaryCompartment, scorePrimaryCompartment, secondaryCompartments);
+						ModelGenesServices.loadGenesCompartments(this.workspaceName, idGene, compartmentsDatabaseIDs, statement, primaryCompartment, scorePrimaryCompartment, secondaryCompartments);
 
 					this.processCompartments.initProcessCompartments(compartmentsDatabaseIDs.keySet());
 				}
