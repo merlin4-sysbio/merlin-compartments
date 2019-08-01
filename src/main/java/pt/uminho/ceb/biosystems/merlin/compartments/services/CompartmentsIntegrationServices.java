@@ -16,6 +16,8 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.Compartmen
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelEnzymesServices;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelReactionsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
 
@@ -123,7 +125,7 @@ public class CompartmentsIntegrationServices {
 	 * @return
 	 * @throws Exception
 	 */
-	public static boolean loadGeneAnnotation(String locusTag, String  sequence_id, String geneName, String direction, String left_end, String right_end, Set<String> ecNumbers, String proteinName, Statement statement,
+	public static boolean loadGeneAnnotation(String databaseName, String locusTag, String  sequence_id, String geneName, String direction, String left_end, String right_end, Set<String> ecNumbers, String proteinName, Statement statement,
 			boolean integratePartial, boolean integrateFull, boolean insertProductNames, Workspace project, InformationType informationType, Map<String, AnnotationCompartmentsGenes> genesCompartments) throws Exception {
 
 		Map<String, List<Integer>> enzymesReactions = null;
@@ -133,7 +135,7 @@ public class CompartmentsIntegrationServices {
 		boolean isCompartmentalisedModel = ProjectServices.isCompartmentalisedModel(null); 
 		
 		if (! ecNumbers.isEmpty())			
-			enzymesReactions = ModelAPI.loadEnzymeGetReactions(idGene, ecNumbers, proteinName, statement, integratePartial, integrateFull, insertProductNames, isCompartmentalisedModel);
+			enzymesReactions = ModelEnzymesServices.loadEnzymeGetReactions(databaseName, idGene, ecNumbers, proteinName, statement, integratePartial, integrateFull, insertProductNames, isCompartmentalisedModel);
 
 		if(isCompartmentalisedModel && !ModelAPI.isGeneCompartmentLoaded(idGene, statement)) {
 
