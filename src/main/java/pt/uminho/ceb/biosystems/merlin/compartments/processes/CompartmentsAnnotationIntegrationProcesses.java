@@ -98,8 +98,10 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			Map<Integer, String> sequenceID_geneID = ModelGenesServices.getQueriesByGeneId(this.workspaceName);
 
 			Map<String,Integer> compartmentsDatabaseIDs = new HashMap<>();
-
-			for(String sequence_id :this.geneCompartments.keySet()) {
+		
+			
+			for(Map.Entry<String, AnnotationCompartmentsGenes> entry : this.geneCompartments.entrySet())
+				{
 
 				if(this.cancel.get()) {
 
@@ -108,7 +110,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 				}
 				else {
 
-					AnnotationCompartmentsGenes geneCompartments = this.geneCompartments.get(sequence_id);
+					AnnotationCompartmentsGenes geneCompartments = this.geneCompartments.get(entry.getKey());
 					String primaryCompartment = geneCompartments.getPrimary_location();
 					String primaryCompartmentAbb = geneCompartments.getPrimary_location_abb();
 					double scorePrimaryCompartment = geneCompartments.getPrimary_score();
@@ -122,7 +124,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 						idGene = Integer.valueOf(sequenceID_geneID.get(geneCompartments.getGene()));
 
 					if(idGene==null)
-						logger.trace("Gene {} not found!", sequence_id);
+						logger.trace("Gene {} not found!", entry.getKey());
 					else						
 						ModelGenesServices.loadGenesCompartments(this.workspaceName, idGene, compartmentsDatabaseIDs, statement, primaryCompartment, scorePrimaryCompartment, secondaryCompartments);
 
