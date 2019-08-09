@@ -23,6 +23,7 @@ import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
 import pt.uminho.ceb.biosystems.merlin.core.containers.model.CompartmentContainer;
 import pt.uminho.ceb.biosystems.merlin.core.containers.model.ReactionContainer;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.IIntegrateData;
+import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.InformationType;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
@@ -288,8 +289,8 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		List<String> reactions_ids;
 
 		//TODO MAKE this a static method on database loaders
-
-		Map<Integer, ReactionContainer> reactionsMap = ModelAPI.getDataFromReactionForTransp(statement);
+		
+		Map<Integer, ReactionContainer> reactionsMap = ModelReactionsServices.getAllModelReactionAttributesbySource(this.workspaceName, false, InformationType.TRANSPORTERS.toString());
 
 		List<String[]> result = ModelAPI.getTransportReactions(statement);
 
