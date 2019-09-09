@@ -10,7 +10,12 @@ import java.util.TreeMap;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
+import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.AnnotationCompartments;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
+import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
+import pt.uminho.ceb.biosystems.merlin.services.implementation.AnnotationServiceImpl;
+import pt.uminho.ceb.biosystems.merlin.services.interfaces.IAnnotationService;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelCompartmentServices;
 import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 
 public class CompartmentsInitializationProcesses {
@@ -21,14 +26,15 @@ public class CompartmentsInitializationProcesses {
 	 * @param probabilities
 	 * @param project_id
 	 * @param statement
+	 * @throws Exception 
 	 */
-	public static void loadData(String locust_tag, List<Pair<String, Double>> probabilities, Statement statement){
+	public static void loadData(String databaseName, String locust_tag, List<Pair<String, Double>> probabilities, Statement statement) throws Exception{
 
 		try {
 
-			CompartmentsInitializationProcesses.initCompartments(statement);
+			CompartmentsInitializationProcesses.initCompartments(databaseName);
 
-			String idLT = CompartmentsAPI.getIdentifierLocusTag(locust_tag, statement);
+			Integer idLT = AnnotationCompartmentsServices.getIdentifierLocusTag(databaseName,locust_tag);
 
 			for(Pair<String, Double> compartment: probabilities) {
 
@@ -40,7 +46,7 @@ public class CompartmentsInitializationProcesses {
 
 					String name = CompartmentsUtilities.parseAbbreviation(compartment.getA());
 
-					CompartmentsAPI.insertIntoCompartments(idLT, name, abb, nComp, statement);
+					CompartmentsAPI.insertIntoCompartments(idLT.toString(), name, abb, nComp, statement);
 				}
 			}
 		} 
@@ -115,7 +121,7 @@ public class CompartmentsInitializationProcesses {
 	 *  'exc' => 'extracellular, including cell wall', 
 	 *  '---' => 'other' 
 	 */
-	private static boolean initCompartments(Statement statement){
+	private static boolean initCompartments(String databaseName){
 
 		Map<String, String> compartments = new TreeMap<String, String>();
 		compartments.put("plas","plasma_membrane");
@@ -132,10 +138,10 @@ public class CompartmentsInitializationProcesses {
 		compartments.put("pero","peroxisomal");
 
 		try
-		{
-			CompartmentsAPI.initCompartments(compartments, statement);
+		{	
+			ModelCompartmentServices.initCompartments(databaseName, compartments);
 		}
-		catch (SQLException e) {e.printStackTrace();return false;}
+		catch (Exception e) {e.printStackTrace();return false;}
 		return true;
 
 	}
