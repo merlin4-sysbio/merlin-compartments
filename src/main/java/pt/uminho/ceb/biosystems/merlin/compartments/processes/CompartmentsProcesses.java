@@ -93,7 +93,7 @@ public class CompartmentsProcesses {
 
 			if (this.isProcessCompartmentsInitiated()) {
 
-				if (localisation.equalsIgnoreCase("out"))					
+				if (localisation.equalsIgnoreCase("out") || localisation.equalsIgnoreCase(CompartmentsUtilities.DEFAULT_MEMBRANE.toString()))					
 					return CompartmentsUtilities.getOutsideMembrane(compartment.toLowerCase(), this.stain);
 				else
 

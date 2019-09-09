@@ -383,7 +383,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 						//////////////////////////////////////////////////////////////////
 
-						String compartment = this.processCompartments.processTransportCompartments(idCompartmentMap.get(originalIDCompartment), abb );						
+						String compartment = idCompartmentMap.get(originalIDCompartment);						
 
 						if(!idCompartmentAbbIdMap.containsKey(compartment.toLowerCase())) {
 

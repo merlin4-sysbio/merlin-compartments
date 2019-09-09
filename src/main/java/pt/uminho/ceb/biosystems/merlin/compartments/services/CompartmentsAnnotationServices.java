@@ -30,7 +30,7 @@ public class CompartmentsAnnotationServices {
 	 * @param connection
 	 * @return
 	 */
-	public static Map<Integer, ArrayList<Object>> getMainTableData(double threshold, Map<Integer, String> names, Map<Integer,Integer> identifiers, Connection connection) {
+	public static Map<Integer, ArrayList<Object>> getMainTableData(double threshold, Map<Integer, String> names, Map<Integer,Integer> identifiers, Connection connection, String databaseName, long taxID) {
 		
 		Map<Integer, ArrayList<Object>> dataTable = new HashMap<>();
 		
@@ -38,7 +38,7 @@ public class CompartmentsAnnotationServices {
 			
 			Statement statement = connection.createStatement();
 
-			Map<Integer, AnnotationCompartmentsGenes> geneCompartments = runCompartmentsInterface(threshold, statement);
+			Map<Integer, AnnotationCompartmentsGenes> geneCompartments = runCompartmentsInterface(threshold, databaseName, taxID, statement);
 			
 			if(geneCompartments != null) {
 
@@ -170,14 +170,14 @@ public class CompartmentsAnnotationServices {
 	 * @param statement
 	 * @return
 	 */
-	public static Map<Integer, AnnotationCompartmentsGenes> runCompartmentsInterface(double threshold, Statement statement){
+	public static Map<Integer, AnnotationCompartmentsGenes> runCompartmentsInterface(double threshold, String databaseName, long taxID, Statement statement){
 		
 		Map<Integer, AnnotationCompartmentsGenes> geneCompartments = null;
 		
 		try {
 			
 			ICompartmentsServices compartmentsInterface = null;
-			String cTool = ProjectAPI.getCompartmentsTool(statement);
+			String cTool = ProjectServices.getCompartmentsTool(databaseName, taxID);
 			
 			if(cTool!=null) {
 				
