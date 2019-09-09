@@ -14,10 +14,8 @@ import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsServ
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.CompartmentsTool;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.HomologyAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
-import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.utilities.Utilities;
 
@@ -30,7 +28,8 @@ public class CompartmentsAnnotationServices {
 	 * @param connection
 	 * @return
 	 */
-	public static Map<Integer, ArrayList<Object>> getMainTableData(double threshold, Map<Integer, String> names, Map<Integer,Integer> identifiers, Connection connection) {
+	public static Map<Integer, ArrayList<Object>> getMainTableData(String databaseName, 
+			double threshold, Map<Integer, String> names, Map<Integer,Integer> identifiers, Connection connection) {
 		
 		Map<Integer, ArrayList<Object>> dataTable = new HashMap<>();
 		
@@ -38,7 +37,8 @@ public class CompartmentsAnnotationServices {
 			
 			Statement statement = connection.createStatement();
 
-			Map<Integer, AnnotationCompartmentsGenes> geneCompartments = runCompartmentsInterface(threshold, statement);
+			Map<Integer, AnnotationCompartmentsGenes> geneCompartments = runCompartmentsInterface(databaseName,
+					threshold, statement);
 			
 			if(geneCompartments != null) {
 
@@ -131,7 +131,7 @@ public class CompartmentsAnnotationServices {
 
 			if(kingdom.equals(KINGDOM.Eukaryota)) {
 
-				compartmentsInterface = new ComparmentsImportLocTreeServices();
+				compartmentsInterface = new ComparmentsImportLocTreeServices(databaseName);
 				((ComparmentsImportLocTreeServices) compartmentsInterface).setPlant(type);
 
 				if(AnnotationCompartmentsServices.areCompartmentsPredicted(databaseName))
@@ -142,11 +142,11 @@ public class CompartmentsAnnotationServices {
 			else {
 				CompartmentsTool compartmentsTool = CompartmentsTool.valueOf(tool);
 				if(compartmentsTool.equals(CompartmentsTool.PSort))
-					compartmentsInterface = new ComparmentsImportPSort3Services();
+					compartmentsInterface = new ComparmentsImportPSort3Services(databaseName);
 				if(compartmentsTool.equals(CompartmentsTool.LocTree))
-					compartmentsInterface = new ComparmentsImportLocTreeServices();
+					compartmentsInterface = new ComparmentsImportLocTreeServices(databaseName);
 				if(compartmentsTool.equals(CompartmentsTool.WoLFPSORT))
-					compartmentsInterface = new ComparmentsImportWolfPsortServices();
+					compartmentsInterface = new ComparmentsImportWolfPsortServices(databaseName);
 
 				if(AnnotationCompartmentsServices.areCompartmentsPredicted(databaseName))
 					go=false;
@@ -170,7 +170,8 @@ public class CompartmentsAnnotationServices {
 	 * @param statement
 	 * @return
 	 */
-	public static Map<Integer, AnnotationCompartmentsGenes> runCompartmentsInterface(double threshold, Statement statement){
+	public static Map<Integer, AnnotationCompartmentsGenes> runCompartmentsInterface(String databaseName, 
+			double threshold, Statement statement){
 		
 		Map<Integer, AnnotationCompartmentsGenes> geneCompartments = null;
 		
@@ -184,11 +185,11 @@ public class CompartmentsAnnotationServices {
 				CompartmentsTool compartmentsTool = CompartmentsTool.valueOf(cTool);
 				
 				if(compartmentsTool.equals(CompartmentsTool.PSort))
-					compartmentsInterface = new ComparmentsImportPSort3Services();
+					compartmentsInterface = new ComparmentsImportPSort3Services(databaseName);
 				if(compartmentsTool.equals(CompartmentsTool.LocTree))
-					compartmentsInterface = new ComparmentsImportLocTreeServices();
+					compartmentsInterface = new ComparmentsImportLocTreeServices(databaseName);
 				if(compartmentsTool.equals(CompartmentsTool.WoLFPSORT))
-					compartmentsInterface = new ComparmentsImportWolfPsortServices();
+					compartmentsInterface = new ComparmentsImportWolfPsortServices(databaseName);
 				
 				geneCompartments = compartmentsInterface.getBestCompartmentsByGene(threshold, statement);
 				

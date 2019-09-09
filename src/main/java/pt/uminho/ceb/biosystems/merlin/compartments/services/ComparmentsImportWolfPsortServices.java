@@ -22,15 +22,19 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 
 	private int normalization = 32;
 	private AtomicBoolean cancel;
+	private String databaseName;
 
 	/**
+	 * @param databaseName 
 	 * @param conn
 	 * @param genomeCode
 	 * @param project_id
 	 */
-	public ComparmentsImportWolfPsortServices() {
+	public ComparmentsImportWolfPsortServices(String databaseName) {
 
 		this.cancel = new AtomicBoolean(false);
+		this.databaseName = databaseName;
+
 	}
 
 	/**
@@ -147,7 +151,8 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 
 		for(ICompartmentResult woLFPSORT_Result : results.values()) {
 
-			CompartmentsInitializationProcesses.loadData(woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments(), statement);
+			CompartmentsInitializationProcesses.loadData(this.databaseName, 
+					woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments(), statement);
 		}
 		
 	}

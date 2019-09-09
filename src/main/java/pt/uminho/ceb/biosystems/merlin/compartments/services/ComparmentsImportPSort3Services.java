@@ -29,6 +29,7 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 	private static int normalization=10;
 	private AtomicBoolean cancel;
 	private boolean typePlant;
+	private String databaseName;
 
 
 //	/**
@@ -44,11 +45,14 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 //	}
 
 	/**
+	 * @param databaseName 
 	 * 
 	 */
-	public ComparmentsImportPSort3Services() {
+	public ComparmentsImportPSort3Services(String databaseName) {
 
 		this.cancel = new AtomicBoolean(false);
+		this.databaseName = databaseName;
+
 	}
 
 	/**
@@ -279,7 +283,8 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 			throws Exception {
 		
 		for(ICompartmentResult pSORT3Result : results.values())
-			CompartmentsInitializationProcesses.loadData(pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), statement);
+			CompartmentsInitializationProcesses.loadData(this.databaseName, 
+					pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), statement);
 	}
 
 	@Override

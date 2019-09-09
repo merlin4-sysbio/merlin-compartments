@@ -29,13 +29,15 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 	private static int normalization=100;
 	private AtomicBoolean cancel;
 	private boolean typePlant;
+	private String databaseName;
 
 	/**
 	 * @param organismType
 	 */
-	public ComparmentsImportLocTreeServices() {
+	public ComparmentsImportLocTreeServices(String databaseName) {
 
 		this.cancel = new AtomicBoolean(false);
+		this.databaseName = databaseName;
 	}
 
 	/**
@@ -397,7 +399,7 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results, Statement statement) throws Exception {
 
 		for(ICompartmentResult locTreeResult : results.values())
-			CompartmentsInitializationProcesses.loadData(locTreeResult.getGeneID(), locTreeResult.getCompartments(), statement);
+			CompartmentsInitializationProcesses.loadData(this.databaseName, locTreeResult.getGeneID(), locTreeResult.getCompartments(), statement);
 
 	}
 
