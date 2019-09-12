@@ -17,6 +17,8 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.Compartmen
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
+import pt.uminho.ceb.biosystems.merlin.services.implementation.CompartmentServiceImpl;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelCompartmentServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelEnzymesServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelReactionsServices;
@@ -24,42 +26,20 @@ import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadi
 
 public class CompartmentsIntegrationServices {
 
-	/**
-	 * @return
-	 * @throws SQLException 
-	 */
-	public String autoSetInteriorCompartment(String interiorCompartment, Connection connection) {
-
-		String out = null;
-
-		try {
-
-			Statement stmt = connection.createStatement();
-
-			out = CompartmentsIntegrationServices.autoSetInteriorCompartment(interiorCompartment, stmt);
-
-			stmt.close();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return out;
-	}
 
 	/**
 	 * @param interiorCompartment
 	 * @param statement
 	 * @return
+	 * @throws Exception 
 	 */
-	public static String autoSetInteriorCompartment(String interiorCompartment, Statement statement){
+	public static String autoSetInteriorCompartment(String databaseName, String interiorCompartment) throws Exception{
 
 		try {
 
-			interiorCompartment = CompartmentsAPI.getCompartmentAbbreviation(interiorCompartment, statement);
-
+			interiorCompartment = ModelCompartmentServices.getCompartmentAbbreviation(databaseName);
 		} 
-		catch (SQLException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 

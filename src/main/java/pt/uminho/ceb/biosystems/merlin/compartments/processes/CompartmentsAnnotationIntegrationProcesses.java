@@ -162,7 +162,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 			statement = this.connection.createStatement();
 
-			processCompartments.setInteriorCompartment(CompartmentsIntegrationServices.autoSetInteriorCompartment(processCompartments.getInteriorCompartment(), statement));
+			processCompartments.setInteriorCompartment(CompartmentsIntegrationServices.autoSetInteriorCompartment(this.workspaceName,processCompartments.getInteriorCompartment()));
 			Map<Integer,String> compartmentsAbb_ids = ModelAPI.getIdCompartmentAbbMap(statement);
 			Map<String,Integer> idCompartmentAbbIdMap = ModelAPI.getCompartmentAbbIdMap(statement);
 
@@ -279,7 +279,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 		Statement statement = this.connection.createStatement();
 
-		processCompartments.setInteriorCompartment(CompartmentsIntegrationServices.autoSetInteriorCompartment(processCompartments.getInteriorCompartment(), statement));
+		processCompartments.setInteriorCompartment(CompartmentsIntegrationServices.autoSetInteriorCompartment(this.workspaceName, processCompartments.getInteriorCompartment()));
 
 		Map<Integer,String> idCompartmentMap = ModelAPI.getIdCompartmentAbbMap(statement);
 
