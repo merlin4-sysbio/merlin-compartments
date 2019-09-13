@@ -31,6 +31,7 @@ import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelCompartmentServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelProteinsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelReactionsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
 import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
@@ -171,8 +172,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-			Map<String, List<Integer>> enzymesCompartments = CompartmentsAPI.getEnzymesCompartments(statement);
-
+			Map<String, List<Integer>> enzymesCompartments = ModelProteinsServices.getEnzymesCompartments(this.workspaceName);
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
