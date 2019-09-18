@@ -12,7 +12,7 @@ import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartme
 import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsProcesses;
 import pt.uminho.ceb.biosystems.merlin.core.containers.model.ReactionContainer;
 import pt.uminho.ceb.biosystems.merlin.core.datatypes.Workspace;
-import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.InformationType;
+import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.SourceType;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
