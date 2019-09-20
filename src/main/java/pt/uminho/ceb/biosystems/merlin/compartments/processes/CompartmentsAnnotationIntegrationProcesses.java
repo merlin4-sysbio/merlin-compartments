@@ -176,7 +176,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-			Map<Integer, ReactionContainer> reactionsMap = ModelDatabaseLoadingServices.getEnzymesReactionsMap(this.workspaceName, statement, false);
+			Map<Integer, ReactionContainer> reactionsMap = ModelDatabaseLoadingServices.getEnzymesReactionsMap(this.workspaceName, false);
 
 			this.processingTotal.set(this.processingTotal.get()+enzymesReactions.size());
 
