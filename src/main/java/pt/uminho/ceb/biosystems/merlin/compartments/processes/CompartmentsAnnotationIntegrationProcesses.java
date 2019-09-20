@@ -221,7 +221,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 			//if no enzyme is assigned to the reaction
 
-			List<Integer> reactionsIDs = CompartmentsAPI.getReactionID(statement);
+			List<Integer> reactionsIDs = ModelReactionsServices.getDistinctReactionIdWhereSourceTransporters(this.workspaceName, false);
 
 			this.processingTotal.set(this.processingTotal.get()+reactionsIDs.size());
 
@@ -294,7 +294,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 		Map<Integer, ReactionContainer> reactionsMap = ModelReactionsServices.getAllModelReactionAttributesbySource(this.workspaceName, false, SourceType.TRANSPORTERS.toString());
 
-		List<String[]> result = ModelAPI.getTransportReactions(statement);
+		List<String[]> result = ModelReactionsServices.getReacIdEcNumProtIdWhereSourceEqualTransporters(this.workspaceName);
 
 		for(int i=0; i<result.size(); i++){
 			String[] list = result.get(i);
@@ -314,7 +314,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		Map<String, Set<Integer>> transportProteinsCompartments = CompartmentsAPI.getTransportProteinsCompartments(statement);
+		Map<String, Set<Integer>> transportProteinsCompartments = ModelCompartmentServices.getCompartIdAndEcNumbAndProtId(this.workspaceName);
 
 
 		result = ProjectAPI.getReactionIdAndPathwayID(statement);
@@ -442,7 +442,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		List<Integer> reactionsIDs = CompartmentsAPI.getTransportReactionID(statement);
+		List<Integer> reactionsIDs = ModelReactionsServices.getDistinctReactionIdWhereSourceTransporters(this.workspaceName, true);
 
 		String defaultAbb = CompartmentsUtilities.DEFAULT_MEMBRANE.toString();
 		Integer idCompartment = null;
