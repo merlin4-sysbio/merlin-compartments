@@ -2,7 +2,6 @@ package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
@@ -101,9 +100,9 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 	/* (non-Javadoc)
 	 * @see compartments.CompartmentsInterface#getBestCompartmentsForGene(double)
 	 */
-	public Map<Integer, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement) throws SQLException  {
+	public Map<Integer, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold) throws Exception  {
 
-		return CompartmentsInitializationProcesses.getBestCompartmenForGene(threshold, this.normalization, statement);
+		return CompartmentsInitializationProcesses.getBestCompartmenForGene(this.databaseName, threshold, this.normalization);
 	}
 
 	@Override

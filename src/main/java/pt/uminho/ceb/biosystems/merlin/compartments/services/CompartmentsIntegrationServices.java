@@ -1,28 +1,8 @@
 package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import net.bytebuddy.asm.Advice.This;
-import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
-import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsProcesses;
-import pt.uminho.ceb.biosystems.merlin.core.containers.model.ReactionContainer;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.Workspace;
-import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.SourceType;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ModelAPI;
-import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
-import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
-import pt.uminho.ceb.biosystems.merlin.services.implementation.CompartmentServiceImpl;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelCompartmentServices;
-import pt.uminho.ceb.biosystems.merlin.services.model.ModelEnzymesServices;
-import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
-import pt.uminho.ceb.biosystems.merlin.services.model.ModelReactionsServices;
-import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
 
 public class CompartmentsIntegrationServices {
 
@@ -51,13 +31,11 @@ public class CompartmentsIntegrationServices {
 	 * @param compartment
 	 * @throws SQLException
 	 */
-	public static int getCompartmentID(String compartment, Connection connection) {
+	public static int getCompartmentID(String databaseName, String compartment) {
 
-		Statement stmt;
-		int compartmentID = -1;
+		Integer compartmentID = null;
 
 		try {
-			stmt = connection.createStatement();
 
 			String abbreviation;
 
@@ -74,10 +52,13 @@ public class CompartmentsIntegrationServices {
 			}
 
 			abbreviation=abbreviation.toUpperCase();
+			
+			compartmentID = ModelCompartmentServices.getCompartmentIdByNameAndAbbreviation(databaseName, compartment, abbreviation);
+			
+			if(compartmentID == null)
+				compartmentID = ModelCompartmentServices.insertNameAndAbbreviation(databaseName, compartment, abbreviation);
 
-			compartmentID = CompartmentsAPI.selectCompartmentID(compartment, abbreviation, stmt);
-
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

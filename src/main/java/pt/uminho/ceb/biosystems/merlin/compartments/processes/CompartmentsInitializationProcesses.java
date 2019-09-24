@@ -2,7 +2,6 @@ package pt.uminho.ceb.biosystems.merlin.compartments.processes;
 
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,11 +9,8 @@ import java.util.TreeMap;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
-import pt.uminho.ceb.biosystems.merlin.core.datatypes.annotation.AnnotationCompartments;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
+import pt.uminho.ceb.biosystems.merlin.core.containers.model.CompartmentContainer;
 import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
-import pt.uminho.ceb.biosystems.merlin.services.implementation.AnnotationServiceImpl;
-import pt.uminho.ceb.biosystems.merlin.services.interfaces.IAnnotationService;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelCompartmentServices;
 import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 
@@ -46,7 +42,7 @@ public class CompartmentsInitializationProcesses {
 
 					String name = CompartmentsUtilities.parseAbbreviation(compartment.getA());
 
-					CompartmentsAPI.insertIntoCompartments(idLT.toString(), name, abb, nComp, statement);
+					AnnotationCompartmentsServices.insertIntoCompartments(databaseName, idLT, name, abb, nComp);
 				}
 			}
 		} 
@@ -63,23 +59,20 @@ public class CompartmentsInitializationProcesses {
 	 * @return
 	 * @throws SQLException
 	 */
-	public static Map<Integer, AnnotationCompartmentsGenes> getBestCompartmenForGene(double threshold, int knn, Statement statement) throws SQLException {
+	public static Map<Integer, AnnotationCompartmentsGenes> getBestCompartmenForGene(String databaseName, double threshold, int knn) throws Exception {
 
 		Map<Integer, AnnotationCompartmentsGenes> compartments = new HashMap<>();
 
-		ArrayList<String[]> result = CompartmentsAPI.getBestCompartmenForGene(statement);
+		List<CompartmentContainer> containers = AnnotationCompartmentsServices.getBestCompartmenForGene(databaseName);
 
 		double score;
+		for(CompartmentContainer container : containers) {
 
-		for(int i=0; i<result.size(); i++) {
-
-			String[] list = result.get(i);
-
-			int geneID = Integer.parseInt(list[0]);
-			String gene = list[1];
-			score = Double.parseDouble(list[2]);  
-			String abbreviation = list[3];		
-			String name = list[4];				
+			int geneID = container.getReportID();
+			String gene = container.getLocusTag();
+			score = container.getScore();
+			String abbreviation = container.getAbbreviation();		
+			String name = container.getName();
 
 			if(!abbreviation.contains("_")) {
 

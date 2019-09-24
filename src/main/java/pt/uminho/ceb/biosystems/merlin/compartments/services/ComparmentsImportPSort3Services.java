@@ -7,9 +7,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -288,10 +286,10 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 	}
 
 	@Override
-	public Map<Integer, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold, Statement statement)
-			throws SQLException {
+	public Map<Integer, AnnotationCompartmentsGenes> getBestCompartmentsByGene(double threshold)
+			throws Exception {
 		
-		return CompartmentsInitializationProcesses.getBestCompartmenForGene(threshold, ComparmentsImportPSort3Services.normalization, statement);
+		return CompartmentsInitializationProcesses.getBestCompartmenForGene(this.databaseName, threshold, ComparmentsImportPSort3Services.normalization);
 	}
 
 	@Override

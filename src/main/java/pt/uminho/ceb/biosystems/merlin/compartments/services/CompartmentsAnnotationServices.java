@@ -1,6 +1,5 @@
 package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,8 +12,6 @@ import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartme
 import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.CompartmentsTool;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.CompartmentsAPI;
-import pt.uminho.ceb.biosystems.merlin.database.connector.databaseAPI.ProjectAPI;
 import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
@@ -49,7 +46,7 @@ public class CompartmentsAnnotationServices {
 
 				Collections.sort(collection);
 
-				Map<Integer, String> allLocusTag = CompartmentsAPI.getAllLocusTag(statement);
+				Map<Integer, String> allLocusTag = AnnotationCompartmentsServices.getAllLocusTag(databaseName);
 
 				for(int query : collection) {
 					
@@ -101,7 +98,7 @@ public class CompartmentsAnnotationServices {
 			}
 			statement.close();
 		} 
-		catch (SQLException ex) {
+		catch (Exception ex) {
 
 			ex.printStackTrace();
 		}
@@ -191,7 +188,7 @@ public class CompartmentsAnnotationServices {
 				if(compartmentsTool.equals(CompartmentsTool.WoLFPSORT))
 					compartmentsInterface = new ComparmentsImportWolfPsortServices(databaseName);
 				
-				geneCompartments = compartmentsInterface.getBestCompartmentsByGene(threshold, statement);
+				geneCompartments = compartmentsInterface.getBestCompartmentsByGene(threshold);
 				
 			}
 		} catch (Exception e) {
