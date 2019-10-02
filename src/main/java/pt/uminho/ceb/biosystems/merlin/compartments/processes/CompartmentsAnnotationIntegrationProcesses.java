@@ -155,12 +155,12 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			Map<Integer,String> compartmentsAbb_ids = ModelCompartmentServices.getModelCompartmentIdAndAbbreviation(this.workspaceName);
 			Map<String,Integer> idCompartmentAbbIdMap = ModelCompartmentServices.getAbbreviationAndCompartmentId(this.workspaceName);
 
-			Map<String, List<Integer>> enzymesReactions = ModelReactionsServices.getEnzymesReactions2(this.workspaceName);
+			Map<Integer, List<Integer>> enzymesReactions = ModelReactionsServices.getEnzymesReactions2(this.workspaceName);
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-			Map<String, List<Integer>> enzymesCompartments = ModelProteinsServices.getEnzymesCompartments(this.workspaceName);
+			Map<Integer, List<Integer>> enzymesCompartments = ModelProteinsServices.getEnzymesCompartments(this.workspaceName);
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -168,15 +168,15 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 			this.processingTotal.set(this.processingTotal.get()+enzymesReactions.size());
 
-			for(String ecnumber : enzymesReactions.keySet()) {
+			for(Integer proteinId : enzymesReactions.keySet()) {
 
-				for(Integer idReaction: enzymesReactions.get(ecnumber)) {
+				for(Integer idReaction: enzymesReactions.get(proteinId)) {
 
 					ReactionContainer reaction = new ReactionContainer(reactionsMap.get(idReaction));
 
-					if(enzymesCompartments.containsKey(ecnumber)) {
+					if(enzymesCompartments.containsKey(proteinId)) {
 
-						Set<Integer> parsedCompartments = this.processCompartments.parseCompartments(enzymesCompartments.get(ecnumber), compartmentsAbb_ids,idCompartmentAbbIdMap, ignoreList);
+						Set<Integer> parsedCompartments = this.processCompartments.parseCompartments(enzymesCompartments.get(proteinId), compartmentsAbb_ids,idCompartmentAbbIdMap, ignoreList);
 
 						//all compartments are assigned to the enzyme
 						for(int idCompartment: parsedCompartments) {
@@ -187,7 +187,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 									reaction.setInModel(false);
 
 								reaction.setLocalisation(idCompartment);
-								ModelDatabaseLoadingServices.loadReaction(this.workspaceName, reaction, ecnumber, false);
+								ModelDatabaseLoadingServices.loadReaction(this.workspaceName, reaction, proteinId, false);
 							}
 						}
 					}
@@ -195,7 +195,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 						int idCompartment = idCompartmentAbbIdMap.get(this.processCompartments.getInteriorCompartment().toLowerCase());
 						reaction.setLocalisation(idCompartment);
-						ModelDatabaseLoadingServices.loadReaction(this.workspaceName, reaction, ecnumber, false);
+						ModelDatabaseLoadingServices.loadReaction(this.workspaceName, reaction, proteinId, false);
 					}
 				}
 

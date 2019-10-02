@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -396,10 +395,10 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 	 * @param statement
 	 * @throws Exception
 	 */
-	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results, Statement statement) throws Exception {
+	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results) throws Exception {
 
 		for(ICompartmentResult locTreeResult : results.values())
-			CompartmentsInitializationProcesses.loadData(this.databaseName, locTreeResult.getGeneID(), locTreeResult.getCompartments(), statement);
+			CompartmentsInitializationProcesses.loadData(this.databaseName, locTreeResult.getGeneID(), locTreeResult.getCompartments());
 
 	}
 
@@ -420,5 +419,4 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 
 		return compartmentLists;
 	}
-
 }

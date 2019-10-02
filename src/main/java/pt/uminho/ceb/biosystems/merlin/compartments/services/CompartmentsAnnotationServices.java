@@ -1,6 +1,5 @@
 package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,7 +11,6 @@ import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartme
 import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.CompartmentsTool;
-import pt.uminho.ceb.biosystems.merlin.database.connector.datatypes.Connection;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.utilities.Utilities;
@@ -27,16 +25,14 @@ public class CompartmentsAnnotationServices {
 	 * @return
 	 */
 	public static Map<Integer, ArrayList<Object>> getMainTableData(String databaseName, long taxID,
-			double threshold, Map<Integer, String> names, Map<Integer,Integer> identifiers, Connection connection) {
+			double threshold, Map<Integer, String> names, Map<Integer,Integer> identifiers) {
 		
 		Map<Integer, ArrayList<Object>> dataTable = new HashMap<>();
 		
 		try {
 			
-			Statement statement = connection.createStatement();
-
 			Map<Integer, AnnotationCompartmentsGenes> geneCompartments = runCompartmentsInterface(databaseName,
-					threshold, taxID, statement);
+					threshold, taxID);
 			
 			if(geneCompartments != null) {
 
@@ -96,7 +92,6 @@ public class CompartmentsAnnotationServices {
 					gene+=1;
 				}
 			}
-			statement.close();
 		} 
 		catch (Exception ex) {
 
@@ -113,8 +108,7 @@ public class CompartmentsAnnotationServices {
 	 * @param statement
 	 * @throws Exception
 	 */
-	public static void loadPredictions(String databaseName, String projectLineage, String tool, Map<String, ICompartmentResult> results,
-			Statement statement) throws Exception {
+	public static void loadPredictions(String databaseName, String projectLineage, String tool, Map<String, ICompartmentResult> results) throws Exception {
 
 		try {
 
@@ -153,7 +147,7 @@ public class CompartmentsAnnotationServices {
 			}
 			
 			if(go)
-				compartmentsInterface.loadCompartmentsInformation(results, statement);
+				compartmentsInterface.loadCompartmentsInformation(results);
 
 		} 
 		catch (Exception e1) {
@@ -169,7 +163,7 @@ public class CompartmentsAnnotationServices {
 	 * @return
 	 */
 	public static Map<Integer, AnnotationCompartmentsGenes> runCompartmentsInterface(String databaseName, 
-			double threshold, long taxID, Statement statement){
+			double threshold, long taxID){
 		Map<Integer, AnnotationCompartmentsGenes> geneCompartments = null;
 		
 		try {

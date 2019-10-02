@@ -2,7 +2,6 @@ package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -145,13 +144,13 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 		return results;
 	}
 	
-	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results, Statement statement)
+	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results)
 			throws Exception {
 
 		for(ICompartmentResult woLFPSORT_Result : results.values()) {
 
 			CompartmentsInitializationProcesses.loadData(this.databaseName, 
-					woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments(), statement);
+					woLFPSORT_Result.getGeneID(), woLFPSORT_Result.getCompartments());
 		}
 		
 	}

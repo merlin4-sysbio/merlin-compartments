@@ -4,7 +4,6 @@
 package pt.uminho.ceb.biosystems.merlin.compartments.interfaces;
 
 import java.io.File;
-import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -33,7 +32,7 @@ public abstract interface ICompartmentsServices {
 	 * @param project_id
 	 * @throws Exception
 	 */
-	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results, Statement statement) throws Exception;
+	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results) throws Exception;
 	
 	/**
 	 * @param threshold

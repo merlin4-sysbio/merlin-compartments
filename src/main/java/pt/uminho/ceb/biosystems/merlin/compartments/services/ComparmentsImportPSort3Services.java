@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -277,12 +276,12 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 	}
 
 	@Override
-	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results, Statement statement)
+	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results)
 			throws Exception {
 		
 		for(ICompartmentResult pSORT3Result : results.values())
 			CompartmentsInitializationProcesses.loadData(this.databaseName, 
-					pSORT3Result.getGeneID(), pSORT3Result.getCompartments(), statement);
+					pSORT3Result.getGeneID(), pSORT3Result.getCompartments());
 	}
 
 	@Override
