@@ -117,7 +117,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 					Integer idGene = null;
 					if(sequenceID_geneID.containsKey(geneCompartments.getGeneID()))
-						idGene = Integer.valueOf(sequenceID_geneID.get(geneCompartments.getGeneID()));
+						idGene = geneCompartments.getGeneID();
 
 					if(idGene==null)
 						logger.trace("Gene {} not found!", entry.getKey());

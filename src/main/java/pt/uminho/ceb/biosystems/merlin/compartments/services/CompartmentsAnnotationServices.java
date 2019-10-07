@@ -115,11 +115,13 @@ public class CompartmentsAnnotationServices {
 			boolean type = false;
 			String projectKingdom = projectLineage.split(";")[0];
 			KINGDOM kingdom = KINGDOM.valueOf(projectKingdom);
+			
 			if (projectLineage.contains("Viridiplantae"))
 				type = true;
+			
 			ICompartmentsServices compartmentsInterface = null;
 
-			boolean go=false;
+			boolean go = false;
 
 			if(kingdom.equals(KINGDOM.Eukaryota)) {
 
@@ -139,13 +141,14 @@ public class CompartmentsAnnotationServices {
 					compartmentsInterface = new ComparmentsImportLocTreeServices(databaseName);
 				if(compartmentsTool.equals(CompartmentsTool.WoLFPSORT))
 					compartmentsInterface = new ComparmentsImportWolfPsortServices(databaseName);
-
+				
 				if(AnnotationCompartmentsServices.areCompartmentsPredicted(databaseName))
 					go=false;
 				else							
 					go = compartmentsInterface.getCompartments(null);
-			}
 			
+			}
+
 			if(go)
 				compartmentsInterface.loadCompartmentsInformation(results);
 
