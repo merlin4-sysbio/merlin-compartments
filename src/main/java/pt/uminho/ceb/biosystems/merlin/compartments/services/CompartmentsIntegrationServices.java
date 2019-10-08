@@ -13,8 +13,10 @@ public class CompartmentsIntegrationServices {
 	 * @return
 	 * @throws Exception 
 	 */
-	public static String autoSetInteriorCompartment(String databaseName, String interiorCompartment) throws Exception{
+	public static String autoSetInteriorCompartment(String databaseName) throws Exception{
 
+		String interiorCompartment = null;
+		
 		try {
 
 			interiorCompartment = ModelCompartmentServices.getCompartmentAbbreviation(databaseName);
