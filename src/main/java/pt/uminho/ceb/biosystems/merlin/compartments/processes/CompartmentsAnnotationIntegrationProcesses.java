@@ -171,9 +171,9 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			for(Integer proteinId : enzymesReactions.keySet()) {
 
 				for(Integer idReaction: enzymesReactions.get(proteinId)) {
-
-					ReactionContainer reaction = new ReactionContainer(reactionsMap.get(idReaction));
-
+					
+					ReactionContainer reaction = new ReactionContainer(reactionsMap.get(idReaction).getReactionID());
+		
 					if(enzymesCompartments.containsKey(proteinId)) {
 
 						Set<Integer> parsedCompartments = this.processCompartments.parseCompartments(enzymesCompartments.get(proteinId), compartmentsAbb_ids,idCompartmentAbbIdMap, ignoreList);
