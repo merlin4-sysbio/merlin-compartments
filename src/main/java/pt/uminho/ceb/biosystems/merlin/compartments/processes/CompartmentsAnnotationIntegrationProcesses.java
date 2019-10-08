@@ -192,7 +192,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 					}
 					else {
 
-						int idCompartment = idCompartmentAbbIdMap.get(this.processCompartments.getInteriorCompartment().toLowerCase());
+					 	int idCompartment = idCompartmentAbbIdMap.get(this.processCompartments.getInteriorCompartment().toLowerCase());
 						reaction.setLocalisation(idCompartment);
 						ModelDatabaseLoadingServices.loadReaction(this.workspaceName, reaction, proteinId, false);
 					}
