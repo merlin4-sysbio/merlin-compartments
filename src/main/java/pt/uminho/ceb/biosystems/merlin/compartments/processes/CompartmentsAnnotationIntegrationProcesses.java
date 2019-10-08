@@ -65,7 +65,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	/**
 	 * @param bool
 	 * @throws Exception 
-	 * @throws SQLException 
 	 */
 	public boolean initProcessCompartments() throws Exception {
 
