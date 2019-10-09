@@ -19,20 +19,25 @@ public class CompartmentsProcesses {
 	private STAIN stain;
 	private boolean hasCellWall=false;
 	private String interiorCompartment;
-	private Integer interiorCompartmentID;
+	//private Integer interiorCompartmentID;
 	private Set<Integer> ignoreCompartmentsID;
 	private boolean processCompartmentsInitiated = false;
 	private Map<Integer, String> compartmentsAbb_ids;
 	private Map<String, Integer> idCompartmentAbbIdMap;
 
-	/**
-	 */
-	public CompartmentsProcesses() {
-
-	}
+//	/**
+//	 */
+//	public CompartmentsProcesses() {
+//
+//	}
 
 	/**
 	 * @param interiorCompartment
+	 */
+	/**
+	 * @param interiorCompartment
+	 * @param compartmentsAbb_ids
+	 * @param idCompartmentAbbIdMap
 	 */
 	public CompartmentsProcesses(String interiorCompartment, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap) {
 
@@ -154,6 +159,13 @@ public class CompartmentsProcesses {
 							if(!hasCellWall)
 								compartments.add(idCompartmentAbbIdMap.get("extr"));
 					}
+					
+					else if(ignoreList.contains(abb.toLowerCase())) {
+
+						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
+						this.ignoreCompartmentsID.add(compartment);
+					} 
+					
 					else if(abb.equalsIgnoreCase("cellw")) {
 
 						compartments.add(idCompartmentAbbIdMap.get("extr"));
@@ -177,16 +189,12 @@ public class CompartmentsProcesses {
 
 						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
 					} 
+				
 					else {
 
 						compartments.add(compartment);
 					}
 					
-					if(ignoreList.contains(abb.toLowerCase())) {
-
-						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
-						this.ignoreCompartmentsID.add(compartment);
-					} 
 				}
 
 //				System.out.println("compartments----->"+compartments);
