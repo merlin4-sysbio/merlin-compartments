@@ -19,24 +19,43 @@ public class CompartmentsProcesses {
 	private STAIN stain;
 	private boolean hasCellWall=false;
 	private String interiorCompartment;
+	//private Integer interiorCompartmentID;
 	private Set<Integer> ignoreCompartmentsID;
 	private boolean processCompartmentsInitiated = false;
+	private Map<Integer, String> compartmentsAbb_ids;
+	private Map<String, Integer> idCompartmentAbbIdMap;
 
-	/**
-	 */
-	public CompartmentsProcesses() {
-
-	}
+//	/**
+//	 */
+//	public CompartmentsProcesses() {
+//
+//	}
 
 	/**
 	 * @param interiorCompartment
 	 */
-	public CompartmentsProcesses(String interiorCompartment) {
+	/**
+	 * @param interiorCompartment
+	 * @param compartmentsAbb_ids
+	 * @param idCompartmentAbbIdMap
+	 */
+	public CompartmentsProcesses(String interiorCompartment, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap) {
 
 		this.interiorCompartment = interiorCompartment;
+		this.compartmentsAbb_ids= compartmentsAbb_ids;
+		this.idCompartmentAbbIdMap = idCompartmentAbbIdMap;
+		this.ignoreCompartmentsID = new HashSet<>();
 	}
 
 
+
+	public Map<Integer, String> getCompartmentsAbb_ids() {
+		return compartmentsAbb_ids;
+	}
+
+	public Map<String, Integer> getIdCompartmentAbbIdMap() {
+		return idCompartmentAbbIdMap;
+	}
 
 	/**
 	 * @param existingCompartments
@@ -53,12 +72,11 @@ public class CompartmentsProcesses {
 
 		if(!this.isProcessCompartmentsInitiated()) {
 
-			this.ignoreCompartmentsID = new HashSet<>();
 			this.stain = STAIN.gram_positive;
 
 			for(String compartment : existingCompartments) {
 
-				if(compartment.equalsIgnoreCase("perip") || compartment.equalsIgnoreCase("periplasm") ) {
+				if(compartment.equalsIgnoreCase("perip") || compartment.equalsIgnoreCase("periplasm") || compartment.equalsIgnoreCase("periplasmic")) {
 
 					this.kingdom = KINGDOM.Bacteria;
 					this.stain = STAIN.gram_negative;
@@ -109,42 +127,21 @@ public class CompartmentsProcesses {
 		}
 	}
 
-	
 
 	/**
+	 *  method for parsing compartmtents for metabolic reactions
 	 * @param list
-	 * @param compartmentsAbb_ids
-	 * @param idCompartmentAbbIdMap
-	 * @param ignoreList
-	 * @return
-	 * @throws Exception 
-	 */
-	public Set<Integer> parseCompartments(List<Integer> list, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap, List<String> ignoreList) throws Exception {
-
-		return CompartmentsProcesses.parseCompartments(list, compartmentsAbb_ids, idCompartmentAbbIdMap, ignoreList, stain, hasCellWall, ignoreCompartmentsID, interiorCompartment, this.isProcessCompartmentsInitiated());
-	}
-
-	/**
-	 * Static method for parsing compartmtents for metabolic reactions
-	 * 
-	 * @param list
-	 * @param compartmentsAbb_ids
-	 * @param idCompartmentAbbIdMap
 	 * @param ignoreList
 	 * @param stain
 	 * @param hasCellWall
-	 * @param ignoreCompartmentsID
-	 * @param interiorCompartment
-	 * @param isProcessCompartmentsInitiated
 	 * @return
 	 * @throws Exception
 	 */
-	public static Set<Integer> parseCompartments(List<Integer> list, Map<Integer, String> compartmentsAbb_ids, Map<String, Integer> idCompartmentAbbIdMap, List<String> ignoreList,
-			STAIN stain, boolean hasCellWall, Set<Integer> ignoreCompartmentsID, String interiorCompartment, boolean isProcessCompartmentsInitiated) throws Exception {
+	public Set<Integer> parseCompartments(List<Integer> list, List<String> ignoreList) throws Exception {
 		
 		Set<Integer> compartments = new HashSet<>();
 
-		if (isProcessCompartmentsInitiated) {
+		if (this.processCompartmentsInitiated) {
 			
 			try {
 
@@ -162,6 +159,13 @@ public class CompartmentsProcesses {
 							if(!hasCellWall)
 								compartments.add(idCompartmentAbbIdMap.get("extr"));
 					}
+					
+					else if(ignoreList.contains(abb.toLowerCase())) {
+
+						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
+						this.ignoreCompartmentsID.add(compartment);
+					} 
+					
 					else if(abb.equalsIgnoreCase("cellw")) {
 
 						compartments.add(idCompartmentAbbIdMap.get("extr"));
@@ -185,16 +189,12 @@ public class CompartmentsProcesses {
 
 						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
 					} 
+				
 					else {
 
 						compartments.add(compartment);
 					}
 					
-					if(ignoreList.contains(abb.toLowerCase())) {
-
-						compartments.add(idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase()));
-						ignoreCompartmentsID.add(compartment);
-					} 
 				}
 
 //				System.out.println("compartments----->"+compartments);
@@ -315,5 +315,14 @@ public class CompartmentsProcesses {
 
 		this.processCompartmentsInitiated = processCompartmentsInitiated;
 	}
+
+	/**
+	 * @return the interiorCompartmentID
+	 */
+	public Integer getInteriorCompartmentID() {
+		
+		return this.idCompartmentAbbIdMap.get(interiorCompartment.toLowerCase());
+	}
+
 
 }

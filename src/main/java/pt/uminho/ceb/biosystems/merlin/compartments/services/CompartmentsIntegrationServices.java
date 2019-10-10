@@ -1,7 +1,11 @@
 package pt.uminho.ceb.biosystems.merlin.compartments.services;
 
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
+import pt.uminho.ceb.biosystems.merlin.core.containers.model.CompartmentContainer;
+import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelCompartmentServices;
 
 public class CompartmentsIntegrationServices {
@@ -13,11 +17,33 @@ public class CompartmentsIntegrationServices {
 	 * @return
 	 * @throws Exception 
 	 */
-	public static String autoSetInteriorCompartment(String databaseName, String interiorCompartment) throws Exception{
+	public static String autoSetInteriorCompartment(String databaseName) throws Exception{
 
+		String interiorCompartment = null;
+		
 		try {
 
-			interiorCompartment = ModelCompartmentServices.getCompartmentAbbreviation(databaseName);
+//			Map<String, String> res = AnnotationCompartmentsServices.getNameAndAbbreviation(databaseName);
+//			
+//			for (String x : res.keySet()) {
+//				String value = res.get(x);
+//				if (value.equalsIgnoreCase("cyto")) 
+//					interiorCompartment = "cyto";	
+//				
+//				else if (value.equalsIgnoreCase("cytop")) 
+//					interiorCompartment = "cytop";
+//			}
+			
+			List<CompartmentContainer> res = ModelCompartmentServices.getCompartmentsInfo(databaseName);
+
+			for (CompartmentContainer x : res) {
+				String abb = x.getAbbreviation();
+				if (abb.equalsIgnoreCase("cyto")) 
+					interiorCompartment = "cyto";	
+				
+				else if (abb.equalsIgnoreCase("cytop")) 
+					interiorCompartment = "cytop";
+			}
 		} 
 		catch (Exception e) {
 			e.printStackTrace();
