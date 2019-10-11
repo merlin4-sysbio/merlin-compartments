@@ -219,7 +219,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 						//all compartments are assigned to the enzyme
 						for(int idCompartment: parsedCompartments) {
 
-							System.out.println(reaction.getExternalIdentifier() + "\t"+idCompartment);
+//							System.out.println(reaction.getExternalIdentifier() + "\t"+idCompartment);
 							
 							if(idCompartment>0) {
 
@@ -250,11 +250,11 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 			//if no enzyme is assigned to the reaction
 
-			List<Integer> reactionsIDs = ModelReactionsServices.getDistinctReactionIdWhereSourceTransporters(this.workspaceName, false);
+//			List<Integer> reactionsIDs = ModelReactionsServices.getDistinctReactionIdWhereSourceTransporters(this.workspaceName, false);
 
-			this.processingTotal.set(this.processingTotal.get()+reactionsIDs.size());
+			this.processingTotal.set(this.processingTotal.get()+reactionsMap.size());
 
-			for(int idReaction: reactionsIDs) {
+			for(int idReaction: reactionsMap.keySet()) {
 
 				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -550,8 +550,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 				
 				Integer newCompartmentID = null;
 				
-				System.out.println(this.processCompartments.getIdCompartmentAbbIdMap());
-				
 				if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(newMetaboliteCompartment.toLowerCase())) {
 
 					String name = CompartmentsUtilities.parseAbbreviation(newMetaboliteCompartment.toLowerCase()).toLowerCase();
@@ -585,8 +583,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 					newMetaboliteCompartment = CompartmentsUtilities.getOutsideMembrane(newAbb, stain);
 				
 				Integer newCompartmentID = null;
-				
-				System.out.println(this.processCompartments.getIdCompartmentAbbIdMap());
 				
 				if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(newMetaboliteCompartment.toLowerCase())) {
 
