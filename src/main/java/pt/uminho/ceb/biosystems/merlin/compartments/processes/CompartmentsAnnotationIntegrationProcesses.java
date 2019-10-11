@@ -97,7 +97,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 			this.processingTotal.set(this.geneCompartments.size());
 
-			Map<Integer, String> sequenceID_geneID = ModelGenesServices.getQueriesByGeneId(this.workspaceName);
+			Map<String, Integer> sequenceID_geneID = ModelGenesServices.getQueriesByGeneID(this.workspaceName);
 
 			Map<String,Integer> compartmentsDatabaseIDs = new HashMap<>();
 
@@ -140,7 +140,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 						compartmentNames.add(secondaryCompartment);
 				}
 			}
-			System.out.println();
 			compartmentsDatabaseIDs.putAll(ModelCompartmentServices.getCompartmentsDatabaseIDs(this.workspaceName, compartments));
 			this.initProcessCompartments();
 
@@ -160,8 +159,8 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 					Map<String, Double> secondaryCompartments = geneCompartments.getSecondary_location();
 
 					Integer idGene = null;
-					if(sequenceID_geneID.containsKey(geneCompartments.getGeneID()))
-						idGene = geneCompartments.getGeneID();
+					if(sequenceID_geneID.containsKey(geneCompartments.getGene()))
+						idGene = sequenceID_geneID.get(geneCompartments.getGene());
 
 					if(idGene==null)
 						logger.trace("Gene {} not found!", entry.getKey());
