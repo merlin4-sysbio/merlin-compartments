@@ -24,6 +24,7 @@ public class AnnotationCompartmentsGenes implements Serializable{
 	private Map<String,Double> secondary_location;
 	private Map<String,String> secondary_location_abb;
 	private double primary_score;
+	private String locusTag;
 	
 	/**
 	 * 
@@ -180,6 +181,20 @@ public class AnnotationCompartmentsGenes implements Serializable{
 				+ dualLocalisation + ", primary_location=" + primary_location + ", primary_location_abb="
 				+ primary_location_abb + ", secondary_location=" + secondary_location + ", secondary_location_abb="
 				+ secondary_location_abb + ", primary_score=" + primary_score + "]";
+	}
+
+	/**
+	 * @return the locusTag
+	 */
+	public String getLocusTag() {
+		return locusTag;
+	}
+
+	/**
+	 * @param locusTag the locusTag to set
+	 */
+	public void setLocusTag(String locusTag) {
+		this.locusTag = locusTag;
 	}
 
 	

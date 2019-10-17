@@ -18,6 +18,7 @@ import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsInitia
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.RetrieveRemoteResults;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
 
 /**
  * @author Oscar Dias
@@ -70,7 +71,9 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 	 * @return Map<String, CompartmentResult>
 	 * @throws IOException
 	 */
-	public Map<String, ICompartmentResult> readLocTreeFile(BufferedReader in) throws IOException {
+	public Map<String, ICompartmentResult> readLocTreeFile(BufferedReader in) throws Exception {
+		
+		Map<String, Integer> sequenceIds = ModelGenesServices.getGeneIDsByQuery(this.databaseName);
 
 		Map<String, ICompartmentResult> compartmentLists = new HashMap<>();
 
@@ -139,7 +142,7 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 				}
 				else {
 
-					locTR = new AnnotationCompartmentsLocTree(locT[protID], Double.parseDouble(locT[scr]), localizationString, locT[geneOnto]);
+					locTR = new AnnotationCompartmentsLocTree(sequenceIds.get(locT[protID]), Double.parseDouble(locT[scr]), localizationString, locT[geneOnto]);
 
 
 					if(acc>0 && annType>0) {
@@ -255,7 +258,7 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 								}
 								else {
 
-									locTR = new AnnotationCompartmentsLocTree(proteinID, Double.parseDouble(score), localization, geneOntologyTerms);
+									locTR = new AnnotationCompartmentsLocTree(sequenceIds.get(proteinID), Double.parseDouble(score), localization, geneOntologyTerms);
 									locTR.setAnnotationType(annotationType);
 									locTR.setExpectedAccuracy(accuracy);
 								}
@@ -396,7 +399,7 @@ public class ComparmentsImportLocTreeServices implements ICompartmentsServices {
 	 * @throws Exception
 	 */
 	public void loadCompartmentsInformation(Map<String, ICompartmentResult> results) throws Exception {
-
+		
 		for(ICompartmentResult locTreeResult : results.values())
 			CompartmentsInitializationProcesses.loadData(this.databaseName, locTreeResult.getGeneID(), locTreeResult.getCompartments());
 

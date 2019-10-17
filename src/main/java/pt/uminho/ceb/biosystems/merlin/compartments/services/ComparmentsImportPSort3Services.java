@@ -16,6 +16,7 @@ import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartme
 import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsInitializationProcesses;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
 
 /**
  * @author ODias
@@ -74,9 +75,11 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 	 * @throws NumberFormatException
 	 * @throws IOException
 	 */
-	private Map<String, ICompartmentResult> readPSortFile(File outFile) throws NumberFormatException, IOException {
+	private Map<String, ICompartmentResult> readPSortFile(File outFile) throws NumberFormatException, Exception {
 
 		Map<String, ICompartmentResult> compartmentLists = new HashMap<>();
+		
+		Map<String, Integer> sequencesIds = ModelGenesServices.getGeneIDsByQuery(this.databaseName);
 
 		BufferedReader in = new BufferedReader(new FileReader(outFile));
 		String str;
@@ -124,7 +127,7 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 					//String locus_tag = line[seqID_index].split(" ")[0].split("\\|")[3];
 					String locus_tag = line[seqID_index].split(" ")[0];
 					
-					AnnotationCompartmentsPSort3 pSort3Result = new AnnotationCompartmentsPSort3(locus_tag);
+					AnnotationCompartmentsPSort3 pSort3Result = new AnnotationCompartmentsPSort3(sequencesIds.get(locus_tag));
 					
 					boolean unknown=true;
 
@@ -222,7 +225,7 @@ public class ComparmentsImportPSort3Services implements ICompartmentsServices{
 
 						if(returnFinalLocalisation) {
 
-							pSort3Result = new AnnotationCompartmentsPSort3(locus_tag);
+							pSort3Result = new AnnotationCompartmentsPSort3(sequencesIds.get(locus_tag));
 							String out;
 							if(line[final_Localization_index].trim().equalsIgnoreCase("Cytoplasmic")){out = "cytop";}
 							else if(line[final_Localization_index].trim().equalsIgnoreCase("CytoplasmicMembrane")){out = "cytmem";}

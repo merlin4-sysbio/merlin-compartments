@@ -15,13 +15,14 @@ import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 public class AnnotationCompartmentsWolfPsort implements Serializable, ICompartmentResult {
 
 	private static final long serialVersionUID = 1L;
-	private String geneID;
+	private Integer geneID;
 	private List<Pair<String, Double>> compartments;
+	private String locusTag;
 	
 	/**
 	 * @param geneID
 	 */
-	public AnnotationCompartmentsWolfPsort(String geneID) {
+	public AnnotationCompartmentsWolfPsort(Integer geneID) {
 		this.setGeneID(geneID);
 		this.setCompartments(new ArrayList<Pair<String, Double>>());
 	}
@@ -32,20 +33,6 @@ public class AnnotationCompartmentsWolfPsort implements Serializable, ICompartme
 	 */
 	public void addCompartment(String compartmentID, double score){
 		this.compartments.add(new Pair<String, Double>(compartmentID,score));
-	}
-
-	/**
-	 * @return the geneID
-	 */
-	public String getGeneID() {
-		return geneID;
-	}
-
-	/**
-	 * @param geneID the geneID to set
-	 */
-	public void setGeneID(String geneID) {
-		this.geneID = geneID;
 	}
 
 	/**
@@ -71,6 +58,28 @@ public class AnnotationCompartmentsWolfPsort implements Serializable, ICompartme
 				+ (this.geneID != null ? "geneID=" + this.geneID + ", " : "")
 				+ (this.compartments != null ? "compartments=" + this.compartments : "")
 				+ "]";
+	}
+
+	@Override
+	public void setGeneLocusTag(String locus) {
+		this.locusTag = locus;
+		
+	}
+
+	@Override
+	public String getGeneLocusTag() {
+		return this.locusTag;
+	}
+
+	@Override
+	public void setGeneID(Integer id) {
+		this.geneID = id;
+		
+	}
+
+	@Override
+	public Integer getGeneID() {
+		return this.geneID;
 	}
 
 }

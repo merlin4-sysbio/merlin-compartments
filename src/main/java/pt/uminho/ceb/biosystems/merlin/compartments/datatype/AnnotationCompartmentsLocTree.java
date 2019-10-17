@@ -14,18 +14,19 @@ import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 public class AnnotationCompartmentsLocTree implements Serializable, ICompartmentResult {
 
 	private static final long serialVersionUID = 1L;
-	private String geneID;
+	private Integer geneID;
 	private double score; 
 	private String compartment;
 	private String goTerms;
 	private String expectedAccuracy;
 	private String annotationType;
+	private String locus;
 	private List<Pair<String, Double>> compartments;
 	
 	/**
 	 * @param geneID
 	 */
-	public AnnotationCompartmentsLocTree (String geneID) {
+	public AnnotationCompartmentsLocTree (Integer geneID) {
 	
 		this.setGeneID(geneID);
 		this.compartments = new ArrayList<>();
@@ -37,7 +38,7 @@ public class AnnotationCompartmentsLocTree implements Serializable, ICompartment
 	 * @param compartment
 	 * @param goTerms
 	 */
-	public AnnotationCompartmentsLocTree(String geneID, double score, String compartment, String goTerms) {
+	public AnnotationCompartmentsLocTree(Integer geneID, double score, String compartment, String goTerms) {
 		super();
 		this.setGeneID(geneID);
 		this.setScore(score);
@@ -50,14 +51,14 @@ public class AnnotationCompartmentsLocTree implements Serializable, ICompartment
 	/**
 	 * @return the geneID
 	 */
-	public String getGeneID() {
+	public Integer getGeneID() {
 		return geneID;
 	}
 
 	/**
 	 * @param geneID the geneID to set
 	 */
-	public void setGeneID(String geneID) {
+	public void setGeneID(Integer geneID) {
 		this.geneID = geneID;
 	}
 
@@ -177,6 +178,16 @@ public class AnnotationCompartmentsLocTree implements Serializable, ICompartment
 	 */
 	public void setAnnotationType(String annotationType) {
 		this.annotationType = annotationType;
+	}
+
+	@Override
+	public void setGeneLocusTag(String locus) {
+		this.locus = locus;
+	}
+
+	@Override
+	public String getGeneLocusTag() {
+		return this.locus;
 	}
 	
 }

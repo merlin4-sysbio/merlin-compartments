@@ -9,8 +9,10 @@ import java.util.TreeMap;
 import pt.uminho.ceb.biosystems.merlin.compartments.datatype.AnnotationCompartmentsGenes;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsUtilities;
 import pt.uminho.ceb.biosystems.merlin.core.containers.model.CompartmentContainer;
+import pt.uminho.ceb.biosystems.merlin.core.containers.model.GeneContainer;
 import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelCompartmentServices;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
 import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
 
 public class CompartmentsInitializationProcesses {
@@ -23,13 +25,11 @@ public class CompartmentsInitializationProcesses {
 	 * @param statement
 	 * @throws Exception 
 	 */
-	public static void loadData(String databaseName, String locust_tag, List<Pair<String, Double>> probabilities) throws Exception{
+	public static void loadData(String databaseName, Integer geneId, List<Pair<String, Double>> probabilities) throws Exception{
 
 		try {
 
 			CompartmentsInitializationProcesses.initCompartments(databaseName);
-
-			Integer idLT = AnnotationCompartmentsServices.getIdentifierLocusTag(databaseName,locust_tag);
 
 			for(Pair<String, Double> compartment: probabilities) {
 
@@ -41,7 +41,7 @@ public class CompartmentsInitializationProcesses {
 
 					String name = CompartmentsUtilities.parseAbbreviation(compartment.getA());
 
-					AnnotationCompartmentsServices.insertIntoCompartments(databaseName, idLT, name, abb, nComp);
+					AnnotationCompartmentsServices.insertIntoCompartments(databaseName, geneId, name, abb, nComp);
 				}
 			}
 		} 
@@ -59,8 +59,12 @@ public class CompartmentsInitializationProcesses {
 	 * @throws SQLException
 	 */
 	public static Map<Integer, AnnotationCompartmentsGenes> getBestCompartmenForGene(String databaseName, double threshold, int knn) throws Exception {
+		
+		
 
 		Map<Integer, AnnotationCompartmentsGenes> compartments = new HashMap<>();
+		
+		Map<Integer, GeneContainer> allGenes = ModelGenesServices.getAllGeneDatabyIds(databaseName);
 
 		List<CompartmentContainer> containers = AnnotationCompartmentsServices.getBestCompartmenForGene(databaseName);
 
@@ -72,6 +76,11 @@ public class CompartmentsInitializationProcesses {
 			score = container.getScore();
 			String abbreviation = container.getAbbreviation();		
 			String name = container.getName();
+			
+			String locusTag = allGenes.get(geneID).getLocusTag();
+			
+			if(locusTag == null)
+				locusTag = allGenes.get(geneID).getExternalIdentifier();
 
 			if(!abbreviation.contains("_")) {
 
@@ -91,6 +100,7 @@ public class CompartmentsInitializationProcesses {
 
 					score = (score)/(knn)*100;
 					AnnotationCompartmentsGenes geneCompartments = new AnnotationCompartmentsGenes(geneID, gene, name, abbreviation, score);
+					geneCompartments.setLocusTag(locusTag);
 					compartments.put(geneID, geneCompartments);
 				}
 			}

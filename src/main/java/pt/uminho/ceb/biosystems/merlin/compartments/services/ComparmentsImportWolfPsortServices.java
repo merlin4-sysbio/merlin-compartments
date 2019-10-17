@@ -15,6 +15,7 @@ import pt.uminho.ceb.biosystems.merlin.compartments.interfaces.ICompartmentsServ
 import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsInitializationProcesses;
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.RetrieveRemoteResults;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
+import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
 
 public class ComparmentsImportWolfPsortServices implements ICompartmentsServices{
 
@@ -55,6 +56,8 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 	 * @throws Exception 
 	 */
 	public Map<String, ICompartmentResult> readWoLFPSORTFile(BufferedReader in) throws Exception {
+		
+		Map<String, Integer> sequencesIds = ModelGenesServices.getGeneIDsByQuery(this.databaseName);
 
 		Map<String, ICompartmentResult> compartmentLists = new HashMap<>();
 
@@ -73,7 +76,7 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 				
 				String[] comp = line[1].split(", ");
 				
-				AnnotationCompartmentsWolfPsort WoLFPSORTResult = new AnnotationCompartmentsWolfPsort(locusTag);
+				AnnotationCompartmentsWolfPsort WoLFPSORTResult = new AnnotationCompartmentsWolfPsort(sequencesIds.get(locusTag));
 				
 				for(int i = 0; i<comp.length; i++){
 					

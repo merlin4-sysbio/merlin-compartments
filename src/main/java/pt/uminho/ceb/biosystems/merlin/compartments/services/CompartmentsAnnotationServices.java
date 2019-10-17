@@ -42,18 +42,19 @@ public class CompartmentsAnnotationServices {
 
 				Collections.sort(collection);
 
-				Map<Integer, String> allLocusTag = AnnotationCompartmentsServices.getAllLocusTag(databaseName);
-
-				for(int query : collection) {
+//				Map<Integer, String> allLocusTag = AnnotationCompartmentsServices.getAllLocusTag(databaseName);
+				
+				for(int geneId : collection) {
 					
-					AnnotationCompartmentsGenes geneCompartment = geneCompartments.get(query);
-					int id = geneCompartment.getGeneID();
+					AnnotationCompartmentsGenes geneCompartment = geneCompartments.get(geneId);
+//					int id = geneCompartment.getGeneID();
 					
 					ArrayList<Object> ql = new ArrayList<Object>();
 					ql.add("");
-					identifiers.put(gene, id);
+					identifiers.put(gene, geneId);
 					
-					String locusTag = allLocusTag.get(query);
+					String locusTag = geneCompartment.getLocusTag();
+					
 					names.put(gene, locusTag);
 					
 					if(locusTag != null){
@@ -63,7 +64,7 @@ public class CompartmentsAnnotationServices {
 					else {
 						
 						names.put(gene, locusTag);
-						ql.add(query);
+						ql.add(geneId);
 					}
 					
 					ql.add(geneCompartment.getPrimary_location());

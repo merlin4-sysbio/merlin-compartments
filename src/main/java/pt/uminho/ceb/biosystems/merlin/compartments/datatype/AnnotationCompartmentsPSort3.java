@@ -14,13 +14,14 @@ public class AnnotationCompartmentsPSort3 implements Serializable, ICompartmentR
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String geneID;
+	private Integer geneID;
+	private String locusTag;
 	private List<Pair<String, Double>> compartments;
 	
 	/**
 	 * @param geneID
 	 */
-	public AnnotationCompartmentsPSort3(String geneID) {
+	public AnnotationCompartmentsPSort3(Integer geneID) {
 		this.setGeneID(geneID);
 		this.setCompartments(new ArrayList<Pair<String, Double>>());
 	}
@@ -31,20 +32,6 @@ public class AnnotationCompartmentsPSort3 implements Serializable, ICompartmentR
 	 */
 	public void addCompartment(String compartmentAbbreviation, double score){
 		this.compartments.add(new Pair<String, Double>(compartmentAbbreviation,score));
-	}
-
-	/**
-	 * @return the geneID
-	 */
-	public String getGeneID() {
-		return geneID;
-	}
-
-	/**
-	 * @param geneID the geneID to set
-	 */
-	public void setGeneID(String geneID) {
-		this.geneID = geneID;
 	}
 
 	/**
@@ -70,6 +57,28 @@ public class AnnotationCompartmentsPSort3 implements Serializable, ICompartmentR
 				+ (this.geneID != null ? "geneID=" + this.geneID + ", " : "")
 				+ (this.compartments != null ? "compartments=" + this.compartments : "")
 				+ "]";
+	}
+
+	@Override
+	public void setGeneLocusTag(String locus) {
+		this.locusTag = locus;
+		
+	}
+
+	@Override
+	public String getGeneLocusTag() {
+		return this.locusTag;
+	}
+
+	@Override
+	public void setGeneID(Integer id) {
+		this.geneID = id;
+		
+	}
+
+	@Override
+	public Integer getGeneID() {
+		return this.geneID;
 	}
 	
 }
