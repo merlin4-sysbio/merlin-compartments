@@ -3,8 +3,8 @@ package pt.uminho.ceb.biosystems.merlin.compartments.processes;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +32,7 @@ import pt.uminho.ceb.biosystems.merlin.services.model.ModelProteinsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelReactionsServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelStoichiometryServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.loaders.ModelDatabaseLoadingServices;
-import pt.uminho.ceb.biosystems.mew.utilities.datastructures.pair.Pair;
+import pt.uminho.ceb.biosystems.merlin.utilities.Utilities;
 
 /**
  * @author ODias
@@ -42,13 +42,15 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 	private static final Logger logger = LoggerFactory.getLogger(CompartmentsAnnotationIntegrationProcesses.class);
 
-	private Map<String,AnnotationCompartmentsGenes> geneCompartments;
+	private Map<Integer,AnnotationCompartmentsGenes> geneCompartments;
 	private AtomicBoolean cancel;
 	private CompartmentsProcesses processCompartments;
 	private AtomicInteger processingTotal;
 	private AtomicInteger processingCounter;
 	private String workspaceName;
 	private PropertyChangeSupport changes;
+	private CompartmentContainer internalCompartment;
+	private CompartmentContainer externalCompartment;
 
 
 	/**
@@ -56,7 +58,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	 * @param threshold
 	 * @throws Exception 
 	 */
-	public CompartmentsAnnotationIntegrationProcesses(String workspaceName, Map<String,AnnotationCompartmentsGenes> geneCompartments) throws Exception {
+	public CompartmentsAnnotationIntegrationProcesses(String workspaceName, Map<Integer,AnnotationCompartmentsGenes> geneCompartments) throws Exception {
 
 		this.workspaceName = workspaceName;
 		this.changes = new PropertyChangeSupport(this);
@@ -107,16 +109,16 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			for(AnnotationCompartmentsGenes genesCompartment : this.geneCompartments.values()) {
 
 				if(compartments.isEmpty()) {
-					
+
 					compartments.add(new CompartmentContainer(genesCompartment.getPrimary_location(), genesCompartment.getPrimary_location_abb() ));
 					compartmentNames.add(genesCompartment.getPrimary_location());
 				}
-					
+
 				boolean add = false;
 				for(String compartmentName : compartmentNames) {
 
 					if(!compartmentName.equals(genesCompartment.getPrimary_location())) {
-						
+
 						compartments.add(new CompartmentContainer(genesCompartment.getPrimary_location(), genesCompartment.getPrimary_location_abb() ));
 						add = true;
 					}
@@ -143,7 +145,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			compartmentsDatabaseIDs.putAll(ModelCompartmentServices.getCompartmentsDatabaseIDs(this.workspaceName, compartments));
 			this.initProcessCompartments();
 
-			for(Map.Entry<String, AnnotationCompartmentsGenes> entry : this.geneCompartments.entrySet())
+			for(Map.Entry<Integer, AnnotationCompartmentsGenes> entry : this.geneCompartments.entrySet())
 			{
 
 				if(this.cancel.get()) {
@@ -210,7 +212,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 				for(Integer idReaction: enzymesReactions.get(proteinId)) {
 
-					ReactionContainer reaction = new ReactionContainer(reactionsMap.get(idReaction));                                                                                                                                                                                                                                                                     
+					ReactionContainer reaction = new ReactionContainer(reactionsMap.get(idReaction), true);                                                                                                                                                                                                                                                                     
 
 					if(enzymesCompartments.containsKey(proteinId)) {
 
@@ -219,8 +221,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 						//all compartments are assigned to the enzyme
 						for(int idCompartment: parsedCompartments) {
 
-//							System.out.println(reaction.getExternalIdentifier() + "\t"+idCompartment);
-							
 							if(idCompartment>0) {
 
 								if(this.processCompartments.getIgnoreCompartmentsID().contains(idCompartment))
@@ -243,40 +243,9 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 				this.changes.firePropertyChange("sequencesCounter", this.processingCounter.get(), this.processingCounter.incrementAndGet());
 			}
 
-			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-			//if no enzyme is assigned to the reaction
-
-//			List<Integer> reactionsIDs = ModelReactionsServices.getDistinctReactionIdWhereSourceTransporters(this.workspaceName, false);
-
 			this.processingTotal.set(this.processingTotal.get()+reactionsMap.size());
 
 			for(int idReaction: reactionsMap.keySet()) {
-
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-				//				ArrayList<String[]> result = HomologyAPI.getEnzymeProteinID(idReaction, statement);
-				//
-				//				Map<Integer,String> proteinID = new HashMap<Integer, String>();
-				//				Map<Integer,String> ecNumber = new HashMap<Integer, String>();
-				//
-				//				for(int i=0; i<result.size(); i++){
-				//					String[] list = result.get(i);
-				//
-				//					proteinID.put(i, list[0]);
-				//					ecNumber.put(i, list[1]);
-				//				}
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-				//List<String> pathwayID = ProjectAPI.getPathwaysIDsByReactionID(idReaction, statement); ---> never used
-
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 				logger.trace("reaction {} is in model {}", reactionsMap.get(idReaction).getExternalIdentifier(), reactionsMap.get(idReaction).isInModel());
 
@@ -315,12 +284,117 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		for(MetaboliteContainer prod : products) {
 			prod.setCompartmentID(reactionCompartmentId);
 		}
-		
-		
-
-
 	}
 
+	private List<ReactionContainer> assignCompartmentsToTransportReactionContainers(ReactionContainer reaction, Map<Integer, List<CompartmentContainer>> geneHasCompartments) {
+
+		Map<String, ReactionContainer> reactionsByCompartment = new HashMap<>();
+
+		List<List<Integer>> rules = Utilities.parseStringRuleToList(reaction.getGeneRule());			//deve faltar tirar os parentesis
+
+		for(List<Integer> rule : rules) {
+
+			if(rule.size() == 1) {
+
+				Integer geneId = rule.get(0);
+
+				if(geneHasCompartments.containsKey(geneId)) {
+
+					for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
+
+						reactionsByCompartment = replicateReaction(geneId.toString(), reaction, compartment, reactionsByCompartment);
+
+					}
+				}
+
+			}
+			else {
+				Map<String, Integer> counts = new HashMap<>();
+				Map<String, CompartmentContainer> containersMapping = new HashMap<>();
+				String newRule = "";
+
+				for(Integer geneId : rule) {
+					for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
+
+						String abb = compartment.getAbbreviation();
+
+						if(counts.containsKey(abb))
+							counts.put(abb, counts.get(abb)+1);
+						else
+							counts.put(abb, 1);
+
+						if(!containersMapping.containsKey(abb))
+							containersMapping.put(abb, compartment);
+					}
+
+					newRule = newRule.concat(geneId.toString()).concat(" and ");
+				}
+				newRule = newRule.replaceAll(" and $", "");
+
+				List<String> abbreviations = processCounts(counts);
+
+				for(String abb : abbreviations) {
+
+					reactionsByCompartment = replicateReaction(newRule, reaction, containersMapping.get(abb), reactionsByCompartment);
+
+				}
+
+			}
+		}
+
+		return new ArrayList<>(reactionsByCompartment.values());
+	}
+
+	/**
+	 * @param rule
+	 * @param reaction
+	 * @param compartment
+	 * @param reactionsByCompartment
+	 * @return
+	 */
+	private static Map<String, ReactionContainer> replicateReaction(String rule, ReactionContainer reaction, CompartmentContainer compartment, Map<String, ReactionContainer> reactionsByCompartment){
+
+		String abb = compartment.getAbbreviation();
+
+		ReactionContainer compReaction = null;
+
+		if(reactionsByCompartment.containsKey(abb)) {
+			compReaction = reactionsByCompartment.get(abb);
+		}
+		else {
+			compReaction = new ReactionContainer(reaction, false);
+			compReaction.setLocalisation(compartment);
+		}
+
+		String geneRule = compReaction.getGeneRule();
+
+		geneRule = geneRule.concat(" OR (").concat(rule.toString()).concat(")").replace("^ OR ", "");
+
+		compReaction.setGeneRule(geneRule);
+		reactionsByCompartment.put(abb, compReaction);
+
+		return reactionsByCompartment;
+	}
+
+	/**
+	 * @param counts
+	 * @return
+	 */
+	private List<String> processCounts(Map<String, Integer> counts){
+
+		List<String> results = new ArrayList<>();
+		Integer max = null;
+
+		if(!counts.isEmpty()) {
+			max = Collections.max(counts.values());
+		}
+
+		for(String abbreviation : counts.keySet())
+			if(counts.get(abbreviation) == max)
+				results.add(abbreviation);
+
+		return results;
+	}
 
 	/**
 	 * @param ignoreList
@@ -329,42 +403,9 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	 */
 	public boolean assignCompartmentsToTransportReactions(List<String> ignoreList, boolean compartmentalized) throws Exception {
 
+		Map<Integer, List<CompartmentContainer>> geneHasCompartments = ModelGenesServices.getCompartmentsRelatedToGenes(this.workspaceName);
+
 		Map<Integer, ReactionContainer> reactionsMap = ModelReactionsServices.getAllModelReactionAttributesbySource(this.workspaceName, false, SourceType.TRANSPORTERS);
-
-		List<Integer> reactionReversibility = new ArrayList<>();
-
-		for(int reactId : reactionsMap.keySet()) {
-			if(reactionsMap.get(reactId).isReversible())
-				reactionReversibility.add(reactId);
-
-		}
-
-//		Map<String, List<String>> transportProteins_reactions = new HashMap<String, List<String>>();
-//		List<String> reactions_ids;
-
-		//TODO MAKE this a static method on database loaders
-
-//		List<String[]> result = ModelReactionsServices.getReacIdEcNumProtIdWhereSourceEqualTransporters(this.workspaceName);
-//
-//		for(int i=0; i<result.size(); i++){
-//			String[] list = result.get(i);
-//
-//			String key = list[1].concat("_").concat(list[2]);
-//			reactions_ids = new ArrayList<String>();
-//
-//			if(transportProteins_reactions.containsKey(key))
-//				reactions_ids = transportProteins_reactions.get(key);	
-//
-//			reactions_ids.add(list[0]);
-//			transportProteins_reactions.put(key,reactions_ids);
-//
-//			reactionsMap.get(Integer.valueOf(list[0])).addProteinPair(new Pair<Integer, String>(Integer.valueOf(list[2]), list[1]));
-//		}
-
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//		Map<String, Set<Integer>> transportProteinsCompartments = ModelCompartmentServices.getCompartIdAndEcNumbAndProtId(this.workspaceName);
 
 		Map<Integer, ReactionContainer> reactionsPathways = ModelReactionsServices.getReactionIdAndPathwayID(this.workspaceName, SourceType.TRANSPORTERS, false);
 
@@ -372,7 +413,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			reactionsMap.get(reactionId).setPathways(reactionsPathways.get(reactionId).getPathways());
 		}
 
-		
+
 		Map<Integer, ReactionContainer> reactionsMetabolites = ModelStoichiometryServices.getAllOriginalTransportersFromStoichiometry(this.workspaceName);
 
 		for(Integer reactionId : reactionsMetabolites.keySet()){
@@ -384,110 +425,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 				reactionsMap.get(reactionId).addReactant(container);
 		}
 
-//		for(String transporter : transportProteins_reactions.keySet()) {
-//
-//			for(String idReaction: transportProteins_reactions.get(transporter)) {
-//
-//				ReactionContainer transportReaction = reactionsMap.get(Integer.valueOf(idReaction));
-//
-//				Set<Integer> tpcCompartments = new HashSet<>();
-//				int tpcCompartmentsSize = 1;
-//
-//				if(transportProteinsCompartments.containsKey(transporter)) {
-//
-//					tpcCompartments = transportProteinsCompartments.get(transporter);
-//					tpcCompartmentsSize = transportProteinsCompartments.get(transporter).size();
-//
-//				}
-//				else 
-//					tpcCompartments.add(this.processCompartments.getIdCompartmentAbbIdMap().get(CompartmentsUtilities.DEFAULT_MEMBRANE));
-//
-//
-//				//				String originalEquation = transportReaction.getEquation();
-//				int originalIDCompartment = transportReaction.getLocalisation().getCompartmentID();
-//
-//				for(int idCompartment: tpcCompartments) {
-//
-//					String abb = this.processCompartments.getCompartmentsAbb_ids().get(idCompartment);
-//
-//					if(reactionReversibility.contains(Integer.valueOf(idReaction)) && abb.equalsIgnoreCase("extr")) {
-//
-//						if(this.processCompartments.getInteriorCompartment().equalsIgnoreCase("cyto"))
-//							abb = "PLAS";
-//						else
-//							abb = "outme";
-//					}
-//
-//					if(abb.toLowerCase().contains("me") || abb.toLowerCase().contains("pla")) {
-//
-//						if(ignoreList.contains(abb.toLowerCase())) 
-//							transportReaction.setInModel(false);
-//
-//						//						String equation = originalEquation.replace("(out)","("+this.processCompartments.processTransportCompartments("out", abb )+")").replace("(in)",
-//						//								"("+this.processCompartments.processTransportCompartments("in", abb )+")");
-//						//
-//						//						transportReaction.setEquation(equation);
-//
-//						//////////////////////////////////////////////////////////////////
-//
-//						String compartment = this.processCompartments.getCompartmentsAbb_ids().get(originalIDCompartment);						
-//
-//						if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(compartment.toLowerCase())) {
-//
-//							ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, compartment, compartment);
-//
-//						}
-//						originalIDCompartment = this.processCompartments.getIdCompartmentAbbIdMap().get(compartment.toLowerCase());
-//
-//						//						transportReaction.setCompartment_idcompartment(newIDCompartments);
-//
-//						//						CompartmentContainer container = new CompartmentContainer(originalIDCompartment, compartment, compartment);
-//
-//						transportReaction.setLocalisation(originalIDCompartment);  //BEFORE THE METHOD WAS DIFFERENT AND THE VARIABLE 'idcompartment' WAS BEING SAVED HERE!!!!
-//
-//						//////////////////////////////////////////////////////////////////
-//						ModelDatabaseLoadingServices.loadReaction(this.workspaceName, transportReaction, null, true);
-//					}
-//					else if(abb.equalsIgnoreCase("cytop") || tpcCompartmentsSize==1){
-//
-//						String newAbb = CompartmentsUtilities.DEFAULT_MEMBRANE;
-//
-//						//						String equation = originalEquation.replace("(out)","("+this.processCompartments.processTransportCompartments("out", newAbb )+")").replace("(in)",
-//						//								"("+this.processCompartments.processTransportCompartments("in", newAbb )+")");
-//						//
-//						//						transportReaction.setEquation(equation);
-//
-//						//////////////////////////////////////////////////////////////////
-//
-//
-//						String compartment = this.processCompartments.processTransportCompartments(this.processCompartments.getCompartmentsAbb_ids().get(transportReaction.getLocalisation().getCompartmentID()), newAbb );
-//
-//						if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(compartment.toLowerCase())) {
-//
-//							Integer id = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, compartment, compartment);
-//
-//							this.processCompartments.getIdCompartmentAbbIdMap().put(compartment.toLowerCase(), id);
-//						}
-//
-//						transportReaction.setLocalisation(this.processCompartments.getIdCompartmentAbbIdMap().get(compartment.toLowerCase()));
-//						transportReaction.setInModel(false);
-//
-//						//////////////////////////////////////////////////////////////////
-//						ModelDatabaseLoadingServices.loadReaction(this.workspaceName, transportReaction, null, true);
-//
-//						//							logger.debug("Transporter compartment {}",abb);
-//					}
-//				}
-//			}
-//		}
-
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//		List<Integer> reactionsIDs = ModelReactionsServices.getDistinctReactionIdWhereSourceTransporters(this.workspaceName, true);
-
 		String defaultAbb = CompartmentsUtilities.DEFAULT_MEMBRANE.toString();
 		Integer idCompartment = null;
 
@@ -498,124 +435,138 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			this.processCompartments.getIdCompartmentAbbIdMap().put(defaultAbb, idCompartment);
 
 		}
-		
+
 		idCompartment = this.processCompartments.getIdCompartmentAbbIdMap().get(defaultAbb);
+		
+		CompartmentContainer defaultMembraneCompartment = ModelCompartmentServices.getCompartmentById(this.workspaceName, idCompartment);
 
 		for(Integer idReaction: reactionsMap.keySet()) {
 
 			ReactionContainer transportReaction = reactionsMap.get(idReaction);
 
-//			String originalEquation = transportReaction.getEquation();
-
-			String newAbb = CompartmentsUtilities.DEFAULT_MEMBRANE;
-
 			transportReaction.setInModel(true);
 
-//			String equation = originalEquation.replace("(out)","("+this.processCompartments.processTransportCompartments("out", newAbb )+")").replace("(in)",
-//					"("+this.processCompartments.processTransportCompartments("in", newAbb )+")");
+			List<ReactionContainer> reactionsToSave = assignCompartmentsToTransportReactionContainers(transportReaction, geneHasCompartments);
 
-//			transportReaction.setEquation(equation);
-
-			//////////////////////////////////////////////////////////////////
-
-//			String compartment = this.processCompartments.processTransportCompartments(
-//					this.processCompartments.getCompartmentsAbb_ids().get(transportReaction.getLocalisation().getCompartmentID()), newAbb);
-
-			if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(newAbb.toLowerCase())) {
+			for(ReactionContainer reactionToSave : reactionsToSave) {
 				
-				String name = CompartmentsUtilities.parseAbbreviation(newAbb);
-
-				Integer id = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, name, newAbb);
-
-				this.processCompartments.getIdCompartmentAbbIdMap().put(newAbb.toLowerCase(), id);
-			}
-			
-			STAIN stain = this.processCompartments.getStain();
-			
-			transportReaction.setLocalisation(this.processCompartments.getIdCompartmentAbbIdMap().get(newAbb.toLowerCase()));
-			
-			List<MetaboliteContainer> reactants = transportReaction.getReactantsStoichiometry();
-			transportReaction.setReactantsStoichiometry(new ArrayList<MetaboliteContainer>());
-			
-			for ( MetaboliteContainer metabolite : reactants) {
-				
-				String oldMetaboliteAbb = metabolite.getAbbreviation();
-				String newMetaboliteCompartment = null;
-				
-				if(oldMetaboliteAbb.equals(Compartments.inside.getAbbreviation()))
-					newMetaboliteCompartment = CompartmentsUtilities.getInsideMembrane(newAbb, stain);
-				
-				else
-					newMetaboliteCompartment = CompartmentsUtilities.getOutsideMembrane(newAbb, stain);
-				
-				Integer newCompartmentID = null;
-				
-				if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(newMetaboliteCompartment.toLowerCase())) {
-
-					String name = CompartmentsUtilities.parseAbbreviation(newMetaboliteCompartment.toLowerCase()).toLowerCase();
-					
-					newCompartmentID = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, name, newMetaboliteCompartment.toLowerCase());
-
-					this.processCompartments.getIdCompartmentAbbIdMap().put(newMetaboliteCompartment.toLowerCase(), newCompartmentID);
-					
+				if(reactionToSave.getLocalisation() == null) {
+					reactionToSave.setLocalisation(defaultMembraneCompartment);
 				}
-				else
-					newCompartmentID = this.processCompartments.getIdCompartmentAbbIdMap().get(newMetaboliteCompartment.toLowerCase());
-				
-				
-				metabolite.setCompartmentID(newCompartmentID);
-				transportReaction.addReactant(metabolite);
-				
-			}
-			
-			List<MetaboliteContainer> products = transportReaction.getProductsStoichiometry();
-			transportReaction.setProductsStoichiometry(new ArrayList<MetaboliteContainer>());
-			
-			for ( MetaboliteContainer metabolite : products) {
-				
-				String oldMetaboliteAbb = metabolite.getAbbreviation();
-				String newMetaboliteCompartment = null;
-				
-				if(oldMetaboliteAbb.equals(Compartments.inside.getAbbreviation()))
-					newMetaboliteCompartment = CompartmentsUtilities.getInsideMembrane(newAbb, stain);
-				
-				else
-					newMetaboliteCompartment = CompartmentsUtilities.getOutsideMembrane(newAbb, stain);
-				
-				Integer newCompartmentID = null;
-				
-				if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(newMetaboliteCompartment.toLowerCase())) {
-
-					String name = CompartmentsUtilities.parseAbbreviation(newMetaboliteCompartment.toLowerCase()).toLowerCase();
+				else {
+					boolean valid = this.processCompartments.checkIfValidMembrane(reactionToSave.getLocalisation().getAbbreviation());
 					
-					newCompartmentID = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, name, newMetaboliteCompartment.toLowerCase());
-
-					this.processCompartments.getIdCompartmentAbbIdMap().put(newMetaboliteCompartment.toLowerCase(), newCompartmentID);
-					
+					if(!valid)
+						reactionToSave.setLocalisation(defaultMembraneCompartment);
 				}
-				else
-					newCompartmentID = this.processCompartments.getIdCompartmentAbbIdMap().get(newMetaboliteCompartment.toLowerCase());
 				
-				
-				metabolite.setCompartmentID(newCompartmentID);
-				transportReaction.addProduct(metabolite);
-				
+				String newAbb = reactionToSave.getLocalisation().getAbbreviation();
+
+				STAIN stain = this.processCompartments.getStain();
+
+				List<MetaboliteContainer> reactants = reactionToSave.getReactantsStoichiometry();
+				reactionToSave.setReactantsStoichiometry(new ArrayList<MetaboliteContainer>());
+
+				for ( MetaboliteContainer metabolite : reactants) {
+
+					String oldMetaboliteAbb = metabolite.getAbbreviation();
+					String newMetaboliteCompartment = null;
+
+					if(oldMetaboliteAbb.equals(Compartments.inside.getAbbreviation()))
+						newMetaboliteCompartment = CompartmentsUtilities.getInsideMembrane(newAbb, stain);
+
+					else
+						newMetaboliteCompartment = CompartmentsUtilities.getOutsideMembrane(newAbb, stain);
+
+					Integer newCompartmentID = null;
+
+					if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(newMetaboliteCompartment.toLowerCase())) {
+
+						String name = CompartmentsUtilities.parseAbbreviation(newMetaboliteCompartment.toLowerCase()).toLowerCase();
+
+						newCompartmentID = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, name, newMetaboliteCompartment.toLowerCase());
+
+						this.processCompartments.getIdCompartmentAbbIdMap().put(newMetaboliteCompartment.toLowerCase(), newCompartmentID);
+
+					}
+					else
+						newCompartmentID = this.processCompartments.getIdCompartmentAbbIdMap().get(newMetaboliteCompartment.toLowerCase());
+
+
+					metabolite.setCompartmentID(newCompartmentID);
+					reactionToSave.addReactant(metabolite);
+
+				}
+
+				List<MetaboliteContainer> products = reactionToSave.getProductsStoichiometry();
+				reactionToSave.setProductsStoichiometry(new ArrayList<MetaboliteContainer>());
+
+				for ( MetaboliteContainer metabolite : products) {
+
+					String oldMetaboliteAbb = metabolite.getAbbreviation();
+					String newMetaboliteCompartment = null;
+
+					if(oldMetaboliteAbb.equals(Compartments.inside.getAbbreviation())) {
+
+						if(this.internalCompartment == null)
+							newMetaboliteCompartment = CompartmentsUtilities.getInsideMembrane(newAbb, stain);
+						else
+							newMetaboliteCompartment = this.internalCompartment.getAbbreviation();
+					}
+					else {
+						if(this.externalCompartment == null)
+							newMetaboliteCompartment = CompartmentsUtilities.getOutsideMembrane(newAbb, stain);
+						else
+							newMetaboliteCompartment = this.externalCompartment.getAbbreviation();
+					}
+					Integer newCompartmentID = null;
+
+					if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(newMetaboliteCompartment.toLowerCase())) {
+
+						String name = CompartmentsUtilities.parseAbbreviation(newMetaboliteCompartment.toLowerCase()).toLowerCase();
+
+						newCompartmentID = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, name, newMetaboliteCompartment.toLowerCase());
+
+						this.processCompartments.getIdCompartmentAbbIdMap().put(newMetaboliteCompartment.toLowerCase(), newCompartmentID);
+
+					}
+					else
+						newCompartmentID = this.processCompartments.getIdCompartmentAbbIdMap().get(newMetaboliteCompartment.toLowerCase());
+
+
+					metabolite.setCompartmentID(newCompartmentID);
+					reactionToSave.addProduct(metabolite);
+
+				}
+
+				//////////////////////////////////////////////////////////////////
+				ModelDatabaseLoadingServices.loadReaction(this.workspaceName, reactionToSave, null, true);
+
+				//				logger.debug("Transporter compartment {}",abb);
 			}
-
-			transportReaction.setLocalisation(idCompartment);
-
-			//////////////////////////////////////////////////////////////////
-			ModelDatabaseLoadingServices.loadReaction(this.workspaceName, transportReaction, null, true);
-
-			//				logger.debug("Transporter compartment {}",abb);
-
 		}
- 		return true;
+		return true;
 	}
 
 	public void processCompoundsCompartments() {
 
 
+	}
+
+	public CompartmentContainer getInternalCompartment() {
+		return internalCompartment;
+	}
+
+	public void setInternalCompartment(CompartmentContainer internalCompartment) {
+		this.internalCompartment = internalCompartment;
+	}
+
+	public CompartmentContainer getExternalCompartment() {
+		return externalCompartment;
+	}
+
+	public void setExternalCompartment(CompartmentContainer externalCompartment) {
+		this.externalCompartment = externalCompartment;
 	}
 
 	/**
