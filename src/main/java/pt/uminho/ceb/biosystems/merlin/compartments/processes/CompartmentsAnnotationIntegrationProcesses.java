@@ -4,7 +4,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,8 +48,10 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 	private AtomicInteger processingCounter;
 	private String workspaceName;
 	private PropertyChangeSupport changes;
-	private CompartmentContainer internalCompartment;
-	private CompartmentContainer externalCompartment;
+	private CompartmentContainer defaultInternalCompartment;
+	private CompartmentContainer defaultExternalCompartment;
+	private CompartmentContainer defaultMembraneCompartment;
+	private boolean isEukaryote;
 
 
 	/**
@@ -286,11 +287,21 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		}
 	}
 
-	private List<ReactionContainer> assignCompartmentsToTransportReactionContainers(ReactionContainer reaction, Map<Integer, List<CompartmentContainer>> geneHasCompartments) {
+	/**
+	 * @param reaction
+	 * @param geneHasCompartments
+	 * @return
+	 * @throws Exception 
+	 */
+	private List<ReactionContainer> assignCompartmentsToTransportReactionContainers(ReactionContainer reaction, Map<Integer, List<CompartmentContainer>> geneHasCompartments) throws Exception {
 
 		Map<String, ReactionContainer> reactionsByCompartment = new HashMap<>();
-
-		List<List<Integer>> rules = Utilities.parseStringRuleToList(reaction.getGeneRule());			//deve faltar tirar os parentesis
+		
+		String geneRule = reaction.getGeneRule();
+		if(geneRule != null)
+			geneRule = geneRule.toUpperCase();
+		
+		List<List<Integer>> rules = Utilities.parseStringRuleToList(geneRule);			//deve faltar tirar os parentesis
 
 		for(List<Integer> rule : rules) {
 
@@ -298,15 +309,20 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 				Integer geneId = rule.get(0);
 
-				if(geneHasCompartments.containsKey(geneId)) {
-
-					for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
-
-						reactionsByCompartment = replicateReaction(geneId.toString(), reaction, compartment, reactionsByCompartment);
-
+					if(geneHasCompartments.containsKey(geneId)) {
+						for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
+							
+							boolean valid = this.processCompartments.checkIfValidMembrane(compartment.getAbbreviation());
+							
+							if(!valid)
+								compartment = this.defaultMembraneCompartment;
+	
+							reactionsByCompartment = replicateReaction(geneId.toString(), reaction, compartment, reactionsByCompartment);
+						}
 					}
-				}
-
+					else {
+						reactionsByCompartment = replicateReaction(geneId.toString(), reaction, this.defaultMembraneCompartment, reactionsByCompartment);
+					}
 			}
 			else {
 				Map<String, Integer> counts = new HashMap<>();
@@ -314,22 +330,34 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 				String newRule = "";
 
 				for(Integer geneId : rule) {
-					for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
-
-						String abb = compartment.getAbbreviation();
-
+					if(geneHasCompartments.containsKey(geneId)) {
+						for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
+	
+							String abb = compartment.getAbbreviation();
+	
+							if(counts.containsKey(abb))
+								counts.put(abb, counts.get(abb)+1);
+							else
+								counts.put(abb, 1);
+	
+							if(!containersMapping.containsKey(abb))
+								containersMapping.put(abb, compartment);
+						}
+					}
+					else {
+						String abb = this.defaultMembraneCompartment.getAbbreviation();
+						
 						if(counts.containsKey(abb))
 							counts.put(abb, counts.get(abb)+1);
 						else
 							counts.put(abb, 1);
 
 						if(!containersMapping.containsKey(abb))
-							containersMapping.put(abb, compartment);
+							containersMapping.put(abb, this.defaultMembraneCompartment);
 					}
-
-					newRule = newRule.concat(geneId.toString()).concat(" and ");
+					newRule = newRule.concat(geneId.toString()).concat(" AND ");
 				}
-				newRule = newRule.replaceAll(" and $", "");
+				newRule = newRule.replaceAll(" AND $", "");
 
 				List<String> abbreviations = processCounts(counts);
 
@@ -363,12 +391,13 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		}
 		else {
 			compReaction = new ReactionContainer(reaction, false);
+			compReaction.setGeneRule("");
 			compReaction.setLocalisation(compartment);
 		}
 
 		String geneRule = compReaction.getGeneRule();
 
-		geneRule = geneRule.concat(" OR (").concat(rule.toString()).concat(")").replace("^ OR ", "");
+		geneRule = geneRule.concat(" OR (").concat(rule.toString()).concat(")").replaceAll("^ OR ", "");
 
 		compReaction.setGeneRule(geneRule);
 		reactionsByCompartment.put(abb, compReaction);
@@ -384,17 +413,28 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 		List<String> results = new ArrayList<>();
 		Integer max = null;
-
-		if(!counts.isEmpty()) {
-			max = Collections.max(counts.values());
-		}
-
-		for(String abbreviation : counts.keySet())
-			if(counts.get(abbreviation) == max)
+		
+		Map<String, Integer> countsAux = Utilities.sortMapByDescendingOrder(counts);
+		
+		for(String abbreviation : countsAux.keySet()) {
+			
+			if(max == null)
+				max = countsAux.get(abbreviation);
+			
+			boolean valid = this.processCompartments.checkIfValidMembrane(abbreviation);
+			
+			if(countsAux.get(abbreviation) == max && valid)
 				results.add(abbreviation);
-
+			else if(results.isEmpty() && valid);
+				results.add(abbreviation);
+		}
+		
+		if(results.isEmpty())
+			results.add(this.defaultMembraneCompartment.getAbbreviation());
+		
 		return results;
 	}
+
 
 	/**
 	 * @param ignoreList
@@ -425,20 +465,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 				reactionsMap.get(reactionId).addReactant(container);
 		}
 
-		String defaultAbb = CompartmentsUtilities.DEFAULT_MEMBRANE.toString();
-		Integer idCompartment = null;
-
-		if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(defaultAbb)) {
-			String name = CompartmentsUtilities.parseAbbreviation(defaultAbb);
-
-			idCompartment = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, name, defaultAbb);
-			this.processCompartments.getIdCompartmentAbbIdMap().put(defaultAbb, idCompartment);
-
-		}
-
-		idCompartment = this.processCompartments.getIdCompartmentAbbIdMap().get(defaultAbb);
-		
-		CompartmentContainer defaultMembraneCompartment = ModelCompartmentServices.getCompartmentById(this.workspaceName, idCompartment);
+		this.defaultMembraneCompartment = getDefaultMembraneCompartment();
 
 		for(Integer idReaction: reactionsMap.keySet()) {
 
@@ -449,16 +476,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			List<ReactionContainer> reactionsToSave = assignCompartmentsToTransportReactionContainers(transportReaction, geneHasCompartments);
 
 			for(ReactionContainer reactionToSave : reactionsToSave) {
-				
-				if(reactionToSave.getLocalisation() == null) {
-					reactionToSave.setLocalisation(defaultMembraneCompartment);
-				}
-				else {
-					boolean valid = this.processCompartments.checkIfValidMembrane(reactionToSave.getLocalisation().getAbbreviation());
-					
-					if(!valid)
-						reactionToSave.setLocalisation(defaultMembraneCompartment);
-				}
 				
 				String newAbb = reactionToSave.getLocalisation().getAbbreviation();
 
@@ -492,10 +509,8 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 					else
 						newCompartmentID = this.processCompartments.getIdCompartmentAbbIdMap().get(newMetaboliteCompartment.toLowerCase());
 
-
 					metabolite.setCompartmentID(newCompartmentID);
 					reactionToSave.addReactant(metabolite);
-
 				}
 
 				List<MetaboliteContainer> products = reactionToSave.getProductsStoichiometry();
@@ -508,16 +523,16 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 					if(oldMetaboliteAbb.equals(Compartments.inside.getAbbreviation())) {
 
-						if(this.internalCompartment == null)
+						if(this.defaultInternalCompartment == null)
 							newMetaboliteCompartment = CompartmentsUtilities.getInsideMembrane(newAbb, stain);
 						else
-							newMetaboliteCompartment = this.internalCompartment.getAbbreviation();
+							newMetaboliteCompartment = this.defaultInternalCompartment.getAbbreviation();
 					}
 					else {
-						if(this.externalCompartment == null)
+						if(this.defaultExternalCompartment == null)
 							newMetaboliteCompartment = CompartmentsUtilities.getOutsideMembrane(newAbb, stain);
 						else
-							newMetaboliteCompartment = this.externalCompartment.getAbbreviation();
+							newMetaboliteCompartment = this.defaultExternalCompartment.getAbbreviation();
 					}
 					Integer newCompartmentID = null;
 
@@ -528,11 +543,9 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 						newCompartmentID = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName, name, newMetaboliteCompartment.toLowerCase());
 
 						this.processCompartments.getIdCompartmentAbbIdMap().put(newMetaboliteCompartment.toLowerCase(), newCompartmentID);
-
 					}
 					else
 						newCompartmentID = this.processCompartments.getIdCompartmentAbbIdMap().get(newMetaboliteCompartment.toLowerCase());
-
 
 					metabolite.setCompartmentID(newCompartmentID);
 					reactionToSave.addProduct(metabolite);
@@ -548,25 +561,84 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		return true;
 	}
 
-	public void processCompoundsCompartments() {
-
-
-	}
-
+	/**
+	 * @return
+	 */
 	public CompartmentContainer getInternalCompartment() {
-		return internalCompartment;
+		return defaultInternalCompartment;
 	}
 
+	/**
+	 * @param internalCompartment
+	 */
 	public void setInternalCompartment(CompartmentContainer internalCompartment) {
-		this.internalCompartment = internalCompartment;
+		this.defaultInternalCompartment = internalCompartment;
 	}
 
+	/**
+	 * @return
+	 */
 	public CompartmentContainer getExternalCompartment() {
-		return externalCompartment;
+		return defaultExternalCompartment;
+	}
+	
+	/**
+	 * @param internalCompartment
+	 */
+	public void setExternalCompartment(CompartmentContainer externalCompartment) {
+		this.defaultExternalCompartment = externalCompartment;
 	}
 
-	public void setExternalCompartment(CompartmentContainer externalCompartment) {
-		this.externalCompartment = externalCompartment;
+	/**
+	 * @param defaultMembraneCompartment
+	 */
+	public void setDefaultMembraneCompartment(CompartmentContainer defaultMembraneCompartment) {
+		this.defaultMembraneCompartment = defaultMembraneCompartment;
+	}
+	
+	/**
+	 * @return
+	 * @throws Exception 
+	 */
+	public CompartmentContainer getDefaultMembraneCompartment() throws Exception {
+		
+		if(this.defaultMembraneCompartment == null) {
+			
+			String defaultAbb = CompartmentsUtilities.assignCorrectMembraneDefaultCompartment(isEukaryote);
+			Integer idCompartment = null;
+	
+			if(!this.processCompartments.getIdCompartmentAbbIdMap().containsKey(defaultAbb)) {
+				String name = CompartmentsUtilities.parseAbbreviation(defaultAbb);
+				
+				CompartmentContainer container = ModelCompartmentServices.getCompartmentByAbbreviation(this.workspaceName, defaultAbb);
+				
+				if(container == null)
+					idCompartment = ModelCompartmentServices.insertNameAndAbbreviation(this.workspaceName,  CompartmentsUtilities.parseAbbreviation(defaultAbb), defaultAbb);
+				else
+					idCompartment = container.getCompartmentID();
+				
+				this.processCompartments.getIdCompartmentAbbIdMap().put(defaultAbb, idCompartment);
+			}
+			idCompartment = this.processCompartments.getIdCompartmentAbbIdMap().get(defaultAbb);
+			
+			return ModelCompartmentServices.getCompartmentById(this.workspaceName, idCompartment);
+		}
+		
+		return this.defaultMembraneCompartment;
+	}
+
+	/**
+	 * @return the isEukaryote
+	 */
+	public boolean isEukaryote() {
+		return isEukaryote;
+	}
+
+	/**
+	 * @param isEukaryote the isEukaryote to set
+	 */
+	public void setEukaryote(boolean isEukaryote) {
+		this.isEukaryote = isEukaryote;
 	}
 
 	/**

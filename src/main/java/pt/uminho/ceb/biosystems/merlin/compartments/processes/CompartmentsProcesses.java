@@ -99,33 +99,33 @@ public class CompartmentsProcesses {
 	}
 
 
-	/**
-	 * @param metaboliteMap
-	 * @param compartment
-	 * @return
-	 * @throws Exception 
-	 */
-	public String processTransportCompartments(String localisation, String compartment) throws Exception {
-
-		try {
-
-			if (this.isProcessCompartmentsInitiated()) {
-
-				if (localisation.equalsIgnoreCase("out") || localisation.equalsIgnoreCase(CompartmentsUtilities.DEFAULT_MEMBRANE.toString()))					
-					return CompartmentsUtilities.getOutsideMembrane(compartment.toLowerCase(), this.stain);
-				else
-
-					return CompartmentsUtilities.getInsideMembrane(compartment.toLowerCase(), this.stain);
-			} else {
-
-				throw new Exception("Compartments processing not initiated!");
-			} 
-		} catch (Exception e) {
-
-			System.out.println(localisation+" "+compartment);
-			throw e;
-		}
-	}
+//	/**
+//	 * @param metaboliteMap
+//	 * @param compartment
+//	 * @return
+//	 * @throws Exception 
+//	 */
+//	public String processTransportCompartments(String localisation, String compartment) throws Exception {
+//
+//		try {
+//
+//			if (this.isProcessCompartmentsInitiated()) {
+//
+//				if (localisation.equalsIgnoreCase("out") || localisation.equalsIgnoreCase(CompartmentsUtilities.DEFAULT_MEMBRANE.toString()))					
+//					return CompartmentsUtilities.getOutsideMembrane(compartment.toLowerCase(), this.stain);
+//				else
+//
+//					return CompartmentsUtilities.getInsideMembrane(compartment.toLowerCase(), this.stain);
+//			} else {
+//
+//				throw new Exception("Compartments processing not initiated!");
+//			} 
+//		} catch (Exception e) {
+//
+//			System.out.println(localisation+" "+compartment);
+//			throw e;
+//		}
+//	}
 	
 	/**
 	 * @param abb
