@@ -68,9 +68,14 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 			Document doc = Jsoup.parse(inputLine);
 			String str = doc.body().text();
 			
-			if(!str.isEmpty()){
-
-				String[] line = str.split(" details ");
+			if(!str.isEmpty() && !str.startsWith("#")){
+				
+				String[] line;
+				
+				if(str.contains(" details "))
+					line = str.split(" details ");
+				else
+					line = str.split(" ", 2);
 				
 				String locusTag = line[0].trim();
 				
