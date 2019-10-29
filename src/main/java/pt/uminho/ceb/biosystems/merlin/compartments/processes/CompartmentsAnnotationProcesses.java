@@ -17,7 +17,7 @@ public class CompartmentsAnnotationProcesses {
 		
 		String[][] res = new String[2][];
 
-		res[0] = new String[] {"Number of genes", ""+result.get(0)};
+		res[0] = new String[] {"Number of genes with predicted compartments", ""+result.get(0)};
 		res[1] = new String[] {"Number of distinct compartments ", ""+result.get(1)};
 			
 		return res;
