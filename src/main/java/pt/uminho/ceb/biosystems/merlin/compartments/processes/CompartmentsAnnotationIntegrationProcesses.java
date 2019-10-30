@@ -301,13 +301,13 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		if(geneRule != null)
 			geneRule = geneRule.toUpperCase();
 		
-		List<List<Integer>> rules = Utilities.parseStringRuleToList(geneRule);			//deve faltar tirar os parentesis
+		Set<Set<Integer>> rules = Utilities.parseStringRuleToList(geneRule);			//deve faltar tirar os parentesis
 
-		for(List<Integer> rule : rules) {
+		for(Set<Integer> rule : rules) {
 
 			if(rule.size() == 1) {
 
-				Integer geneId = rule.get(0);
+				Integer geneId = new ArrayList<>(rule).get(0);
 
 					if(geneHasCompartments.containsKey(geneId)) {
 						for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
