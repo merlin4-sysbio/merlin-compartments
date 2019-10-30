@@ -302,7 +302,6 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 			geneRule = geneRule.toUpperCase();
 		
 		Set<Set<Integer>> rules = Utilities.parseStringRuleToList(geneRule);			//deve faltar tirar os parentesis
-
 		for(Set<Integer> rule : rules) {
 
 			if(rule.size() == 1) {
@@ -398,7 +397,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		String geneRule = compReaction.getGeneRule();
 
 		geneRule = geneRule.concat(" OR (").concat(rule.toString()).concat(")").replaceAll("^ OR ", "");
-
+		
 		compReaction.setGeneRule(geneRule);
 		reactionsByCompartment.put(abb, compReaction);
 
