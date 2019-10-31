@@ -301,13 +301,12 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		if(geneRule != null)
 			geneRule = geneRule.toUpperCase();
 		
-		List<List<Integer>> rules = Utilities.parseStringRuleToList(geneRule);			//deve faltar tirar os parentesis
-
-		for(List<Integer> rule : rules) {
+		Set<Set<Integer>> rules = Utilities.parseStringRuleToList(geneRule);			//deve faltar tirar os parentesis
+		for(Set<Integer> rule : rules) {
 
 			if(rule.size() == 1) {
 
-				Integer geneId = rule.get(0);
+				Integer geneId = new ArrayList<>(rule).get(0);
 
 					if(geneHasCompartments.containsKey(geneId)) {
 						for(CompartmentContainer compartment : geneHasCompartments.get(geneId)) {
@@ -398,7 +397,7 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		String geneRule = compReaction.getGeneRule();
 
 		geneRule = geneRule.concat(" OR (").concat(rule.toString()).concat(")").replaceAll("^ OR ", "");
-
+		
 		compReaction.setGeneRule(geneRule);
 		reactionsByCompartment.put(abb, compReaction);
 
