@@ -132,8 +132,6 @@ public class CompartmentsProcesses {
 	 *  method for parsing compartmtents for metabolic reactions
 	 * @param list
 	 * @param ignoreList
-	 * @param stain
-	 * @param hasCellWall
 	 * @return
 	 * @throws Exception
 	 */
