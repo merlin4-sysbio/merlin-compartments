@@ -7,11 +7,18 @@ import java.util.List;
 import java.util.Set;
 
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.CompartmentsEnumerators.STAIN;
+import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 
 public class CompartmentsUtilities {
 
-	public static String DEFAULT_MEMBRANE = "plas"; //if this fails, implement a system of alternative membrane, like 'cytmem', it was the previous default, but sometimes it failed
-	
+	public static String assignCorrectMembraneDefaultCompartment(boolean isEukaryote) {
+		
+		if(isEukaryote)
+			return "PLAS";
+		
+		return "CYTMEM";
+	}
+		
 		/**
 		 * @param abbreviation
 		 * @return

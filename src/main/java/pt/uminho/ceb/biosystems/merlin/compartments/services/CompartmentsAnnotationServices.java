@@ -132,7 +132,8 @@ public class CompartmentsAnnotationServices {
 				if(AnnotationCompartmentsServices.areCompartmentsPredicted(databaseName))
 					go = false;
 				else
-					go = compartmentsInterface.getCompartments(null);
+					go = true;
+					//go = compartmentsInterface.getCompartments(null);
 			}
 			else {
 				CompartmentsTool compartmentsTool = CompartmentsTool.valueOf(tool);
@@ -146,7 +147,8 @@ public class CompartmentsAnnotationServices {
 				if(AnnotationCompartmentsServices.areCompartmentsPredicted(databaseName))
 					go=false;
 				else							
-					go = compartmentsInterface.getCompartments(null);
+					go = true;
+					//go = compartmentsInterface.getCompartments(null);
 			
 			}
 

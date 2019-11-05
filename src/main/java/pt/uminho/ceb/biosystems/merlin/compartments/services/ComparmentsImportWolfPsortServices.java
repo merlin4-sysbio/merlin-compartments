@@ -16,6 +16,7 @@ import pt.uminho.ceb.biosystems.merlin.compartments.processes.CompartmentsInitia
 import pt.uminho.ceb.biosystems.merlin.compartments.utils.RetrieveRemoteResults;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelGenesServices;
+import uk.ac.ebi.uniprot.dataservice.client.alignment.blast.input.ScoreCutoffOption;
 
 public class ComparmentsImportWolfPsortServices implements ICompartmentsServices{
 
@@ -51,11 +52,65 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 		return true;
 	}
 
+//	/**
+//	 * @return
+//	 * @throws Exception 
+//	 */
+//	public Map<String, ICompartmentResult> readWoLFPSORTFile(BufferedReader in) throws Exception {
+//		
+//		Map<String, Integer> sequencesIds = ModelGenesServices.getGeneIDsByQuery(this.databaseName);
+//
+//		Map<String, ICompartmentResult> compartmentLists = new HashMap<>();
+//
+//		String inputLine;
+//		
+//		while ((inputLine = in.readLine()) != null && !this.cancel.get()) {
+//			
+//			Document doc = Jsoup.parse(inputLine);
+//			String str = doc.body().text();
+//			
+//			if(!str.isEmpty() && !str.startsWith("#")){
+//				
+//				String[] line;
+//				
+//				if(str.contains(" details "))
+//					line = str.split(" details ");
+//				else
+//					line = str.split(" ", 2);
+//				
+//				String locusTag = line[0].trim();
+//				
+//				String[] comp = line[1].split(", ");
+//				
+//				AnnotationCompartmentsWolfPsort WoLFPSORTResult = new AnnotationCompartmentsWolfPsort(sequencesIds.get(locusTag));
+//				
+//				for(int i = 0; i<comp.length; i++){
+//					
+//					String[] score = comp[i].split(": ");
+//					
+//					if(score.length == 2){
+//						
+//						String[] value = score[1].split("\\s+");
+//						WoLFPSORTResult.addCompartment(score[0], Double.valueOf(value[0].trim()));
+//					}
+//				}
+//				compartmentLists.put(locusTag, WoLFPSORTResult);
+//			}
+//		}
+//		
+//		in.close();
+//		return compartmentLists;
+//	}
+	
+	
+	
 	/**
 	 * @return
 	 * @throws Exception 
 	 */
-	public Map<String, ICompartmentResult> readWoLFPSORTFile(BufferedReader in) throws Exception {
+	public Map<String, ICompartmentResult> readWoLFPSORTFileFromURL(BufferedReader in) throws Exception {
+		
+		// it is expected to work with files as well 
 		
 		Map<String, Integer> sequencesIds = ModelGenesServices.getGeneIDsByQuery(this.databaseName);
 
@@ -69,8 +124,13 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 			String str = doc.body().text();
 			
 			if(!str.isEmpty()){
-
-				String[] line = str.split(" details ");
+				
+				String[] line;
+				
+				if(str.contains(" details "))
+					line = str.split(" details ");
+				else
+					line = str.split(" ", 2);
 				
 				String locusTag = line[0].trim();
 				
@@ -80,12 +140,22 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 				
 				for(int i = 0; i<comp.length; i++){
 					
-					String[] score = comp[i].split(": ");
+					String [] score;
+					
+					if(comp[i].contains(": "))
+						score = comp[i].split(": ");
+					else
+						score = comp[i].split(" ");
 					
 					if(score.length == 2){
 						
-						String[] value = score[1].split("\\s+");
-						WoLFPSORTResult.addCompartment(score[0], Double.valueOf(value[0].trim()));
+						if(score[1].contains(" ")) {
+							String[] value = score[1].split("\\s+");
+							WoLFPSORTResult.addCompartment(score[0], Double.valueOf(value[0].trim()));
+						}
+						
+						else
+							WoLFPSORTResult.addCompartment(score[0], Double.valueOf(score[1].trim()));
 					}
 				}
 				compartmentLists.put(locusTag, WoLFPSORTResult);
@@ -138,7 +208,7 @@ public class ComparmentsImportWolfPsortServices implements ICompartmentsServices
 		try {
 			
 			BufferedReader data = RetrieveRemoteResults.retrieveDataFromURL(link);
-			results = this.readWoLFPSORTFile(data);
+			results = this.readWoLFPSORTFileFromURL(data);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
