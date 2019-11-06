@@ -298,10 +298,12 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 		Map<String, ReactionContainer> reactionsByCompartment = new HashMap<>();
 		
 		String geneRule = reaction.getGeneRule();
+
 		if(geneRule != null)
 			geneRule = geneRule.toUpperCase();
 		
-		Set<Set<Integer>> rules = Utilities.parseStringRuleToList(geneRule);			//deve faltar tirar os parentesis
+		Set<Set<Integer>> rules = Utilities.parseStringRuleToSet(geneRule);			//deve faltar tirar os parentesis
+
 		for(Set<Integer> rule : rules) {
 
 			if(rule.size() == 1) {
@@ -396,8 +398,8 @@ public class CompartmentsAnnotationIntegrationProcesses implements IIntegrateDat
 
 		String geneRule = compReaction.getGeneRule();
 
-		geneRule = geneRule.concat(" OR (").concat(rule.toString()).concat(")").replaceAll("^ OR ", "");
-		
+		geneRule = geneRule.concat(" OR (").concat(rule.toString()).concat(")").replaceAll("^ OR ", "").replaceAll(" OR\\s+OR ", " OR ").replaceAll(" AND\\s+AND ", " AND ");
+
 		compReaction.setGeneRule(geneRule);
 		reactionsByCompartment.put(abb, compReaction);
 
