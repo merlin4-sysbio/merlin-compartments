@@ -1,0 +1,32 @@
+<plugin start="true">
+	<uid>pt.uminho.ceb.biosystems.merlin.compartments</uid>
+	<name>merlin-compartments</name>
+	<version>4.0.2</version>
+
+	<dependencies>
+		<dependency uid="merlin" />
+	</dependencies>
+
+	<extensions>
+		<extension uid="aibench.core"
+			name="aibench.core.operation-definition"
+			class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments_new.ChooseToolCompartmentalization">
+			<operation-description
+				name="load reports" path="30@annotation/40@compartments/"
+				uid="operations.ChooseToolCompartmentalization.ID" />
+		</extension>
+		
+		<extension uid="aibench.workbench"
+			name="aibench.workbench.view">
+			<icon-operation
+				operation="operations.ChooseToolCompartmentalization.ID"
+				icon="icons/Lifecycle/upload.png" />
+		</extension>
+		
+		<extension uid="aibench.workbench"
+			name="aibench.workbench.view">
+			<gui-operation operation="operations.ChooseToolCompartmentalization.ID"
+				class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments_new.ChooseToolGUI" />
+		</extension>
+	</extensions>
+</plugin>
