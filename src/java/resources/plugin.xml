@@ -28,5 +28,32 @@
 			<gui-operation operation="operations.ChooseToolCompartmentalization.ID"
 				class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments_new.ChooseToolGUI" />
 		</extension>
+		
+		<!-- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+		
+		<extension uid="aibench.core"
+			name="aibench.core.operation-definition"
+			class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments.LoadPSortReports">
+			<operation-description
+				name="load reports - PSortb3"
+				uid="operations.LoadPSortReports.ID" />
+		</extension>
+
+		<extension uid="aibench.core"
+			name="aibench.core.operation-definition"
+			class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments.LoadLocTreeReports">
+			<operation-description
+				name="load reports - LocTree3"
+				uid="operations.LoadLocTreeReports.ID" />
+		</extension>
+
+		<extension uid="aibench.core"
+			name="aibench.core.operation-definition"
+			class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments.LoadWoLFPSORTReports">
+			<operation-description
+				name="load reports - WoLFPSORT"
+				uid="operations.LoadWoLFPSORTReports.ID" />
+		</extension>
+		
 	</extensions>
 </plugin>
