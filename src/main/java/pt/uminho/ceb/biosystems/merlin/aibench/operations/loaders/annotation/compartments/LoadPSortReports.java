@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import es.uvigo.ei.aibench.core.operation.annotation.Cancel;
 import es.uvigo.ei.aibench.core.operation.annotation.Direction;
-import es.uvigo.ei.aibench.core.operation.annotation.Operation;
 import es.uvigo.ei.aibench.core.operation.annotation.Port;
 import es.uvigo.ei.aibench.core.operation.annotation.Progress;
 import es.uvigo.ei.aibench.workbench.Workbench;
@@ -21,31 +23,36 @@ import pt.uminho.ceb.biosystems.merlin.processes.model.compartments.interfaces.I
 import pt.uminho.ceb.biosystems.merlin.processes.model.compartments.services.ComparmentsImportPSort3Services;
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 
-@Operation(name="Load Compartments' Reports", description="Load compartments reports' to merlin.")
 public class LoadPSortReports {
 
-
+	
 	private File outFile;
 	private TimeLeftProgress progress = new TimeLeftProgress();
 	//private long startTime;
 	private String tool = "PSort";
 	private ICompartmentsServices compartmentsInterface;
+	private WorkspaceAIB project;
+	final static Logger logger = LoggerFactory.getLogger(LoadPSortReports.class);
 
-	/**
-	 * @param file_dir
-	 * @throws Exception 
-	 */
-	@Port(direction=Direction.INPUT, name="predictions file",description="Long Format (tab delimited)", validateMethod="checkFiles",order=2)
-	public void setFile_dir(File outFile) throws Exception {
-
+	public LoadPSortReports(WorkspaceAIB workspace, File predictionsFile) {
+		
+		this.project = workspace;
+		this.outFile = predictionsFile;
+		try {
+			run();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			Workbench.getInstance().error(e);
+			e.printStackTrace();
+		}
+		
+		
 	}
-
 	/**
 	 * @param project
 	 * @throws Exception 
 	 */
-	@Port(direction=Direction.INPUT, name="workspace",description="select workspace",validateMethod="checkProject", order=3)
-	public void setProject(WorkspaceAIB project) throws Exception {
+	public void run() throws Exception {
 
 		ProjectServices.updateCompartmentsTool(project.getName(), project.getTaxonomyID(), tool);
 

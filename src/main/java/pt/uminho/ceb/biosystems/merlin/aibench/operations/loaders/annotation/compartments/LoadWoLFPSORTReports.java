@@ -1,8 +1,12 @@
 package pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import es.uvigo.ei.aibench.core.operation.annotation.Cancel;
 import es.uvigo.ei.aibench.core.operation.annotation.Direction;
@@ -23,7 +27,6 @@ import pt.uminho.ceb.biosystems.merlin.processes.model.compartments.services.Com
 import pt.uminho.ceb.biosystems.merlin.services.ProjectServices;
 import pt.uminho.ceb.biosystems.merlin.services.model.ModelSequenceServices;
 
-@Operation(name="Load Compartments' Reports", description="Load compartments reports' to merlin.")
 public class LoadWoLFPSORTReports {
 
 
@@ -32,22 +35,28 @@ public class LoadWoLFPSORTReports {
 	private TimeLeftProgress progress = new TimeLeftProgress();
 	private ICompartmentsServices compartmentsInterface;
 	private AtomicBoolean cancel = new AtomicBoolean(false);
+	private WorkspaceAIB project;
+	final static Logger logger = LoggerFactory.getLogger(LoadWoLFPSORTReports.class);
 
-	/**
-	 * @param file_dir
-	 * @throws Exception 
-	 */
-	@Port(direction=Direction.INPUT, name="predictions link",description="predictions website link", validateMethod="checkFiles",order=2)
-	public void setFile_dir(String link) throws Exception {
-
+	public LoadWoLFPSORTReports(WorkspaceAIB workspace, String link) {
+		
+		this.project = workspace;
+		this.link = link;
+		try {
+			run();
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			Workbench.getInstance().error(e);
+			e.printStackTrace();
+		}
+		
+		
 	}
-
 	/**
 	 * @param project
 	 * @throws Exception 
 	 */
-	@Port(direction=Direction.INPUT, name="workspace",description="select workspace",validateMethod="checkProject", order=3)
-	public void setProject(WorkspaceAIB project) throws Exception {
+	public void run() throws Exception {
 
 		if(!this.cancel.get()) {
 			ProjectServices.updateCompartmentsTool(project.getName(), project.getTaxonomyID(), tool);
