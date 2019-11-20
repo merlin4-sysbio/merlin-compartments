@@ -14,6 +14,7 @@ import es.uvigo.ei.aibench.core.operation.annotation.Direction;
 import es.uvigo.ei.aibench.core.operation.annotation.Operation;
 import es.uvigo.ei.aibench.core.operation.annotation.Port;
 import es.uvigo.ei.aibench.core.operation.annotation.Progress;
+import es.uvigo.ei.aibench.workbench.Workbench;
 import pt.uminho.ceb.biosystems.merlin.aibench.datatypes.WorkspaceAIB;
 import pt.uminho.ceb.biosystems.merlin.aibench.gui.CustomGUI;
 import pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments.LoadLocTreeReports;
@@ -22,6 +23,7 @@ import pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.com
 import pt.uminho.ceb.biosystems.merlin.aibench.utilities.AIBenchUtils;
 import pt.uminho.ceb.biosystems.merlin.aibench.utilities.TimeLeftProgress;
 import pt.uminho.ceb.biosystems.merlin.processes.model.compartments.interfaces.ICompartmentsServices;
+import pt.uminho.ceb.biosystems.merlin.services.annotation.AnnotationCompartmentsServices;
 
 @Operation(name="Load Reports",description="Load reports")
 public class ChooseToolCompartmentalization {
@@ -43,10 +45,13 @@ public class ChooseToolCompartmentalization {
 
 
 	@Port(direction=Direction.INPUT, name="Tool",description="", order = 2)
-	public void setTool(String tool) {
+	public void setTool(String tool) throws Exception {
 
 		this.tool = tool;
+		
+		boolean go = AnnotationCompartmentsServices.areCompartmentsPredicted(this.workspace.getName());
 
+		if (!go) {
 		if (this.tool.equals("PSortb3")) {
 
 			FilePathPopUp filePath = new FilePathPopUp();
@@ -71,7 +76,11 @@ public class ChooseToolCompartmentalization {
 			
 			
 		}
-
+		}
+		else
+			Workbench.getInstance().warn("Compartments have been predicted already. \n"
+					+ "Please go to \"Workspace\" menu, press \"Clean\".\n"
+					+ "Select the correct workspace and then, in \"select information\", select \"compartment annotation\". Press \"OK\" ");
 
 
 	}
