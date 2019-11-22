@@ -54,22 +54,23 @@ public class ChooseToolCompartmentalization {
 			File file = filePath.getFile();
 
 			this.file = file;
-
-			new LoadPSortReports(this.workspace,this.file);
+			if (!this.cancel.get() && this.file!=null)
+				new LoadPSortReports(this.workspace,this.file);
 
 		}
 		else {
 
-			UrlPopUp url = new UrlPopUp();
+			UrlPopUp url = new UrlPopUp(this.tool);
 
 			this.link=url.getLink();
+			
+			if (!this.cancel.get()) {
+				if (this.tool.equals("LocTree3"))
+					new LoadLocTreeReports(this.workspace,this.link);
+				else
+					new LoadWoLFPSORTReports(this.workspace,this.link);
+			}
 
-			if (this.tool.equals("LocTree3")) 
-				new LoadLocTreeReports(this.workspace,this.link);
-			else
-				new LoadWoLFPSORTReports(this.workspace,this.link);
-			
-			
 		}
 		}
 		else

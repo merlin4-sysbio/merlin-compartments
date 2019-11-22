@@ -28,6 +28,7 @@ import es.uvigo.ei.aibench.workbench.InputGUI;
 import es.uvigo.ei.aibench.workbench.ParamsReceiver;
 import es.uvigo.ei.aibench.workbench.Workbench;
 import pt.uminho.ceb.biosystems.merlin.aibench.datatypes.WorkspaceAIB;
+import pt.uminho.ceb.biosystems.merlin.aibench.gui.CustomGUI;
 import pt.uminho.ceb.biosystems.merlin.aibench.utilities.CreateImageIcon;
 
 
@@ -65,7 +66,7 @@ public class ChooseToolGUI extends AbstractInputJDialog implements InputGUI{
 	}
 
 	public String getDescription() {
-		return "Load compartments reports' to merlin.";
+		return "Load compartment reports to merlin.";
 	}
 
 	public JPanel getInputComponentsPane() {
@@ -127,16 +128,16 @@ public class ChooseToolGUI extends AbstractInputJDialog implements InputGUI{
 		cancelButton.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Cancel.png")),0.7).resizeImageIcon());
 		cancelButton.addActionListener(event -> {
 
-			//String[] options = new String[2];
-			//options[0] = "yes";
-			//options[1] = "no";
+			String[] options = new String[2];
+			options[0] = "yes";
+			options[1] = "no";
 
-			//int result = CustomGUI.stopQuestion("cancel confirmation", "are you sure you want to cancel the operation?", options);
+			int result = CustomGUI.stopQuestion("cancel confirmation", "are you sure you want to cancel the operation?", options);
 
-			//if(result == 0) {
+			if(result == 0) {
 			canceled = true;
 			dispose();
-			//}
+			}
 
 		});
 
