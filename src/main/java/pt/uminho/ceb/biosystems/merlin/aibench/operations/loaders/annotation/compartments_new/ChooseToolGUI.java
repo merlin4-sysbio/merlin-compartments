@@ -71,8 +71,6 @@ public class ChooseToolGUI extends AbstractInputJDialog implements InputGUI{
 
 	public JPanel getInputComponentsPane() {
 
-		//		Enumerators.CompartmentsTool.;
-		
 		List<ClipboardItem> cl = Core.getInstance().getClipboard().getItemsByClass(WorkspaceAIB.class);                    
 		
 		String[] workspaces = new String[cl.size()];
@@ -103,7 +101,7 @@ public class ChooseToolGUI extends AbstractInputJDialog implements InputGUI{
 		okButton = new JButton("proceed");
 		okButton.setEnabled(true);
 		okButton.setToolTipText("proceed");
-		okButton.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Ok.png")),0.7).resizeImageIcon());
+		okButton.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Ok_compartments.png")),0.7).resizeImageIcon());
 		ActionListener listener= new ActionListener() {
 
 
@@ -121,11 +119,12 @@ public class ChooseToolGUI extends AbstractInputJDialog implements InputGUI{
 
 			}
 		};
+		
 		okButton.addActionListener(listener);
 
 		cancelButton = new JButton("cancel");
 		cancelButton.setToolTipText("cancel");
-		cancelButton.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Cancel.png")),0.7).resizeImageIcon());
+		cancelButton.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Cancel_compartments.png")),0.7).resizeImageIcon());
 		cancelButton.addActionListener(event -> {
 
 			String[] options = new String[2];
