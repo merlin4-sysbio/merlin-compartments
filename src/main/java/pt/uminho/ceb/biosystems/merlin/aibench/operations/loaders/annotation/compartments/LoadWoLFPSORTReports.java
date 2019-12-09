@@ -1,6 +1,5 @@
 package pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -9,16 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import es.uvigo.ei.aibench.core.operation.annotation.Cancel;
-import es.uvigo.ei.aibench.core.operation.annotation.Direction;
-import es.uvigo.ei.aibench.core.operation.annotation.Operation;
-import es.uvigo.ei.aibench.core.operation.annotation.Port;
 import es.uvigo.ei.aibench.core.operation.annotation.Progress;
 import es.uvigo.ei.aibench.workbench.Workbench;
-import pt.uminho.ceb.biosystems.merlin.aibench.datatypes.WorkspaceAIB;
-import pt.uminho.ceb.biosystems.merlin.aibench.datatypes.annotation.AnnotationCompartmentsAIB;
-import pt.uminho.ceb.biosystems.merlin.aibench.gui.CustomGUI;
-import pt.uminho.ceb.biosystems.merlin.aibench.utilities.MerlinUtils;
-import pt.uminho.ceb.biosystems.merlin.aibench.utilities.TimeLeftProgress;
+import pt.uminho.ceb.biosystems.merlin.gui.datatypes.WorkspaceAIB;
+import pt.uminho.ceb.biosystems.merlin.gui.datatypes.annotation.AnnotationCompartmentsAIB;
+import pt.uminho.ceb.biosystems.merlin.gui.jpanels.CustomGUI;
+import pt.uminho.ceb.biosystems.merlin.gui.utilities.MerlinUtils;
+import pt.uminho.ceb.biosystems.merlin.gui.utilities.TimeLeftProgress;
 import pt.uminho.ceb.biosystems.merlin.core.interfaces.ICompartmentResult;
 import pt.uminho.ceb.biosystems.merlin.core.utilities.Enumerators.SequenceType;
 import pt.uminho.ceb.biosystems.merlin.processes.WorkspaceProcesses;
