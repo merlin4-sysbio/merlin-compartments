@@ -71,6 +71,8 @@ public class UrlPopUp extends javax.swing.JDialog{
 
 			jPanel1.add(jPanel11, new GridBagConstraints(0, 0, 3, 2, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 		}
+		
+		
 
 		
 		JTextArea textfield = null;
