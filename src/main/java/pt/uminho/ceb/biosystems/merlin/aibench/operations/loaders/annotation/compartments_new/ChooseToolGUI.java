@@ -27,9 +27,9 @@ import es.uvigo.ei.aibench.core.operation.OperationDefinition;
 import es.uvigo.ei.aibench.workbench.InputGUI;
 import es.uvigo.ei.aibench.workbench.ParamsReceiver;
 import es.uvigo.ei.aibench.workbench.Workbench;
-import pt.uminho.ceb.biosystems.merlin.aibench.datatypes.WorkspaceAIB;
-import pt.uminho.ceb.biosystems.merlin.aibench.gui.CustomGUI;
-import pt.uminho.ceb.biosystems.merlin.aibench.utilities.CreateImageIcon;
+import pt.uminho.ceb.biosystems.merlin.gui.datatypes.WorkspaceAIB;
+import pt.uminho.ceb.biosystems.merlin.gui.jpanels.CustomGUI;
+import pt.uminho.ceb.biosystems.merlin.gui.utilities.CreateImageIcon;
 
 
 public class ChooseToolGUI extends AbstractInputJDialog implements InputGUI{
