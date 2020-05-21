@@ -8,35 +8,104 @@
 	</dependencies>
 
 	<extensions>
+
+		<!-- Load compartment prediction reports -->
+
 		<extension uid="aibench.core"
 			name="aibench.core.operation-definition"
 			class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments_new.ChooseToolCompartmentalization">
-			<operation-description
-				name="load reports" path="30@annotation/40@compartments/"
+			<operation-description name="load reports"
+				path="30@annotation/40@compartments/"
 				uid="operations.ChooseToolCompartmentalization.ID" />
 		</extension>
-		
+
 		<extension uid="aibench.workbench"
 			name="aibench.workbench.view">
 			<icon-operation
 				operation="operations.ChooseToolCompartmentalization.ID"
 				icon="icons/Lifecycle/upload.png" />
 		</extension>
-		
+
 		<extension uid="aibench.workbench"
 			name="aibench.workbench.view">
-			<gui-operation operation="operations.ChooseToolCompartmentalization.ID"
+			<gui-operation
+				operation="operations.ChooseToolCompartmentalization.ID"
 				class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments_new.ChooseToolGUI" />
+
 		</extension>
-		
+
+
+		<!-- Integrate compartments to model -->
+
+
+		<extension uid="aibench.core"
+			name="aibench.core.operation-definition"
+			class="pt.uminho.ceb.biosystems.merlin.compartments.integration.ModelCompartmentsIntegrationOperation">
+			<operation-description
+				name="compartments integration"
+				uid="operations.ModelCompartmentsIntegrationOperation.ID" />
+		</extension>
+
+		<extension uid="aibench.core"
+			name="aibench.core.operation-definition"
+			class="pt.uminho.ceb.biosystems.merlin.compartments.integration.ChooseWorkspaceOperation">
+			<operation-description
+				name="integrate to model" path="30@annotation/40@compartments/"
+				uid="operations.ChooseWorkspaceOperation.ID" />
+		</extension>
+
+		<extension uid="aibench.workbench"
+			name="aibench.workbench.view">
+			<icon-operation
+				operation="operations.ChooseWorkspaceOperation.ID"
+				icon="icons/Lifecycle/Integrate.png" />
+		</extension>
+
+		<extension uid="aibench.workbench"
+			name="aibench.workbench.view">
+
+			<gui-operation
+				operation="operations.ChooseWorkspaceOperation.ID"
+				class="pt.uminho.ceb.biosystems.merlin.compartments.integration.ChooseWorkspaceGUI" />
+		</extension>
+
+
+		<!-- Remove compartments integration -->
+
+		<extension uid="aibench.core"
+			name="aibench.core.operation-definition"
+			class="pt.uminho.ceb.biosystems.merlin.compartments.integration.CleanIntegrationOperation">
+			<operation-description
+				name="clean integration"
+				path="30@annotation/40@compartments/"
+				uid="operations.CleanIntegrationOperation.ID" />
+		</extension>
+
+		<extension uid="aibench.workbench"
+			name="aibench.workbench.view">
+			<icon-operation
+				operation="operations.CleanIntegrationOperation.ID"
+				icon="icons/Lifecycle/Clean.png" />
+		</extension>
+
+		<extension uid="aibench.workbench"
+			name="aibench.workbench.view">
+
+			<gui-operation
+				operation="operations.CleanIntegrationOperation.ID"
+				class="pt.uminho.ceb.biosystems.merlin.compartments.integration.CleanIntegrationGUI" />
+		</extension>
+
+
+
+
 		<!-- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
-		
+
 		<extension uid="aibench.core"
 			name="aibench.core.operation-definition"
 			class="pt.uminho.ceb.biosystems.merlin.aibench.operations.loaders.annotation.compartments.LoadPSortReports">
 			<operation-description
-				name="load reports - PSortb3"
-				uid="operations.LoadPSortReports.ID" />
+				name="load reports - PSortb3" uid="operations.LoadPSortReports.ID" />
 		</extension>
 
 		<extension uid="aibench.core"
@@ -54,6 +123,6 @@
 				name="load reports - WoLFPSORT"
 				uid="operations.LoadWoLFPSORTReports.ID" />
 		</extension>
-		
+
 	</extensions>
 </plugin>
