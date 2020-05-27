@@ -31,7 +31,6 @@ import pt.uminho.ceb.biosystems.merlin.gui.datatypes.WorkspaceAIB;
 import pt.uminho.ceb.biosystems.merlin.gui.jpanels.CustomGUI;
 import pt.uminho.ceb.biosystems.merlin.gui.utilities.CreateImageIcon;
 
-
 public class ChooseWorkspaceGUI extends AbstractInputJDialog implements InputGUI {
 
 	private static final long serialVersionUID = 1L;

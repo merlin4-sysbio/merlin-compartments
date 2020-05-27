@@ -1,5 +1,6 @@
 package pt.uminho.ceb.biosystems.merlin.compartments.integration;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -16,6 +17,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
@@ -54,6 +56,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 	private String workspaceName;
 	private WorkspaceTableAIB workspaceTable;
 	private WorkspaceAIB project;
+	private JTextField JTextcloneWorkspaceName;
 
 
 	/**
@@ -66,13 +69,13 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 	public ModelCompartmentsIntegrationGUI(String workspaceName, double threshold) {//AnnotationCompartmentsAIB compartmentsContainer) {
 
 		super(Workbench.getInstance().getMainFrame());
-		
+
 		this.workspaceTable = new WorkspaceTableAIB("compartments_annotation_reports", workspaceName);
 		this.compartmentsContainer = new AnnotationCompartmentsAIB(this.workspaceTable, "compartments");
 		this.project = AIBenchUtils.getProject(workspaceName);
 		this.compartmentsContainer.setWorkspace(project);
 		this.compartmentsContainer.setThreshold(threshold);
-				
+
 		this.workspaceName = workspaceName;
 		this.compartments = new HashMap<>();
 
@@ -95,10 +98,10 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 		this.setSize(500, 500);
 		{
 			this.setTitle("Compartments integration");
-			
-			
+
+
 			// First panel with compartments to ignore
-			
+
 			jPanel0 = new JPanel();
 			jPanel0.setBorder(BorderFactory.createTitledBorder("Please choose the compartments to ignore"));
 			GridBagLayout jPanel0Layout = new GridBagLayout();
@@ -109,7 +112,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 			jPanel0Layout.rowHeights = new int[] {0};
 			this.add(jPanel0, new GridBagConstraints(0, 0, 2, 2, 2, 0.5, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
-			
+
 			jPanel1 = new JPanel();
 			GridBagLayout jPanel1Layout = new GridBagLayout();
 			jPanel1Layout.rowWeights = new double[] {0.1};
@@ -124,7 +127,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 			jScrollPane.setPreferredSize(new java.awt.Dimension(700, 700));
 			jScrollPane.setSize(500, 420);
 			{	
-				
+
 				// Second panel with default compartments (between the compartments list and options)
 				jPanel3 = new JPanel();
 				this.add(jPanel3, new GridBagConstraints(0, 3, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -135,7 +138,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 				jPanel13Layout.columnWidths = new int[] { 3, 20, 7, 50 };
 				jPanel13Layout.rowWeights = new double[] { 0.1 };
 				jPanel13Layout.rowHeights = new int[] { 7 };
-				
+
 				// first button in the second panel
 				jRadioButtonDefaultMembrane = new JRadioButton();
 				jPanel3.add(jRadioButtonDefaultMembrane,
@@ -149,7 +152,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 					public void actionPerformed(ActionEvent evt) {
 					}
 				});
-				
+
 				// second button in the second panel
 				jRadioButtonInputMembrane = new JRadioButton();
 				jPanel3.add(jRadioButtonInputMembrane,
@@ -163,9 +166,9 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 					public void actionPerformed(ActionEvent evt) {
 					}
 				});
-				
+
 				// text field with user input default membrane rightmost of the second radio button
-				
+
 				textInputMembrane = new JTextField("");
 				jPanel3.add(textInputMembrane, new GridBagConstraints(1, 5, 1, 1, 0.0, 0.0,
 						GridBagConstraints.WEST,
@@ -177,14 +180,14 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 					}
 				});
 
-				
+
 				// button group, this groups the previous two buttons together making sure that there can only be one button selected and one button only
 				buttonGroupMembrane = new ButtonGroup();
 				buttonGroupMembrane.add(jRadioButtonDefaultMembrane);
 				jRadioButtonDefaultMembrane.setSelected(true);
 				buttonGroupMembrane.add(jRadioButtonInputMembrane);
-				
-				
+
+
 				// clone workspace panel
 				jPanel4 = new JPanel();
 				this.add(jPanel4, new GridBagConstraints(0, 6, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -195,7 +198,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 				jPanel4Layout.columnWidths = new int[] { 3, 20, 7, 50 };
 				jPanel4Layout.rowWeights = new double[] { 0.1 };
 				jPanel4Layout.rowHeights = new int[] { 7 };
-				
+
 				// clone workspace checkbox
 				cloneCheckbox = new JCheckBox("clone workspace");
 				cloneCheckbox.setSelected(false);
@@ -209,9 +212,32 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 						GridBagConstraints.WEST,
 						GridBagConstraints.BOTH, new Insets(0, 0,
 								0, 0), 0, 0));
+
+
+				// text field with cloned workspace name below the clone workspace checkbox
+				JTextcloneWorkspaceName = new JTextField("");
 				
+				// cloneWorkspace text field label
+				JLabel cloneWorkspaceNameLabel = new JLabel(" workspace new name ");
+				jPanel4.add(cloneWorkspaceNameLabel, new GridBagConstraints(0, 8, 1, 1, 0.0, 0.0,
+						GridBagConstraints.WEST,
+						GridBagConstraints.BOTH, new Insets(0, 0,
+								0, 0), 0, 0));
+				
+				jPanel4.add(JTextcloneWorkspaceName, new GridBagConstraints(1, 8, 1, 1, 0.0, 0.0,
+						GridBagConstraints.WEST,
+						GridBagConstraints.BOTH, new Insets(0, 0,
+								0, 0), 0, 0));
+				JTextcloneWorkspaceName.setToolTipText("enter the name of the cloned workspace");
+				JTextcloneWorkspaceName.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent evt) {
+					}
+				});
+				
+	
+
 				// options panel
-				
+
 				jPanel2 = new JPanel();
 				this.add(jPanel2, new GridBagConstraints(0, 8, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 				jPanel2.setBorder(BorderFactory.createTitledBorder("Options"));
@@ -221,7 +247,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 				jPanel12Layout.columnWidths = new int[] { 3, 20, 7, 50 };
 				jPanel12Layout.rowWeights = new double[] { 0.1 };
 				jPanel12Layout.rowHeights = new int[] { 7 };
-				
+
 				{
 					JButton jButtonSave = new JButton();
 					jButtonSave.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Ok.png")),0.1).resizeImageIcon());
@@ -235,14 +261,19 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 							List<String> ignore = readTable();
 							String membrane = "auto";
 							Boolean cloneWorkspace = false;
-							
+							String cloneWorkspaceName = "";
+
 							if (jRadioButtonInputMembrane.isSelected())
 								membrane = textInputMembrane.getText().trim();
-							
-							if(cloneCheckbox.isSelected())
+
+							if(cloneCheckbox.isSelected()) {
+
+								cloneWorkspaceName = JTextcloneWorkspaceName.getText().trim();
 								cloneWorkspace = true;
-								
+							}
 							
+
+
 							ParamSpec[] paramsSpec = new ParamSpec[]{
 									new ParamSpec("biochemical", Boolean.class, true, null),
 									new ParamSpec("transporters", Boolean.class, true, null),
@@ -250,6 +281,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 									new ParamSpec("project", Workspace.class, compartmentsContainer.getWorkspace(), null),
 									new ParamSpec("compartment", String.class, membrane, null),
 									new ParamSpec("cloneWorkspace", Boolean.class, cloneWorkspace, null),
+									new ParamSpec("cloneWorkspaceName", String.class, cloneWorkspaceName, null),
 									new ParamSpec("geneCompartments", Map.class, compartmentsContainer.runCompartmentsInterface(compartmentsContainer.getThreshold()), null)		
 							};
 
