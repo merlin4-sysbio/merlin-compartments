@@ -250,7 +250,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 
 				{
 					JButton jButtonSave = new JButton();
-					jButtonSave.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Ok.png")),0.1).resizeImageIcon());
+					jButtonSave.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Ok_compartments.png")),0.7).resizeImageIcon());
 					jPanel2.add(jButtonSave, new GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
 							GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 					jButtonSave.setText("ok");
@@ -297,7 +297,7 @@ public class ModelCompartmentsIntegrationGUI extends javax.swing.JDialog{
 				}
 				{
 					JButton jButtonClose = new JButton();
-					jButtonClose.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Cancel.png")),0.1).resizeImageIcon());
+					jButtonClose.setIcon(new CreateImageIcon(new ImageIcon(getClass().getClassLoader().getResource("icons/Cancel_compartments.png")),0.7).resizeImageIcon());
 					jPanel2.add(jButtonClose, new GridBagConstraints(3, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
 							GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 					jButtonClose.setText("cancel");
